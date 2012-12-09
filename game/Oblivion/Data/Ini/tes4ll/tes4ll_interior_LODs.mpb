@@ -1,0 +1,146 @@
+[tes4ll]
+
+ParseModList  
+
+;;todo
+SetOption -sizeX=128 -sizeY=128 -center
+;;SetOption -sizeX=256 -sizeY=256 -center
+
+
+; ****************************
+; Make color maps
+; ****************************
+
+SetOption -installdirectory="$_gamedir\Data\Textures\myworld"
+@makecolormap CallTes4qlod -options="-a -f -F -C"
+
+; ****************************
+; Make normal maps
+; ****************************
+
+GenerateHeightmap -n=1
+@makenormalmap WriteAll -writenormalmap
+
+
+; ****************************
+; Make meshes 
+; ****************************
+
+
+SetOption -mindistance=256
+
+SetOption -installdirectory="$_gamedir\Data\Meshes\myworld"
+SetOption -useshapes
+
+FocusAll 
+
+SetGridBorder -x=4096 -y=4096 -min=0
+SetGridBorder -x=16384 -y=16384
+SetGrid -x=16384 -y=16384
+
+@cheydinhal ReadPolygonDataFile -filename="ini\tes4ll\CityPolygons.dat" -name=Cheydinhal_border 
+@chorrol    ReadPolygonDataFile -filename="ini\tes4ll\CityPolygons.dat" -name=Chorrol_border 
+@bruma      ReadPolygonDataFile -filename="ini\tes4ll\CityPolygons.dat" -name=Bruma_border 
+
+@cheydinhal Panorama -x=118400 -y=90600 
+@chorrol    Panorama -x=-69400 -y=95000
+@bruma      Panorama -x=25210 -y=145970
+
+
+Filter -n=4     ; -n=4
+
+AlgFirstOrder  -add=0.2
+AlgSecondOrder -add=0.5 
+
+AlgPeakFinder  -multiply=1 -radius=4096 -scanradius=8192 -lowest=4000 -maxval=1 -minval=0.5
+AlgSecondOrder -multiply=1
+
+@cheydinhal AlgRadial -multiply=1 -x=117537 -y=97016  -near=10000 -far=400000 -minval=1 -maxval=0
+@cheydinhal AlgRadial -multiply=1 -x=117537 -y=97016  -near=0 -far=20000 -minval=1 -maxval=0.5
+@chorrol    AlgRadial -multiply=1 -x=-69400 -y=95000  -near=10000 -far=400000 -minval=1 -maxval=0
+@chorrol    AlgRadial -multiply=1 -x=-69400 -y=95000  -near=0 -far=20000 -minval=1 -maxval=0.5
+@bruma      AlgRadial -multiply=1 -x=25210  -y=145970 -near=10000 -far=400000 -minval=1 -maxval=0
+@bruma      AlgRadial -multiply=1 -x=25210  -y=145970 -near=0 -far=20000 -minval=1 -maxval=0.5
+
+
+; Switch off sampling below the shore line:
+AlgLayer -multiply=1 -lowest=-999999 -highest=10 -minval=1 -maxval=0
+; ============================
+
+FocusAll 
+;;todo
+;;FocusRec -x1=100000 -x2=140000 -y1=60000 -y2=100000 ;; not yet working
+
+SetMaxVertices -n=25000
+
+FocusAll 
+MakeTriangulation
+
+;;DivideBetween -x1=-20000 -y1=40000 -x2=80000 -y2=-200000 
+;;DivideAtPolygonBorder -name=Cheydinhal_border
+;;DivideAtPolygonBorder
+
+@cheydinhal StencilPolygon -name=Cheydinhal_border
+@chorrol    StencilPolygon -name=Chorrol_border
+@bruma      StencilPolygon -name=Bruma_border
+
+
+@removeinvisibletriangles InactivateAllVertices
+@removeinvisibletriangles @cheydinhal ActivateVisibleVertices -x=118400 -y=90600   -z=8500   -radius=7000
+@removeinvisibletriangles @chorrol    ActivateVisibleVertices -x=-69400 -y=95000   -z=14500  -radius=7000
+@removeinvisibletriangles @bruma      ActivateVisibleVertices -x=25210 -y=145970 -z=25920 -radius=7000
+@removeinvisibletriangles RemoveInactiveTriangles
+
+
+FocusAll
+
+@cheydinhal WriteAll -texture="textures\myworld\TamrielMap.dds" -name="meshes\myworld\TamrielCheydinhal_tmp.nif" -transX=-118400 -transY=-90600 -transZ=-8500
+@chorrol WriteAll -texture="textures\myworld\TamrielMap.dds" -name="meshes\myworld\TamrielChorrol_tmp.nif" -transX=69400 -transY=-95000 -transZ=-14500
+@bruma WriteAll -texture="textures\myworld\TamrielMap.dds" -name="meshes\myworld\TamrielBruma_tmp.nif" -transX=-25210 -transY=-145970 -transZ=-25920
+
+
+
+; ****************************
+[mpgui]
+; ****************************
+
+GUIRequestVersion -value="1.22"
+
+@!tes4ll_doonce GUITab -help="Options for interior LOD generation" -text="Interior LODs" -name=tes4ll_gui
+
+@!tes4ll_doonce GUIConsoleEcho -text="Tes4ll batch file for generation of Immersive Interiors LODs loaded"
+@!tes4ll_doonce GUIConsoleEcho -text="***** This will NOT generate the landscape LODs of exterior cells *****"
+SetFlag -name=tes4ll_doonce -hidden
+
+SetOption -noskipinfo ;avoid nasty skip messenges in loop mode
+
+
+; ****************************
+[tes4ll_gui]
+; ****************************
+
+GUIDisable -name=tab_ws
+
+GUIDisable -name=tes4ll_gui
+@_modlist GUIEnable -name=tes4ll_gui
+@_modlist="" GUIDisable -name=tes4ll_gui
+
+GUICheckBox -name=makenormalmap -text="Make normal maps" -help="Select this if you want to generate the normal map"
+
+GUICheckBox -name=makecolormap -text="Make color maps (calls build-in TES4qLOD)" -help="Select this if you want to generate the color map with TES4qLOD"
+
+GUIDropDown -name=city -help="Select the city" -vdist=10
+## and now the items:
+GUIDropDownItem -parent=city -name=cheydinhal -text="Cheydinhal" -select
+GUIDropDownItem -parent=city -name=chorrol -text="Chorrol"
+GUIDropDownItem -parent=city -name=bruma -text="Bruma"
+
+
+GUICheckBox -name=removeinvisibletriangles -text="Remove invisible triangles (can take hours!!!)" -vdist=10
+
+## The final button. Once the button is clicked, the flag "exec_tes4ll" is set for one single run of this section
+GUIButton -name=exec_tes4ll -text="Click me if you are ready" -vdist=30
+
+
+@exec_tes4ll GUIExec -exe="tes4ll.exe -t -w Tamriel -f \"$_flaglist\" -t -l \"$_modlist\" " -dumpbatch
+
