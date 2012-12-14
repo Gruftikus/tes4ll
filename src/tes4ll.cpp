@@ -2508,6 +2508,8 @@ panorama_end: ;
 
 writequadsloop:
 
+			mesg->Dump();
+
 			if (com == COM_WRITEALLQUADS) {
 				batch->x00 = float(quads->GetCurrentX())*batch->cellsize_x*batch->quadsize_x;
 				batch->x11 = (float(quads->GetCurrentX())+1.f)*batch->cellsize_x*batch->quadsize_x;
@@ -2517,11 +2519,9 @@ writequadsloop:
 				batch->quady = float(quads->GetCurrentY());
 			}
 
-
 			char filename[1000];
 			char filename1[1000];
 			char filename2[1000];
-
 
 			if (!batch->writenormalmap && !batch->writeheightmap) {
 				char * texname=NULL;

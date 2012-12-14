@@ -512,34 +512,62 @@ out:
 		y00 = (float)y1;
 		y11 = (float)y2;
 	}
-	if (_stricmp(ptr, COM_FOCUSQUAD_CMD)==0)
+	if (_stricmp(ptr, COM_FOCUSQUAD_CMD)==0) {
 		com = COM_FOCUSQUAD;
-	if (_stricmp(ptr, COM_FOCUSREC_CMD)==0)
+		CurrentCommand = COM_FOCUSQUAD_CMD;
+	}
+	if (_stricmp(ptr, COM_FOCUSREC_CMD)==0) {
 		com = COM_FOCUSREC;
-	if (_stricmp(ptr, COM_SETGRID_CMD)==0)
+		CurrentCommand = COM_FOCUSREC_CMD;
+	}
+	if (_stricmp(ptr, COM_SETGRID_CMD)==0) {
 		com = COM_SETGRID;
-	if (_stricmp(ptr, COM_SETGRIDBORDER_CMD)==0)
+		CurrentCommand = COM_SETGRID_CMD;
+	}
+	if (_stricmp(ptr, COM_SETGRIDBORDER_CMD)==0) {
 		com = COM_SETGRIDBORDER;
-	if (_stricmp(ptr, COM_SETHEIGHT_CMD)==0)
+		CurrentCommand = COM_SETGRIDBORDER_CMD;
+	}
+	if (_stricmp(ptr, COM_SETHEIGHT_CMD)==0) {
 		com = COM_SETHEIGHT;
-	if (_stricmp(ptr, COM_DIVIDEGRID_CMD)==0)
+		CurrentCommand = COM_SETHEIGHT_CMD;
+	}
+	if (_stricmp(ptr, COM_DIVIDEGRID_CMD)==0) {
 		com = COM_DIVIDEGRID;
-	if (_stricmp(ptr, COM_DIVIDEAT_CMD)==0)
+		CurrentCommand = COM_DIVIDEGRID_CMD;
+	}
+	if (_stricmp(ptr, COM_DIVIDEAT_CMD)==0) {
 		com = COM_DIVIDEAT;
-	if (_stricmp(ptr, COM_DIVIDEBETWEEN_CMD)==0)
+		CurrentCommand = COM_DIVIDEAT_CMD;
+	}
+	if (_stricmp(ptr, COM_DIVIDEBETWEEN_CMD)==0) {
 		com = COM_DIVIDEBETWEEN;
-	if (_stricmp(ptr, COM_DIVIDEATPOLGONBORDER_CMD)==0)
+		CurrentCommand = COM_DIVIDEBETWEEN_CMD;
+	}
+	if (_stricmp(ptr, COM_DIVIDEATPOLGONBORDER_CMD)==0) {
 		com = COM_DIVIDEATPOLGONBORDER;
-	if (_stricmp(ptr, COM_BREAKATGRID_CMD)==0)
+		CurrentCommand = COM_DIVIDEATPOLGONBORDER_CMD;
+	}
+	if (_stricmp(ptr, COM_BREAKATGRID_CMD)==0) {
 		com = COM_BREAKATGRID;
-	if (_stricmp(ptr, COM_STENCILPOLGON_CMD)==0)
+		CurrentCommand = COM_BREAKATGRID_CMD;
+	}
+	if (_stricmp(ptr, COM_STENCILPOLGON_CMD)==0) {
 		com = COM_STENCILPOLGON;
-	if (_stricmp(ptr, COM_CREATEPOLYGON_CMD)==0)
+		CurrentCommand = COM_STENCILPOLGON_CMD;
+	}
+	if (_stricmp(ptr, COM_CREATEPOLYGON_CMD)==0) {
 		com = COM_CREATEPOLYGON;
-	if (_stricmp(ptr, COM_ADDVERTEXTOPOLYGON_CMD)==0)
+		CurrentCommand = COM_CREATEPOLYGON_CMD;
+	}
+	if (_stricmp(ptr, COM_ADDVERTEXTOPOLYGON_CMD)==0) {
 		com = COM_ADDVERTEXTOPOLYGON;
-	if (_stricmp(ptr, COM_BREAKLINE_CMD)==0)
+		CurrentCommand = COM_ADDVERTEXTOPOLYGON_CMD;
+	}
+	if (_stricmp(ptr, COM_BREAKLINE_CMD)==0) {
 		com = COM_BREAKLINE;
+		CurrentCommand = COM_BREAKLINE_CMD;
+	}
 
 	if (_stricmp(ptr, COM_ALGCONST_CMD)==0) {
 		com = COM_ALGCONST;
@@ -587,54 +615,102 @@ out:
 		CurrentCommand = COM_SETMAXPOINTSPERQUAD_CMD;
 	}
 
-	if (_stricmp(ptr, COM_SETSINGLEPOINT_CMD)==0)
+	if (_stricmp(ptr, COM_SETSINGLEPOINT_CMD)==0) {
 		com = COM_SETSINGLEPOINT;
-	if (_stricmp(ptr, COM_READFILE_CMD)==0)
+		CurrentCommand = COM_SETSINGLEPOINT_CMD;
+	}
+	if (_stricmp(ptr, COM_READFILE_CMD)==0) {
 		com = COM_READFILE;
-	if (_stricmp(ptr, COM_READPOLYGONDATAFILE_CMD)==0)
+		CurrentCommand = COM_READFILE_CMD;
+	}
+	if (_stricmp(ptr, COM_READPOLYGONDATAFILE_CMD)==0) {
 		com = COM_READPOLYGONDATAFILE;
-	if (_stricmp(ptr, COM_WRITEQUAD_CMD)==0)
+		CurrentCommand = COM_READPOLYGONDATAFILE_CMD;
+	}
+	if (_stricmp(ptr, COM_WRITEQUAD_CMD)==0) {
 		com = COM_WRITEQUAD;
-	if (_stricmp(ptr, COM_WRITEALL_CMD)==0)
+		CurrentCommand = COM_WRITEQUAD_CMD;
+	}
+	if (_stricmp(ptr, COM_WRITEALL_CMD)==0) {
 		com = COM_WRITEALL;
-	if (_stricmp(ptr, COM_WRITEALLQUADS_CMD)==0)
+		CurrentCommand = COM_WRITEALL_CMD;
+	}
+	if (_stricmp(ptr, COM_WRITEALLQUADS_CMD)==0) {
+		CurrentCommand = COM_WRITEALLQUADS_CMD;
 		com = COM_WRITEALLQUADS;
-	if (_stricmp(ptr, COM_TRIANGULATION_CMD)==0)
+	}
+	if (_stricmp(ptr, COM_TRIANGULATION_CMD)==0) {
 		com = COM_TRIANGULATION;
-	if (_stricmp(ptr, COM_SETOPTION_CMD)==0)
+		CurrentCommand = COM_TRIANGULATION_CMD;
+	}
+	if (_stricmp(ptr, COM_SETOPTION_CMD)==0) {
 		com = COM_SETOPTION;
-	if (_stricmp(ptr, COM_FILTER_CMD)==0)
+		CurrentCommand = COM_SETOPTION_CMD;
+	}
+	if (_stricmp(ptr, COM_FILTER_CMD)==0) {
 		com = COM_FILTER;
-	if (_stricmp(ptr, COM_BREAKFLATTRIANGLES_CMD)==0)
+		CurrentCommand = COM_FILTER_CMD;
+	}
+	if (_stricmp(ptr, COM_BREAKFLATTRIANGLES_CMD)==0) {
 		com = COM_BREAKFLATTRIANGLES;
-	if (_stricmp(ptr, COM_REMOVEBROKENTRIANGLES_CMD)==0)
+		CurrentCommand = COM_BREAKFLATTRIANGLES_CMD;
+	}
+	if (_stricmp(ptr, COM_REMOVEBROKENTRIANGLES_CMD)==0) {
 		com = COM_REMOVEBROKENTRIANGLES;
-	if (_stricmp(ptr, COM_ACTIVATEVISIBLEVERTICES_CMD)==0)
+		CurrentCommand = COM_REMOVEBROKENTRIANGLES_CMD;
+	}
+	if (_stricmp(ptr, COM_ACTIVATEVISIBLEVERTICES_CMD)==0) {
 		com = COM_ACTIVATEVISIBLEVERTICES;
-	if (_stricmp(ptr, COM_INACTIVATEALLVERTICES_CMD)==0)
+		CurrentCommand = COM_ACTIVATEVISIBLEVERTICES_CMD;
+	}
+	if (_stricmp(ptr, COM_INACTIVATEALLVERTICES_CMD)==0) {
 		com = COM_INACTIVATEALLVERTICES;
-	if (_stricmp(ptr, COM_REMOVEINACTIVETRIANGLES_CMD)==0)
+		CurrentCommand = COM_INACTIVATEALLVERTICES_CMD;
+	}
+	if (_stricmp(ptr, COM_REMOVEINACTIVETRIANGLES_CMD)==0) {
 		com = COM_REMOVEINACTIVETRIANGLES;
-	if (_stricmp(ptr, COM_PANORAMA_CMD)==0)
+		CurrentCommand = COM_REMOVEINACTIVETRIANGLES_CMD;
+	}
+	if (_stricmp(ptr, COM_PANORAMA_CMD)==0) {
 		com = COM_PANORAMA;
-	if (_stricmp(ptr, COM_CALLTES4QLOD_CMD)==0)
+		CurrentCommand = COM_PANORAMA_CMD;
+	}
+	if (_stricmp(ptr, COM_CALLTES4QLOD_CMD)==0) {
 		com = COM_CALLTES4QLOD;
-	if (_stricmp(ptr, COM_SETFLAG_CMD)==0)
+		CurrentCommand = COM_CALLTES4QLOD_CMD;
+	}
+	if (_stricmp(ptr, COM_SETFLAG_CMD)==0) {
 		com = COM_SETFLAG;
-	if (_stricmp(ptr, COM_ADDGAME_CMD)==0)
+		CurrentCommand = COM_SETFLAG_CMD;
+	}
+	if (_stricmp(ptr, COM_ADDGAME_CMD)==0) {
 		com = COM_ADDGAME;
-	if (_stricmp(ptr, COM_SETGAMEPLUGINFILE_CMD)==0)
+		CurrentCommand = COM_ADDGAME_CMD;
+	}
+	if (_stricmp(ptr, COM_SETGAMEPLUGINFILE_CMD)==0) {
 		com = COM_SETGAMEPLUGINFILE;
-	if (_stricmp(ptr, COM_SETGAMESEARCHPATTERN_CMD)==0)
+		CurrentCommand = COM_SETGAMEPLUGINFILE_CMD;
+	}
+	if (_stricmp(ptr, COM_SETGAMESEARCHPATTERN_CMD)==0) {
 		com = COM_SETGAMESEARCHPATTERN;
-	if (_stricmp(ptr, COM_SETGAMESTDWS_CMD)==0)
+		CurrentCommand = COM_SETGAMESEARCHPATTERN_CMD;
+	}
+	if (_stricmp(ptr, COM_SETGAMESTDWS_CMD)==0) {
 		com = COM_SETGAMESTDWS;
-	if (_stricmp(ptr, COM_SETPATH_CMD)==0)
+		CurrentCommand = COM_SETGAMESTDWS_CMD;
+	}
+	if (_stricmp(ptr, COM_SETPATH_CMD)==0) {
 		com = COM_SETPATH;
-	if (_stricmp(ptr, COM_LOGFILE_CMD)==0)
+		CurrentCommand = COM_SETPATH_CMD;
+	}
+	if (_stricmp(ptr, COM_LOGFILE_CMD)==0) {
 		com = COM_LOGFILE;
-	if (_stricmp(ptr, COM_GAMEMODE_CMD)==0)
+		CurrentCommand = COM_LOGFILE_CMD;
+	}
+	if (_stricmp(ptr, COM_GAMEMODE_CMD)==0) {
 		com = COM_GAMEMODE;
+		CurrentCommand = COM_GAMEMODE_CMD;
+	}
 
 	if (_stricmp(ptr, COM_EXIT_CMD)==0) {
 		CurrentCommand = COM_EXIT_CMD;
@@ -645,42 +721,71 @@ out:
 		CurrentCommand = COM_CALLTESANNWYN_CMD;
 		return COM_CALLTESANNWYN;
 	}
-	if (_stricmp(ptr, COM_READBMP_CMD)==0)
+	if (_stricmp(ptr, COM_READBMP_CMD)==0) {
 		com = COM_READBMP;
-	if (_stricmp(ptr, COM_GENERATEHEIGHTMAP_CMD)==0)
+		CurrentCommand = COM_READBMP_CMD;
+	}
+	if (_stricmp(ptr, COM_GENERATEHEIGHTMAP_CMD)==0) {
 		com = COM_GENERATEHEIGHTMAP;
+		CurrentCommand = COM_GENERATEHEIGHTMAP_CMD;
+	}
 	if (_stricmp(ptr, COM_PARSEMODLIST_CMD)==0) {
 		CurrentCommand = COM_PARSEMODLIST_CMD;
 		return COM_PARSEMODLIST;
 	}
 
-	if (_stricmp(ptr, COM_GUIAPPLICATION_CMD)==0)
+	if (_stricmp(ptr, COM_GUIAPPLICATION_CMD)==0) {
 		com = COM_GUIAPPLICATION;
-	if (_stricmp(ptr, COM_GUIECHO_CMD)==0)
+		CurrentCommand = COM_GUIAPPLICATION_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIECHO_CMD)==0) {
 		com = COM_GUIECHO;
-	if (_stricmp(ptr, COM_GUICHECKBOX_CMD)==0)
+		CurrentCommand = COM_GUIECHO_CMD;
+	}
+	if (_stricmp(ptr, COM_GUICHECKBOX_CMD)==0) {
 		com = COM_GUICHECKBOX;
-	if (_stricmp(ptr, COM_GUIDROPDOWN_CMD)==0)
+		CurrentCommand = COM_GUICHECKBOX_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIDROPDOWN_CMD)==0) {
 		com = COM_GUIDROPDOWN;
-	if (_stricmp(ptr, COM_GUIDROPDOWNITEM_CMD)==0)
+		CurrentCommand = COM_GUIDROPDOWN_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIDROPDOWNITEM_CMD)==0) {
 		com = COM_GUIDROPDOWNITEM;
-	if (_stricmp(ptr, COM_GUIENABLE_CMD)==0)
+		CurrentCommand = COM_GUIDROPDOWNITEM_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIENABLE_CMD)==0) {
 		com = COM_GUIENABLE;
-	if (_stricmp(ptr, COM_GUIDISABLE_CMD)==0)
+		CurrentCommand = COM_GUIENABLE_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIDISABLE_CMD)==0) {
 		com = COM_GUIDISABLE;
-	if (_stricmp(ptr, COM_GUISPLASHECHO_CMD)==0)
+		CurrentCommand = COM_GUIDISABLE_CMD;
+	}
+	if (_stricmp(ptr, COM_GUISPLASHECHO_CMD)==0) {
 		com = COM_GUISPLASHECHO;
-	if (_stricmp(ptr, COM_GUIBUTTON_CMD)==0)
+		CurrentCommand = COM_GUISPLASHECHO_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIBUTTON_CMD)==0) {
 		com = COM_GUIBUTTON;
-	if (_stricmp(ptr, COM_GUIEXEC_CMD)==0)
+		CurrentCommand = COM_GUIBUTTON_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIEXEC_CMD)==0) {
 		com = COM_GUIEXEC;
-	if (_stricmp(ptr, COM_GUIMESSAGEBOX_CMD)==0)
+		CurrentCommand = COM_GUIEXEC_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIMESSAGEBOX_CMD)==0) {
 		com = COM_GUIMESSAGEBOX;
-	if (_stricmp(ptr, COM_GUIWINDOWSIZE_CMD)==0)
+		CurrentCommand = COM_GUIMESSAGEBOX_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIWINDOWSIZE_CMD)==0) {
 		com = COM_GUIWINDOWSIZE;
-	if (_stricmp(ptr, COM_GUIREQUESTVERSION_CMD)==0)
+		CurrentCommand = COM_GUIWINDOWSIZE_CMD;
+	}
+	if (_stricmp(ptr, COM_GUIREQUESTVERSION_CMD)==0) {
 		com = COM_GUIREQUESTVERSION;
-
+		CurrentCommand = COM_GUIREQUESTVERSION_CMD;
+	}
 
 	if (com==-1) {
 		mesg->WriteNextLine(MH_ERROR,"Unknown command [%s]",ptr);
@@ -1627,7 +1732,6 @@ out:
 		}
 
 		if (com == COM_WRITEALLQUADS) {
-			CurrentCommand = COM_WRITEALLQUADS_CMD;
 			if (_stricmp(ptr,"-writeheightmap")==0) {
 				writeheightmap=1;
 			} else if (_stricmp(ptr,"-writenormalmap")==0) {
