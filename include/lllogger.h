@@ -29,7 +29,6 @@ public:
 
 	unsigned int write_pointer, read_pointer, tot_lines;
 	char *lines[MH_NUM_LINES];
-	unsigned int length[MH_NUM_LINES];
 	int counter;
 
 	void SetLogFile(FILE *myfile) {

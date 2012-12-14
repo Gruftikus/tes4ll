@@ -704,7 +704,7 @@ int main(int argc, char **argv) {
 
     std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@texnexus" << std::endl;
-	std::cout << "V4.00, 23.09.2012" << std::endl;
+	std::cout << "V4.10, 14.12.2012" << std::endl;
     std::cout << "***********************" << std::endl;
 
 	//open registry

@@ -10,59 +10,70 @@
 
 llLogger::llLogger() {
 	write_pointer =  MH_NUM_LINES;
-	read_pointer = tot_lines = counter = 0;
+	read_pointer = MH_NUM_LINES - 1;
+	tot_lines = counter = 0;
 	for (int i=0;i<MH_NUM_LINES;i++) {
-		lines[i]= new char[MH_MAX_LENGTH];
-		length[i]=0;
+		lines[i]= NULL;
 	}
 	logfile = NULL;
 }
 
 char *llLogger::ReadNextLine(void) {
+
 	if (tot_lines == 0) return NULL;
+
+	if (lines[read_pointer]) {
+		delete lines[read_pointer];
+		lines[read_pointer] = NULL;
+	} 
+
+	read_pointer++;
+	if (read_pointer==MH_NUM_LINES)  read_pointer = 0;
+	tot_lines--;
+
 	char *s = ":";
-	if (length[read_pointer]) {
+	if (lines[read_pointer]) {
 		s=lines[read_pointer];
 	} 
-	length[read_pointer] =0;
-	read_pointer++;
-	if (read_pointer==MH_NUM_LINES)  read_pointer=0;
-	tot_lines--;
+	
 	return s;
 }
 
 int llLogger::WriteNextLine(int level, char *format, ...) {
 
-	if (write_pointer == MH_NUM_LINES) write_pointer=0;
-	counter++;
-
 	if (level<1) return 1;
 	if (tot_lines == MH_NUM_LINES-1) return 0;
+	
+	if (write_pointer == MH_NUM_LINES) write_pointer = 0;
+	counter++;
+	tot_lines++;
+	
 	va_list args;
 	va_start(args,format);
 	char tmp[MH_MAX_LENGTH];
-	vsprintf_s(tmp,MH_MAX_LENGTH-50,format,args);
-	
+	char tmp2[MH_MAX_LENGTH];
+
+	vsprintf_s(tmp,MH_MAX_LENGTH,format,args);
 	//vsprintf(tmp,format,args);
 	va_end(args);
 	
 	if (level == MH_DEBUG)
-		sprintf_s(lines[write_pointer],500,"%i [Debug] %s",counter,tmp); 
+		sprintf_s(tmp2,MH_MAX_LENGTH,"%i [Debug] %s",counter,tmp); 
 	else if (level == MH_INFO)
-		sprintf_s(lines[write_pointer],500,"%i [Info] %s",counter,tmp); 
+		sprintf_s(tmp2,MH_MAX_LENGTH,"%i [Info] %s",counter,tmp); 
 	else if (level == MH_WARNING)
-		sprintf_s(lines[write_pointer],500,"%i [Warning] %s",counter,tmp); 
+		sprintf_s(tmp2,MH_MAX_LENGTH,"%i [Warning] %s",counter,tmp); 
 	else if (level == MH_ERROR)
-		sprintf_s(lines[write_pointer],500,"%i [Error] %s",counter,tmp); 
+		sprintf_s(tmp2,MH_MAX_LENGTH,"%i [Error] %s",counter,tmp); 
 	else if (level == MH_FATAL)
-		sprintf_s(lines[write_pointer],500,"%i [Fatal] %s",counter,tmp); 
+		sprintf_s(tmp2,MH_MAX_LENGTH,"%i [Fatal] %s",counter,tmp); 
 	else if (level == MH_ECHO)
-		sprintf_s(lines[write_pointer],500,"%i [Echo] %s",counter,tmp); 
+		sprintf_s(tmp2,MH_MAX_LENGTH,"%i [Echo] %s",counter,tmp); 
     else if (level == MH_COMMAND)
-		sprintf_s(lines[write_pointer],500,"%i [Command] %s",counter,tmp);
+		sprintf_s(tmp2,MH_MAX_LENGTH,"%i [Command] %s",counter,tmp);
 	else if (level == MH_ALGORITHM)
-		sprintf_s(lines[write_pointer],500,"%i [Algorithm] %s",counter,tmp);
-	else sprintf_s(lines[write_pointer],500,"%i: %s",counter,tmp); 
+		sprintf_s(tmp2,MH_MAX_LENGTH,"%i [Algorithm] %s",counter,tmp);
+	else sprintf_s(tmp2,MH_MAX_LENGTH,"%i: %s",counter,tmp); 
 	
 #if 1
 	if (logfile) {
@@ -86,9 +97,10 @@ int llLogger::WriteNextLine(int level, char *format, ...) {
 	}
 #endif
 
-	length[write_pointer] = strlen(tmp);
+	lines[write_pointer] = new char[strlen(tmp2)+1];
+	strcpy_s(lines[write_pointer],strlen(tmp2)+1,tmp2);
 	write_pointer++;
-	tot_lines++;
+	
 	return 1;
 }
 
