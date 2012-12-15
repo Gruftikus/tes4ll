@@ -240,7 +240,7 @@ class llCommands {
     int npoints,nquadmax,mindistance,createpedestals,tes4qlod_q;
 	char *tes4qlod_options, *polygon_name;
     int setmin, setmax,linear, findmin, findmax, splitwatertriangles, removebrokentriangles, ps, useshapes, onlyintracell, use16bit;
-	int writeheightmap, writenormalmap, timeslice, lodshadows; 
+	int writeheightmap, writenormalmap, timeslice, lodshadows, usegameunits; 
 	float flowfactor, flowfraction, overwrite, overdrawing;
 	float quadsize_x, quadsize_y, cellsize_x, cellsize_y;
 	char *texname, *datafile, *worldname, *install_dir, *dds_tool;
@@ -289,7 +289,7 @@ class llCommands {
 		for (unsigned int i = 0; i < strlen(tmp); i++) {
 			if (tmp[i] == '=') {
 				tmp[i] = '\0';
-				val = tmp + i +1;
+				val = tmp + i + 1;
 				break;
 			}
 		}

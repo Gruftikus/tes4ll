@@ -402,6 +402,7 @@ int llCommands::GetCommand(void) {
 	myflagvalue=myflagname=NULL;
 	guienabled=0;
 	CurrentCommand = NULL;
+	usegameunits=0;
 
 repeat:	
 	for (unsigned int i=0;i<strlen(linex);i++) if (linex[i]=='\n' || linex[i]==';' || linex[i]=='#') linex[i]='\0';
@@ -1516,28 +1517,28 @@ out:
 				if (_stricmp(ptr2,"-x1")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						sscanf_s(ptr2,"%f",&x00);x00/=128.f;}
+						sscanf_s(ptr2,"%f",&x00);}
 					else {
 						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y1")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						sscanf_s(ptr2,"%f",&y00);y00/=128.f;}
+						sscanf_s(ptr2,"%f",&y00);}
 					else {
 						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-x2")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						sscanf_s(ptr2,"%f",&x11);x11/=128.f;}
+						sscanf_s(ptr2,"%f",&x11);}
 					else {
 						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y2")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						sscanf_s(ptr2,"%f",&y11);y11/=128.f;}
+						sscanf_s(ptr2,"%f",&y11);}
 					else {
 						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
@@ -1551,20 +1552,24 @@ out:
 
 		if (com == COM_SETHEIGHT) {
 			CurrentCommand = COM_SETHEIGHT_CMD;
-			ptr2 = strtok_int(ptr, '=',&saveptr2);
-			if (ptr2!=NULL && strlen(ptr2)>0) {
-				if (_stricmp(ptr2,"-z")==0) {
-					ptr2 = strtok_int(NULL, '=',&saveptr2);
-					if (ptr2)
-						sscanf_s(ptr2,"%f",&zmin);
-					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+			if (_stricmp(ptr,"-gameunits")==0) {
+				usegameunits=1;
+			} else {
+				ptr2 = strtok_int(ptr, '=',&saveptr2);
+				if (ptr2!=NULL && strlen(ptr2)>0) {
+					if (_stricmp(ptr2,"-z")==0) {
+						ptr2 = strtok_int(NULL, '=',&saveptr2);
+						if (ptr2)
+							sscanf_s(ptr2,"%f",&zmin);
+						else {
+							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						}
+					} else {
+						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
-			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 

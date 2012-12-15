@@ -965,6 +965,7 @@ int main(int argc, char **argv) {
 						if (*(my_flag_list+jj) == ' ') *(my_flag_list+jj)='_';
 					}
 					mesg->WriteNextLine(MH_INFO,"Flag: %s",my_flag_list);
+					batch->AddFlag(my_flag_list);
 				}
 			} else { //list mod option -l provided
 				char *ptr;          
@@ -980,6 +981,7 @@ int main(int argc, char **argv) {
 					}
 					ptr = strtok_int(NULL, ',', &saveptr1);
 					mesg->WriteNextLine(MH_INFO,"Flag: %s",flag_list);
+					batch->AddFlag(flag_list);
 				}
 			}
 		}
@@ -1420,6 +1422,9 @@ int main(int argc, char **argv) {
 		}
 		
 		if (com == COM_SETHEIGHT) {
+
+			if (batch->usegameunits) batch->zmin /= 8.0f; //convert to heightmap units
+
 			mesg->WriteNextLine(MH_COMMAND,"%s: -x1=%.0f -y1=%.0f -x1=%.0f -y1=%.0f -z=%.0f", COM_SETHEIGHT_CMD,
 				batch->x00, batch->x11, batch->y00, batch->y11, batch->zmin);
 			if (!heightmap) {
@@ -1427,8 +1432,13 @@ int main(int argc, char **argv) {
 				DumpExit();
 			}
 
-			for (int x=(int)batch->x00;x<=batch->x11;x+=1) {
-				for (int y=(int)batch->y00;y<=batch->y11;y+=1) {
+			int x1 = (int) (batch->x00 / 128.f);
+			int x2 = (int) (batch->x11 / 128.f);
+			int y1 = (int) (batch->y00 / 128.f);
+			int y2 = (int) (batch->y11 / 128.f);
+
+			for (int x=x1;x<=x2;x+=1) {
+				for (int y=y1;y<=y2;y+=1) {
 					for (int xx=0;xx<heightmap->GetScaling();xx+=1) {
 						for (int yy=0;yy<heightmap->GetScaling();yy+=1) {
 							heightmap->SetElement((x - x_cell *32 - 1)*heightmap->GetScaling()+xx, 
