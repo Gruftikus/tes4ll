@@ -94,28 +94,28 @@ void Log(char *info);
 void WriteCellChangeList(int old_x, int old_y, int trans_x, int trans_y);
 int  CheckCellChangeList(int old_x, int old_y, int *trans_x, int *trans_y);
 void LogCell4(void);
-int ReadLODTextures(char *filename);
-int ExportTES4LandT4QLOD(char *input_esp_filename);
-int Process4WRLDData(char *r, int size);
-int Add4LTEXData(char *r, int size);
-int StringToReverseFormID(char *formid, char *s);
-int InitLoadTexture(char *filename);
+int  ReadLODTextures(char *filename);
+int  ExportTES4LandT4QLOD(char *input_esp_filename);
+int  Process4WRLDData(char *r, int size);
+int  Add4LTEXData(char *r, int size);
+int  StringToReverseFormID(char *formid, char *s);
+int  InitLoadTexture(char *filename);
 
 int  DecompressZLIBStream(char *input, int input_size, char output[], int *output_size); 
 int  CompressZLIBStream(char *input, int input_size, char output[], int *output_size, int compress_level);
 
-int DecodeFilenames(char *s);
-int CheckTESVersion(char *input_esp_filename);
+int  DecodeFilenames(char *s);
+int  CheckTESVersion(char *input_esp_filename);
 
-int CleanUpDir(char *dirname);
-int CleanUp(void);
-int ParseDir(char *dirname);
+int  CleanUpDir(char *dirname);
+int  CleanUp(void);
+int  ParseDir(char *dirname);
 
-int HumptyLODs(void);
-int HumptyVWD(void);
-int HumptyLOD(char *lod_filename, char *tmp_bmp_dir, char *fprefix, int lmin_x, int lmax_x, int lmin_y, int lmax_y, int dsize, int invert, int qual, int mode);
+int  HumptyLODs(void);
+int  HumptyVWD(void);
+int  HumptyLOD(char *lod_filename, char *tmp_bmp_dir, char *fprefix, int lmin_x, int lmax_x, int lmin_y, int lmax_y, int dsize, int invert, int qual, int mode);
 void WriteBMPHeader(FILE *fp_out, int sx, int sy, int bpp);
-int LOD2_Partial(char *filename, int cx, int cy, int mode);
+int  LOD2_Partial(char *filename, int cx, int cy, int mode);
 
 int DumpCellBMP(int cx, int cy, char vimage[136][136][3]);
 
@@ -138,8 +138,8 @@ struct cell_data {
 } cell;
 
 struct {
-        int count;
-        char filename[512][256];
+	int count;
+	char filename[512][256];
 } input_files;
 
 /**************************************************************************
@@ -256,13 +256,13 @@ int total_cells = 0,		    /* Total CELL records found in the file. */
     total_dialogs_changed = 0;	    /* Total INFO records modified.          */
 
 
-#define APP_NAME	"TES4QLOD"
+#define APP_NAME	    "TES4QLOD"
 #define APP_VERSION     "4.10"
 #define APP_DATE        "11 Nov. 2012"
 #define LOD2_TEX_DIR	"Textures"
 #define IMPORT_TEX_DIR	"tes4qlod_tex/%s"
 
-#define LOD_LTEX_DATA_FILE 	"tes4qlod_%s_ltex.dat"
+#define LOD_LTEX_DATA_FILE			"tes4qlod_%s_ltex.dat"
 #define LOD_OUTPUT_DIR_OBLIVION		"Textures/LandscapeLOD/Generated"
 #define LOD_OUTPUT_DIR_OBLIVION_DOS	"Textures\\LandscapeLOD\\Generated"
 
@@ -274,10 +274,10 @@ int total_cells = 0,		    /* Total CELL records found in the file. */
 
 #define FULL_LOD_MAP		"%sMap.bmp"
 #define FULL_LOD_NORMAL_MAP	"%sMap_fn.bmp"
-#define TMP_TEX_DIR		"tes4qlod_partials"
+#define TMP_TEX_DIR			"tes4qlod_partials"
 #define TMP_NORMAL_DIR		"tes4qlod_normals"
-#define TMP_VWD_DIR		"tes4qlod_tmp_vwd"
-#define VWD_DIR			"DistantLOD"
+#define TMP_VWD_DIR			"tes4qlod_tmp_vwd"
+#define VWD_DIR				"DistantLOD"
 
 char * DDS_CONVERTOR = "S3TC.EXE";
 
@@ -376,7 +376,8 @@ int main(int argc, char *argv[])
 	//for (i=0;i<argc;i++) printf("'%s' ",argv[i]);
 
 	printf("################################################################################\n");
-	printf("TES4QLOD: A Quick Texture and/or VWD Generator for Oblivion/Fallout/Skyrim \n          Landscape LODs\n");
+	printf("TES4QLOD: A Quick Texture and/or VWD Generator \n");
+	printf("          for Oblivion/Fallout/Skyrim Landscape LODs\n");
 	printf("          Version: %s\n",APP_VERSION);
 	printf("          Date: %s\n",APP_DATE);
 	printf("################################################################################\n");
@@ -629,8 +630,7 @@ int main(int argc, char *argv[])
 		sprintf_s(lod_texture_formids_file, 512, LOD_LTEX_DATA_FILE, opt_tes_mode);
 		if (verbosity) printf("Reading %s.esm Texture FormIDs from %s ...", opt_tes_mode, lod_texture_formids_file);
 		fflush(stdout);
-
-
+		
 		ReadLODTextures(lod_texture_formids_file);
 		if (verbosity) printf(" finished.\n\n");
 	}
@@ -788,18 +788,17 @@ int CheckTESVersion(char *input_esp_filename)
 		fseek(fpin, TES4_FA_SK_RECORD_SIZE, SEEK_SET);
 		fread(s, 4, 1, fpin);
 		if (isalpha(s[0]) && isalpha(s[1]) && isalpha(s[2]) && isalpha(s[3])) {
-			if (verbosity) printf("Looks like a TES4 (Fallout3 / FalloutNV / Skyrim) file\n");
+			if (verbosity) printf("'%s' looks like a TES4 (Fallout3 / FalloutNV / Skyrim) file\n", input_esp_filename);
 			if (tes_rec_offset != TES4_FA_SK_RECORD_SIZE) {
 				tes_rec_offset = TES4_FA_SK_RECORD_SIZE;
 			}
 			if (opt_tes_mode == TES_UNKNOWN) {
 				if (verbosity) printf("Going to assume Skyrim LOD type. Please override with \"-G GameType\" if this is wrong\n");
-
 				opt_tes_mode = TES_SKYRIM;
 			}
 
 		} else {
-			if (verbosity) printf("Looks like a TES4 Oblivion file.\n");
+			if (verbosity) printf("'%s' looks like a TES4 Oblivion file.\n", input_esp_filename);
 			if (tes_rec_offset != TES4_OB_RECORD_SIZE) {
 				tes_rec_offset = TES4_OB_RECORD_SIZE; 
 			}
@@ -1643,6 +1642,7 @@ int LOD2_Partial(char *filename, int cx, int cy, int mode)
 	sprintf_s(dds_command, 256, "%s %s", DDS_CONVERTOR, filename);
 	printf("Running External DDS Convertor: %s\n", dds_command);
 	printf("Running %s\n", dds_command);
+	fflush(stdout);
 	system(dds_command);
 
 	strcpy_s(dds_filename, 256, filename);
@@ -2111,7 +2111,7 @@ int HumptyLODs(void)
 		sprintf_s(filename1,1000,"%sMap.dds",worldspace);
 		remove (filename);		
 		
-		printf("Generating a complete map of the terrain called %s\n", filename2);
+		printf("Generating a complete map of the terrain called %s\n", filename);
 		HumptyLOD(filename, TMP_TEX_DIR, "partial", min_x, max_x, min_y, max_y, dsize, opt_flip, opt_q, TEXTURES);
 		sprintf_s(dds_command, 128, "%s %s", DDS_CONVERTOR, filename);
 		if (!opt_no_dds) {
@@ -2542,70 +2542,70 @@ int HumptyVWD()
 
 int ParseDir(char *dirname)
 {
-        DIR             *ds;
-        struct dirent   *dir;
+	DIR             *ds;
+	struct dirent   *dir;
 	struct stat	f_stat;
 
 	char fullname[1024];
 
-        if ((ds = opendir(dirname)) == NULL) {
+	if ((ds = opendir(dirname)) == NULL) {
 		fprintf(stderr, "Unable to open texture directory %s for reading!: %s\n",
 			dirname, strerror(errno));
-                return 0;
-        }
+		return 0;
+	}
 
-        /*  struct dirent *readdir(DIR *dir);
-         *
-         * Read in the files from argv[1] and print 
-         */
+	/*  struct dirent *readdir(DIR *dir);
+	*
+	* Read in the files from argv[1] and print 
+	*/
 
-        while ((dir = readdir(ds)) != NULL) {
+	while ((dir = readdir(ds)) != NULL) {
 		if ( !(dir->d_name[0] == '.' && dir->d_name[1] == '\0') 
-		 &&  !(dir->d_name[0] == '.' && dir->d_name[1] == '.' && dir->d_name[2] == '\0')) {
-			sprintf_s(fullname, 1024, "%s/%s", dirname, dir->d_name);
-			if (stat(fullname, &f_stat) == 0) {
-				if (S_ISDIR(f_stat.st_mode)) {
-					ParseDir(fullname);
+			&&  !(dir->d_name[0] == '.' && dir->d_name[1] == '.' && dir->d_name[2] == '\0')) {
+				sprintf_s(fullname, 1024, "%s/%s", dirname, dir->d_name);
+				if (stat(fullname, &f_stat) == 0) {
+					if (S_ISDIR(f_stat.st_mode)) {
+						ParseDir(fullname);
+					} else {
+						InitLoadTexture(fullname);
+					}
 				} else {
-					InitLoadTexture(fullname);
+					fprintf(stderr, "Unable to stat %s: %s\n",
+						dir->d_name, strerror(errno));
+					perror(dir->d_name);
 				}
-			} else {
-				fprintf(stderr, "Unable to stat %s: %s\n",
-					dir->d_name, strerror(errno));
-				perror(dir->d_name);
-			}
 		}
-        }
+	}
 
 
 	closedir(ds);
 
-        return 1;
+	return 1;
 }
 
 int InitLoadTexture(char *filename)
 {
-        int i; //, j;
+	int i; //, j;
 
-        int sx = 0, sy = 0;
+	int sx = 0, sy = 0;
 	int Bp = 32;
 
-        FILE *fp_in;
+	FILE *fp_in;
 
-        char s[65536];
+	char s[65536];
 
-        short unsigned int bmp_head_size = 54;
+	short unsigned int bmp_head_size = 54;
 
 	if (strcmp(filename + strlen(filename) - 4, ".dds") != 0 &&
-	    strcmp(filename + strlen(filename) - 4, ".bmp") != 0) {
-		return 1;
+		strcmp(filename + strlen(filename) - 4, ".bmp") != 0) {
+			return 1;
 	}
 
-        if ((fp_in = fopen(filename, "rb")) == NULL) {
-                fprintf(stderr, "Unable to open input file (%s) for reading: %s\n",
-                        filename, strerror(errno));
-                exit(1);
-        }
+	if ((fp_in = fopen(filename, "rb")) == NULL) {
+		fprintf(stderr, "Unable to open input file (%s) for reading: %s\n",
+			filename, strerror(errno));
+		exit(1);
+	}
 
 	fread(s, 2, 1, fp_in);
 
@@ -2616,21 +2616,21 @@ int InitLoadTexture(char *filename)
 		return 1;
 	}
 
-        fseek(fp_in, 0, SEEK_SET);
+	fseek(fp_in, 0, SEEK_SET);
 
-        // Gather data from the standard sized BMP header.
-        fread(s, 54, 1, fp_in);
+	// Gather data from the standard sized BMP header.
+	fread(s, 54, 1, fp_in);
 	memcpy(&bmp_head_size, s + 10, 2);
 
 	if (bmp_head_size != 54) {
-	        fseek(fp_in, 0, SEEK_SET);
-	        fread(s, bmp_head_size, 1, fp_in);
+		fseek(fp_in, 0, SEEK_SET);
+		fread(s, bmp_head_size, 1, fp_in);
 	}
 
 	// Copy in dimensions and bit-depth to variables.
-        memcpy(&sx, s+18, 4);
-        memcpy(&sy, s+22, 4);
-        memcpy(&Bp, s+28, 1);
+	memcpy(&sx, s+18, 4);
+	memcpy(&sy, s+22, 4);
+	memcpy(&Bp, s+28, 1);
 
 	if (sx != 4 || sy != 4) {
 		fprintf(stderr, "The size or bit-rate of the texture file %s is incorrect:\n"
@@ -2638,7 +2638,7 @@ int InitLoadTexture(char *filename)
 			filename, sx, sy);
 		exit(1);
 	}
-        Bp = Bp / 8;
+	Bp = Bp / 8;
 
 	for (i = 0; i < (sx*sy); i++) {
 		fread(s, Bp, 1, fp_in);
@@ -2646,8 +2646,8 @@ int InitLoadTexture(char *filename)
 	}
 
 	/**
-	 ** Record the filename, stripping off the IMPORT_TEX_DIR from the beginning of the path.
-	 **/
+	** Record the filename, stripping off the IMPORT_TEX_DIR from the beginning of the path.
+	**/
 
 	memcpy(ftex.filename[ftex.count], filename + strlen(game_textures_filepath)+1, strlen(filename)-strlen(game_textures_filepath));
 	memcpy(ftex.filename[ftex.count] + strlen(ftex.filename[ftex.count]) - 3, "dds", 3);

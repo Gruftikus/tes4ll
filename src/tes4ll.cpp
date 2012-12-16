@@ -1736,8 +1736,9 @@ panorama_end: ;
 			size_t size=1000;
 			int lp=0;
 			while (fgets(line,1000,fptr_data)) {
+				batch->strip_spaces(&linex);
 				float x,y;
-				if ((strlen(line)>2) && (line[0]!=';')) {
+				if ((strlen(linex)>2) && (linex[0]!=';') && (linex[0]!='#') && (linex[0]!='[')) {
 					if (sscanf_s(line,"%f %f",&x,&y) == 2) {
 						if (!heightmap->IsInMap(x,y)) {
 							mesg->WriteNextLine(MH_ERROR,"Point (%.0f,%.0f) not in map",x,y);
@@ -1749,7 +1750,7 @@ panorama_end: ;
 						mesg->WriteNextLine(MH_ERROR,"Syntax error in data file \"%s\" in the line: %i",batch->datafile,line);
 				}
 			}
-			mesg->WriteNextLine(MH_INFO,"ReadDataFile: %i vertex points added from data file %s",lp,batch->datafile);
+			mesg->WriteNextLine(MH_INFO,"%s: %i vertex points added from data file %s", COM_READFILE_CMD, lp, batch->datafile);
 		}
 
 		if (com == COM_SETOPTION) {
