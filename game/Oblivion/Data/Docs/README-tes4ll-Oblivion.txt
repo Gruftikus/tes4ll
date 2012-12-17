@@ -63,15 +63,13 @@ The generation can take some time (10-20 minutes). In particular, after calling 
 
 Normalmaps
 ==========
-Tes4ll can also produce normalmaps. Use tes4ll_normalmaps.bat for this purpose.
+Tes4ll can also produce normalmaps. Use tes4ll_normalmaps.bat for this purpose. Change the "1.0" in z_val=1.0 to 2-0 or 4.0 if you want to have more contrast. Add "lodshadows" in the flag list, if you would like to have the "terrain shadows" (see http://oblivion.nexusmods.com/mods/41243).
 
 TES4qLOD
 ========
-In order to enable the optional call of tes4qlod, add the flags "tes4qlod,qlod1" to the list of flags in one of the windows bat-files mentioned above. 
+In order to enable the optional call of tes4qlod, add the flags "tes4qlod,qlod1,option_blending" to the list of flags (the argument list after the '-f') in one of the windows bat-files mentioned above. 
 
-You can also use tes4ll_tes4qlod.bat
-
-This generates 1024x1024 textures. If you want 2048x2048 or 4096x4096, change "qlod1" to "qlod2" or "qlod4", respectively.
+You can also use tes4ll_tes4qlod.bat. This bat-file produces only the color maps in 1024x1024 resolution. If you want 2048x2048 or 4096x4096, change "qlod1" to "qlod2" or "qlod4", respectively.
 
 I recommend the 1024x1024 version, because it has less tiling.
 
@@ -93,7 +91,7 @@ Nothing is perfect - also not the algorithms in tes4ll. If you still find walls,
 
 These positions can be written into a data file which contains a list of x,y positions (x and y separated by a space).
 
-This data file can be added to the batch file (e.g. tes4ll_all.exe).
+This data file can be added to the batch file (e.g. tes4ll_all.mpb).
 
 Rerun tes4ll - and the additional vertices should cure the problem.
 
