@@ -2,7 +2,6 @@
 
 ParseModList  
 
-;;todo
 SetOption -sizeX=128 -sizeY=128 -center
 ;;SetOption -sizeX=256 -sizeY=256 -center
 
@@ -41,10 +40,13 @@ SetGrid -x=16384 -y=16384
 @cheydinhal ReadPolygonDataFile -filename="ini\tes4ll\CityPolygons.dat" -name=Cheydinhal_border 
 @chorrol    ReadPolygonDataFile -filename="ini\tes4ll\CityPolygons.dat" -name=Chorrol_border 
 @bruma      ReadPolygonDataFile -filename="ini\tes4ll\CityPolygons.dat" -name=Bruma_border 
+@anvil      ReadPolygonDataFile -filename="ini\tes4ll\CityPolygons.dat" -name=Anvil_border 
 
 @cheydinhal Panorama -x=118400 -y=90600 
 @chorrol    Panorama -x=-69400 -y=95000
 @bruma      Panorama -x=25210 -y=145970
+@anvil      Panorama -x=-191188 -y=-30016
+
 
 
 Filter -n=4     ; -n=4
@@ -61,6 +63,8 @@ AlgSecondOrder -multiply=1
 @chorrol    AlgRadial -multiply=1 -x=-69400 -y=95000  -near=0 -far=20000 -minval=1 -maxval=0.5
 @bruma      AlgRadial -multiply=1 -x=25210  -y=145970 -near=10000 -far=400000 -minval=1 -maxval=0
 @bruma      AlgRadial -multiply=1 -x=25210  -y=145970 -near=0 -far=20000 -minval=1 -maxval=0.5
+@anvil      AlgRadial -multiply=1 -x=-191188 -y=-30016 -near=10000 -far=400000 -minval=1 -maxval=0
+@anvil      AlgRadial -multiply=1 -x=-191188 -y=-30016 -near=0 -far=20000 -minval=1 -maxval=0.5
 
 
 ; Switch off sampling below the shore line:
@@ -83,12 +87,14 @@ MakeTriangulation
 @cheydinhal StencilPolygon -name=Cheydinhal_border
 @chorrol    StencilPolygon -name=Chorrol_border
 @bruma      StencilPolygon -name=Bruma_border
+@anvil      StencilPolygon -name=Anvil_border
 
 
 @removeinvisibletriangles InactivateAllVertices
 @removeinvisibletriangles @cheydinhal ActivateVisibleVertices -x=118400 -y=90600   -z=8500   -radius=7000
 @removeinvisibletriangles @chorrol    ActivateVisibleVertices -x=-69400 -y=95000   -z=14500  -radius=7000
-@removeinvisibletriangles @bruma      ActivateVisibleVertices -x=25210 -y=145970 -z=25920 -radius=7000
+@removeinvisibletriangles @bruma      ActivateVisibleVertices -x=25210  -y=145970  -z=25920  -radius=7000
+@removeinvisibletriangles @anvil      ActivateVisibleVertices -x=-191188  -y=-30016  -z=300  -radius=7000
 @removeinvisibletriangles RemoveInactiveTriangles
 
 
@@ -97,6 +103,7 @@ FocusAll
 @cheydinhal WriteAll -texture="textures\myworld\TamrielMap.dds" -name="meshes\myworld\TamrielCheydinhal_tmp.nif" -transX=-118400 -transY=-90600 -transZ=-8500
 @chorrol WriteAll -texture="textures\myworld\TamrielMap.dds" -name="meshes\myworld\TamrielChorrol_tmp.nif" -transX=69400 -transY=-95000 -transZ=-14500
 @bruma WriteAll -texture="textures\myworld\TamrielMap.dds" -name="meshes\myworld\TamrielBruma_tmp.nif" -transX=-25210 -transY=-145970 -transZ=-25920
+@anvil WriteAll -texture="textures\myworld\TamrielMap.dds" -name="meshes\myworld\TamrielAnvil_tmp.nif" -transX=191188 -transY=30016 -transZ=-274
 
 
 
@@ -134,6 +141,7 @@ GUIDropDown -name=city -help="Select the city" -vdist=10
 GUIDropDownItem -parent=city -name=cheydinhal -text="Cheydinhal" -select
 GUIDropDownItem -parent=city -name=chorrol -text="Chorrol"
 GUIDropDownItem -parent=city -name=bruma -text="Bruma"
+GUIDropDownItem -parent=city -name=anvil -text="Anvil"
 
 
 GUICheckBox -name=removeinvisibletriangles -text="Remove invisible triangles (can take hours!!!)" -vdist=10

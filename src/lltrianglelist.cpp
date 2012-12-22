@@ -274,7 +274,7 @@ int llTriangleList::RemoveTriangle(unsigned int n) {
 int llTriangleList::AddTriangle(int _p1, int _p2, int _p3) {
 
 	if ((_p1 == _p2) ||  (_p3 == _p2) || (_p3 == _p1)) {
-		mesg->WriteNextLine(MH_WARNING,"Triangle with two equal points (maybe a very small one) -> removed");
+		mesg->WriteNextLine(LOG_WARNING,"Triangle with two equal points (maybe a very small one) -> removed");
 		mesg->Dump();
 #if 0
 		std::cout << p1 << ":" << p2 << ":" << p3 << std::endl;
@@ -448,7 +448,7 @@ int llTriangleList::GetTriangle(int _p1, int _p2) {
 			(p2 == _p2 && p3 == _p1)) {
 
 				if (num!=-1 && num2 !=-1) {
-					mesg->WriteNextLine(MH_WARNING,"The edge with the points (%i,%i) appeared in triangle %i, %i and %i", _p1, _p2, num, num2, i);
+					mesg->WriteNextLine(LOG_WARNING,"The edge with the points (%i,%i) appeared in triangle %i, %i and %i", _p1, _p2, num, num2, i);
 					mesg->Dump();
 #if 0				
 					GetTriangle(num)->Print();
@@ -516,13 +516,13 @@ int llTriangleList::Stripification(void) {
 	int terminal=0;
 	lastflag=-1;
 
-	mesg->WriteNextLine(MH_INFO,"Stripification started");
+	mesg->WriteNextLine(LOG_INFO,"Stripification started");
 	mesg->Dump();
 
 	while (make_stripification) {
 		//get next terminal
 		if (!GetTriangle(triangle)) {
-			mesg->WriteNextLine(MH_FATAL,"Triangle: %i not present",triangle);
+			mesg->WriteNextLine(LOG_FATAL,"Triangle: %i not present",triangle);
 			mesg->Dump();
 			exit(-1);
 		}
@@ -537,7 +537,7 @@ int llTriangleList::Stripification(void) {
 		}
 		triangle++;
 		if (triangle==counter) {
-			mesg->WriteNextLine(MH_INFO,"Terminals processed: %i",terminal);
+			mesg->WriteNextLine(LOG_INFO,"Terminals processed: %i",terminal);
 			mesg->Dump();
 			terminal=0;
 			triangle=0;
@@ -548,7 +548,7 @@ int llTriangleList::Stripification(void) {
 		}
 	}
 
-	mesg->WriteNextLine(MH_INFO,"Now stitch the strips");
+	mesg->WriteNextLine(LOG_INFO,"Now stitch the strips");
 	mesg->Dump();
 
 	//now we set the length of the strips
@@ -579,7 +579,7 @@ int llTriangleList::Stripification(void) {
 				nextstrip = current->GetNeighbor(source, IS_SAME_STRIP);
 				if (nextstrip==-1) {
 					loop=0;
-					mesg->WriteNextLine(MH_ERROR,"Forked strip: %i (Startstrip: %i)",source,i);
+					mesg->WriteNextLine(LOG_ERROR,"Forked strip: %i (Startstrip: %i)",source,i);
 					GetTriangle(i)->Print();
 					mesg->Dump();
 				} else {
@@ -596,7 +596,7 @@ int llTriangleList::Stripification(void) {
 
 					if (nextstrip == i){
 						loop=0;
-						mesg->WriteNextLine(MH_ERROR,"Looped strip");
+						mesg->WriteNextLine(LOG_ERROR,"Looped strip");
 					}
 
 					if (!added) { //try a new endpoint
@@ -621,7 +621,7 @@ int llTriangleList::Stripification(void) {
 	for (unsigned int i=0;i<counter;i++) {
 		llTriangle * current = GetTriangle(i);
 		if (current->GetDoneFlag()==0) {
-			mesg->WriteNextLine(MH_ERROR,"Untouched triangle %i",i);
+			mesg->WriteNextLine(LOG_ERROR,"Untouched triangle %i",i);
 			current->Print();
 			mesg->Dump();
 		}
@@ -629,7 +629,7 @@ int llTriangleList::Stripification(void) {
 
 	vertices.resize(pos_strip);
 	//vertices.resize(pos);
-	mesg->WriteNextLine(MH_INFO,"Strips: %i, trianglepoints: %i",num_strips,pos_strip);
+	mesg->WriteNextLine(LOG_INFO,"Strips: %i, trianglepoints: %i",num_strips,pos_strip);
 	mesg->Dump();
 	return 1;
 }
@@ -638,7 +638,7 @@ int llTriangleList::Stripification(void) {
 int llTriangleList::AddTriangle(llTriangle *_tri, int _flag) {
 
 	if (pos_strip > 65530) {
-		mesg->WriteNextLine(MH_FATAL,"Too many vertices");
+		mesg->WriteNextLine(LOG_FATAL,"Too many vertices");
 		mesg->Dump();
 		return 0;
 	}
@@ -700,7 +700,7 @@ int llTriangleList::AddTriangle(llTriangle *_tri, int _flag) {
 			}
 		}
 		if (c==10) {
-			mesg->WriteNextLine(MH_ERROR,"Starting triangles cannot be stitched");
+			mesg->WriteNextLine(LOG_ERROR,"Starting triangles cannot be stitched");
 			mesg->Dump();
 			//std::cout << v1 << ":" << v2 << ":" << v3 << std::endl;
 			//std::cout << v1a << ":" << v2a << ":" << v3a << std::endl;
@@ -734,9 +734,9 @@ int llTriangleList::AddTriangle(llTriangle *_tri, int _flag) {
 				c++;
 		}
 		if (c==3) {
-			mesg->WriteNextLine(MH_ERROR,"Following triangles cannot be stitched");
-			mesg->WriteNextLine(MH_ERROR,"%i %i %i",v1,v2,v3);
-			mesg->WriteNextLine(MH_ERROR,"%i %i %i",v1a,v2a,v3a);
+			mesg->WriteNextLine(LOG_ERROR,"Following triangles cannot be stitched");
+			mesg->WriteNextLine(LOG_ERROR,"%i %i %i",v1,v2,v3);
+			mesg->WriteNextLine(LOG_ERROR,"%i %i %i",v1a,v2a,v3a);
 			mesg->Dump();
 		} else {
 			if ((v2 == v1a) && (v3 == v2a)) {
@@ -1104,11 +1104,11 @@ void llTriangleList::DivideBetween(float _xx1, float _yy1, float _xx2, float _yy
 	int p2 = points->GetPoint(_xx2, _yy2);
 
 	if (p1 < 0) {
-		mesg->WriteNextLine(MH_ERROR,"DivideBetween: vertex (%f,%f) not found in vertex list",_xx1, _yy1);
+		mesg->WriteNextLine(LOG_ERROR,"DivideBetween: vertex (%f,%f) not found in vertex list",_xx1, _yy1);
 		return;
 	}
 	if (p2 < 0) {
-		mesg->WriteNextLine(MH_ERROR,"DivideBetween: vertex (%f,%f) not found in vertex list",_xx2, _yy2);
+		mesg->WriteNextLine(LOG_ERROR,"DivideBetween: vertex (%f,%f) not found in vertex list",_xx2, _yy2);
 		return;
 	}
 

@@ -1,6 +1,5 @@
 #include "..\include\llmap.h"
 
-
 //constructor
 llMap::llMap(llLogger *_mesg, unsigned long _x, unsigned long _y, int _makeshort, float _default) {
 	widthx=_x;
@@ -89,13 +88,40 @@ void llMap::MakeDerivative(int _use16bit) {
 	der_done=true;
 
 	float minheight = (default*8.0f) + 1.0f;
-	
+	int redone = 0;
+
+repeat:
+
 	if (!data1x) {
 		data1x = new llShortarray(widthx*widthy, _use16bit); 
 		data1y = new llShortarray(widthx*widthy, _use16bit); 	
 		data2x = new llShortarray(widthx*widthy, _use16bit); 	
 		data2y = new llShortarray(widthx*widthy, _use16bit); 
 	}
+
+	if (!data1x->SetElement(0,0.f) || !data1y->SetElement(0,0.f) || 
+		!data2x->SetElement(0,0.f) || !data2y->SetElement(0,0.f)) { //test bad alloc
+		if (!_use16bit) {
+			_use16bit = 1;
+			redone    = 1;
+			mesg->WriteNextLine(LOG_WARNING,"llMap::MakeDerivative: memory allocation failed, I will try the short version");
+			delete data1x;
+			delete data1y;
+			delete data2x;
+			delete data2y;
+			data1x = data1y = data2x = data2y = NULL;
+			goto repeat;
+		} else {
+			mesg->WriteNextLine(-LOG_FATAL,"llMap::MakeDerivative: out of memory");
+			exit(1);
+		}
+	}
+
+	if (redone) {
+		mesg->AddToLine("... [OK]");
+		mesg->Dump();
+	}
+
 
 	x1max=0;
 	for (unsigned long y=0;y<widthy;y++) {
@@ -145,9 +171,9 @@ void llMap::MakeDerivative(int _use16bit) {
 		}
 	}
 
-	data1x->Print("1st order derivative, x-direction",mesg);
-	data1y->Print("1st order derivative, y-direction",mesg);
-	data2x->Print("2nd order derivative, x-direction",mesg);
-	data2y->Print("2nd order derivative, y-direction",mesg);
+	data1x->Print("1st order derivative, x-direction", mesg);
+	data1y->Print("1st order derivative, y-direction", mesg);
+	data2x->Print("2nd order derivative, x-direction", mesg);
+	data2y->Print("2nd order derivative, y-direction", mesg);
 
 }

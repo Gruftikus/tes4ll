@@ -19,109 +19,6 @@
 #endif
 
 
-char *strtok_old(char *string, const char *seps, char **context) {
-	//The "original" strtok
-	char *head;  /* start of word */
-	char *tail;  /* end of word */
-
-	/* If we're starting up, initialize context */
-	if (string) {
-		*context = string;
-	}
-	/* Get potential start of this next word */
-	head = *context;
-	if (head == NULL) {
-		return NULL;
-	}
-
-	/* Skip any leading separators */
-	while (*head && strchr(seps, *head)) {
-		head++;
-	}
-
-	/* Did we hit the end? */
-	if (*head == 0) {
-		/* Nothing left */
-		*context = NULL;
-		return NULL;
-	}
-
-	/* skip over word */
-	tail = head;
-	while (*tail && !strchr(seps, *tail)) {
-		tail++;
-	}
-
-	/* Save head for next time in context */
-	if (*tail == 0) {
-		*context = NULL;
-	}
-	else {
-		*tail = 0;
-		tail++;
-		*context = tail;
-	}
-
-	/* Return current word */
-	return head;
-
-}
-
-
-char * strtok_int(char *ptr, const char delim,char **saveptr1) {
-	//Wrapper
-	int foundquot=0;
-	char *ptr1;
-	char delim2[2];
-	sprintf_s(delim2,2,"%c",delim);
-	if (*saveptr1) {
-		for (unsigned int h=0;h<strlen(*saveptr1);h++) {
-			if ((*saveptr1)[h]=='\"' && foundquot) {foundquot=0;if (h>0 && (*saveptr1)[h-1]=='\\') foundquot=1;}
-			else if ((*saveptr1)[h]=='\"' && !foundquot) {foundquot=1;if (h>0 && (*saveptr1)[h-1]=='\\') foundquot=0;}
-			if ((*saveptr1)[h]==delim && !foundquot) (*saveptr1)[h]='§';
-		}
-	} 
-	foundquot=0;
-	if (ptr) {
-		for (unsigned int h=0;h<strlen(ptr);h++) {
-			if ((ptr)[h]=='\"' && foundquot) {foundquot=0;if (h>0 && (ptr)[h-1]=='\\') foundquot=1;}
-			else if ((ptr)[h]=='\"' && !foundquot) {foundquot=1;if (h>0 && (ptr)[h-1]=='\\') foundquot=0;}
-			if ((ptr)[h]==delim && !foundquot) (ptr)[h]='§';
-		}
-	} 
-	ptr1 = strtok_old(ptr, "§", saveptr1);
-	foundquot=0;
-	if (*saveptr1) {
-		for (unsigned int h=0;h<strlen(*saveptr1);h++) {
-			if ((*saveptr1)[h]=='\"' && foundquot) {foundquot=0;if (h>0 && (*saveptr1)[h-1]=='\\') foundquot=1;}
-			else if ((*saveptr1)[h]=='\"' && !foundquot) {foundquot=1;if (h>0 && (*saveptr1)[h-1]=='\\') foundquot=0;}
-			if ((*saveptr1)[h]=='§' && !foundquot) (*saveptr1)[h]=delim;
-		}
-	} 
-	foundquot=0;
-	if (ptr1) {
-		for (unsigned int h=0;h<strlen(ptr1);h++) {
-			if ((ptr1)[h]=='\"' && foundquot) {
-				foundquot=0;
-				if (h>0 && (ptr1)[h-1]=='\\') {
-					foundquot=1;
-					//for (unsigned int j=h-1;j<strlen(ptr1)-1;j++) (ptr1)[j]=(ptr1)[j+1];
-					//(ptr1)[strlen(ptr1)-1]='\0';
-				}
-			}
-			else if ((ptr1)[h]=='\"' && !foundquot) {
-				foundquot=1;
-				if (h>0 && (ptr1)[h-1]=='\\') {
-					foundquot=0;
-					//for (unsigned int j=h-1;j<strlen(ptr1)-1;j++) (ptr1)[j]=(ptr1)[j+1];
-					//(ptr1)[strlen(ptr1)-1]='\0';
-				}
-			}
-			if ((ptr1)[h]=='§' && !foundquot) (ptr1)[h]=delim;
-		}
-	} 
-	return ptr1;
-}
 
 
 void llCommands::Init() {
@@ -136,7 +33,6 @@ void llCommands::Init() {
 	overdrawing=1.0;	
 	is_good=1;
 	gamemode=0;
-	num_flags=0;
 	num_lines=line_pointer=noskipinfo=0;
 	minheight = -1000000;
 	bmpscaling = 1.;
@@ -154,8 +50,9 @@ void llCommands::Init() {
 }
 
 //constructor
-llCommands::llCommands(llLogger *_mesg, FILE *_file, char *_section) {
+llCommands::llCommands(llLogger *_mesg, llUtils *_utils, FILE *_file, char *_section) {
 	mesg     = _mesg;
+	utils    = _utils;
 	section  = _section;
 	file     = _file;
 	filename = NULL;
@@ -163,8 +60,9 @@ llCommands::llCommands(llLogger *_mesg, FILE *_file, char *_section) {
 }
 
 //constructor
-llCommands::llCommands(llLogger *_mesg, const char *_file, char *_section) {
+llCommands::llCommands(llLogger *_mesg, llUtils *_utils, const char *_file, char *_section) {
 	mesg     = _mesg;
+	utils    = _utils;
 	section  = _section;
 	filename = new char[strlen(_file)];
 	strcpy_s(filename,strlen(_file) + 1, _file);
@@ -174,8 +72,9 @@ llCommands::llCommands(llLogger *_mesg, const char *_file, char *_section) {
 	Init();
 }
 
-llCommands::llCommands(llLogger *_mesg) {
+llCommands::llCommands(llLogger *_mesg, llUtils *_utils) {
 	mesg     = _mesg;
+	utils    = _utils;
 	section  = "[None]";
 	filename = NULL;
 	file     = NULL;
@@ -192,7 +91,7 @@ int llCommands::Open(const char *_file, char *_section) {
 	}
 	section = _section;
 	if (fopen_s(&file,filename,"r")) {
-		mesg->WriteNextLine(MH_ERROR,"Unable to open %s", filename);
+		mesg->WriteNextLine(LOG_ERROR,"Unable to open %s", filename);
 		file = NULL;
 		return 0;
 	}
@@ -206,7 +105,7 @@ int llCommands::ReadCache(void) {
 	if (!file) return 0;
 	while (fgets(line,10000,file)) {
 		if (num_lines == MAX_LINES) {
-			mesg->WriteNextLine(MH_FATAL,"Batch file too big");
+			mesg->WriteNextLine(LOG_FATAL,"Batch file too big");
 			return 0;
 		}
 		lines[num_lines] = new char[strlen(line)+1];
@@ -234,7 +133,7 @@ int llCommands::ReadCache(void) {
 int llCommands::SaveFile(const char *_file) {
 	FILE * wfile;
 	if (fopen_s(&wfile,_file,"w")) {
-		mesg->WriteNextLine(MH_ERROR,"Unable to open %s", _file);
+		mesg->WriteNextLine(LOG_ERROR,"Unable to open %s", _file);
 		return 0;
 	}
 
@@ -254,21 +153,7 @@ int llCommands::SaveFile(const char *_file) {
 	}
 	//save all variables which are not hidden
 	fprintf(wfile,"[_saved]\n");
-	for (unsigned int i=0;i<num_flags;i++) {
-		if (flag_enable[i] && !flag_hidden[i]) {
-			if (flag_value[i]) {
-				fprintf(wfile,"SetFlag -name=%s -value=\"%s\"\n",flag_list[i],flag_value[i]);
-			} else {
-				fprintf(wfile,"SetFlag -name=%s\n",flag_list[i]);
-			} 
-		} else if (!flag_hidden[i]) {
-			if (flag_value[i]) {
-				fprintf(wfile,"SetFlag -name=%s -value=\"%s\" -unselect\n",flag_list[i],flag_value[i]);
-			} else {
-				fprintf(wfile,"SetFlag -name=%s -unselect\n",flag_list[i]);
-			} 
-		} 
-	}
+	utils->WriteFlags(wfile);
 
 	fclose(wfile);
 	return 1;
@@ -278,7 +163,7 @@ int llCommands::ReadStdin(void) {
 	char line[1000];
 	while (gets_s(line,1000)) {
 		if (num_lines == 10000) {
-			mesg->WriteNextLine(MH_FATAL,"Batch file too big");
+			mesg->WriteNextLine(LOG_FATAL,"Batch file too big");
 			return 0;
 		}
 		lines[num_lines] = new char[strlen(line)+1];
@@ -315,55 +200,9 @@ int llCommands::Reopen(char *_section) {
 }
 
 
-void llCommands::strip_quot(char **_tmp) {
-	if ((*_tmp)[0] == '\"') (*_tmp)++;
-	if ((*_tmp)[strlen(*_tmp)-1] == '\"') (*_tmp)[strlen(*_tmp)-1]='\0';
-	for (unsigned int h=0;h<strlen(*_tmp);h++) {
-		if ((*_tmp)[h]=='\"') {
-			if (h>0 && (*_tmp)[h-1]=='\\') {
-				for (unsigned int j=h-1;j<strlen(*_tmp)-1;j++) (*_tmp)[j]=(*_tmp)[j+1];
-				(*_tmp)[strlen(*_tmp)-1]='\0';
-			}
-		}
-	}
-}
-
-
-void llCommands::strip_spaces(char **_partc) {
-	while (**_partc==' ') (*_partc)++;
-	if (strlen(*_partc)) {
-		int partend=strlen(*_partc)-1;
-
-		while ((*_partc)[partend]==' ' && partend>=0) {
-			(*_partc)[partend]='\0';
-			partend--;
-		}
-	}
-}
-
-
-int llCommands::CrunchStart(char *_s) {
-	crunch_string = new char[strlen(_s)+1];
-	strcpy_s(crunch_string,strlen(_s)+1,_s);
-	crunch_current = NULL;
-	crunch_saveptr = NULL;
-	return 1;
-}
-
-int llCommands::CrunchNext(void) {
-	if (!crunch_current) {
-		crunch_current = strtok_int(crunch_string, ',', &crunch_saveptr);
-		return 1;
-	}
-	crunch_current = strtok_int(NULL, ',', &crunch_saveptr);
-	if (crunch_current) return 1;
-
-	return 0;
-}
-
 int llCommands::GetCommand(void) {
 
-	//mesg->WriteNextLine(MH_ERROR,"next commands, filename %s, section %s", filename,section);
+	//mesg->WriteNextLine(LOG_ERROR,"next commands, filename %s, section %s", filename,section);
 	int com=-1;
 	char line[10000];
 	char linenew[100000];
@@ -406,7 +245,7 @@ int llCommands::GetCommand(void) {
 
 repeat:	
 	for (unsigned int i=0;i<strlen(linex);i++) if (linex[i]=='\n' || linex[i]==';' || linex[i]=='#') linex[i]='\0';
-	strip_spaces(&linex);
+	utils->StripSpaces(&linex);
 
 	if (strlen(linex)==0) return 0;
 
@@ -433,14 +272,14 @@ check_again:
 				for (unsigned int j=i+1;j<strlen(linex);j++) {
 					if (!(isalnum(linex[j]) || linex[j]=='_')) {
 						if ((j-i) <= 1) {
-							mesg->WriteNextLine(MH_ERROR,"Something wrong in [%s]", linex);
+							mesg->WriteNextLine(LOG_ERROR,"Something wrong in [%s]", linex);
 						}
 						//find the end
 						linex[i]='\0';
 						char tmp=linex[j];
 						linex[j]='\0';
 						sprintf_s(linenew,100000,"%s",linex);
-						char *val=(char *)GetValue(linex+i+1);
+						char *val=(char *)utils->GetValue(linex+i+1);
 						if (strlen(val)>90000) val="<String too long>";
 						sprintf_s(linenew,100000-strlen(linex),"%s%s",linenew,val);
 						if (tmp != '$') sprintf_s(linenew,100000-strlen(linex)-strlen(val),"%s%c%s",linenew,tmp,linex+j+1);
@@ -453,7 +292,7 @@ check_again:
 				}
 				linex[i]='\0';
 				sprintf_s(linenew,100000,"%s",linex);
-				char *val=(char *)GetValue(linex+i+1);
+				char *val=(char *)utils->GetValue(linex+i+1);
 				if (strlen(val)>90000) val="<String too long>";
 				sprintf_s(linenew,100000-strlen(linex),"%s%s",linenew,val);
 				char *bla= new char[strlen(linenew)+i+1];
@@ -476,23 +315,23 @@ check_again:
 		}
 out:
 		if (i==strlen(linex)) {
-			mesg->WriteNextLine(MH_ERROR,"No command after: %s",linex);
+			mesg->WriteNextLine(LOG_ERROR,"No command after: %s",linex);
 			return 0;
 		}
 		linex[i]='\0';
 		int found=0;
 		if (linex[1]=='!') negative=1;
 
-		found = (IsEnabled(linex+1+negative) == 1 ? 1: 0);
+		found = (utils->IsEnabled(linex+1+negative) == 1 ? 1: 0);
 
 		if (!found && negative==0) {
 			while (*(linex+i+1) == ' ') i++;
-			if (!noskipinfo) mesg->WriteNextLine(MH_INFO,"Flag %s not set, skipped [%s]",linex+1,linex+i+1);
+			if (!noskipinfo) mesg->WriteNextLine(LOG_INFO,"Flag %s not set, skipped [%s]",linex+1,linex+i+1);
 			return 0;
 		}
 		if (found && negative==1) {
 			while (*(linex+i+1) == ' ') i++;
-			if (!noskipinfo) mesg->WriteNextLine(MH_INFO,"Flag %s set, skipped [%s]",linex+2,linex+i+1);
+			if (!noskipinfo) mesg->WriteNextLine(LOG_INFO,"Flag %s set, skipped [%s]",linex+2,linex+i+1);
 			return 0;
 		}
 		linex=linex+i+1;
@@ -789,7 +628,7 @@ out:
 	}
 
 	if (com==-1) {
-		mesg->WriteNextLine(MH_ERROR,"Unknown command [%s]",ptr);
+		mesg->WriteNextLine(LOG_ERROR,"Unknown command [%s]",ptr);
 		return com;
 	}
 
@@ -835,20 +674,20 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%i",&npoints);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);strip_quot(&myflagname);
+						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -861,17 +700,17 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%i",&npoints);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-value")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);strip_quot(&myflagname);
+						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} 			
 		}
@@ -885,20 +724,20 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%i",&npoints);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-value")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);strip_quot(&myflagname);
+						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -911,17 +750,17 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%i",&npoints);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-value")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);strip_quot(&myflagname);
+						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} 			
 		}
@@ -933,15 +772,15 @@ out:
 				if (_stricmp(ptr2,"-value")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);strip_quot(&myflagname);
+						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,"Syntax error in [%s] after [%s]",ptr,CurrentCommand);;return com;
+						mesg->WriteNextLine(LOG_ERROR,"Syntax error in [%s] after [%s]",ptr,CurrentCommand);;return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -952,15 +791,15 @@ out:
 				if (_stricmp(ptr2,"-value")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);strip_quot(&myflagname);
+						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -971,15 +810,15 @@ out:
 				if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);strip_quot(&myflagname);
+						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -995,22 +834,22 @@ out:
 					if (_stricmp(ptr2,"-value")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							myflagvalue=new char[strlen(ptr2)+1];strcpy_s(myflagvalue,strlen(ptr2)+1,ptr2);strip_quot(&myflagvalue);
+							myflagvalue=new char[strlen(ptr2)+1];strcpy_s(myflagvalue,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagvalue);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-name")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);strip_quot(&myflagname);
+							myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagname);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				} 
 			} 
 		}
@@ -1022,29 +861,29 @@ out:
 				if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);strip_quot(&guiname);
+						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-help")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guitab=new char[strlen(ptr2)+1];strcpy_s(guitab,strlen(ptr2)+1,ptr2);strip_quot(&guitab);
+						guitab=new char[strlen(ptr2)+1];strcpy_s(guitab,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitab);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-text")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);strip_quot(&guitext);
+						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitext);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1061,50 +900,50 @@ out:
 				if (_stricmp(ptr2,"-text")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);strip_quot(&guitext);
+						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitext);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);strip_quot(&guiname);
+						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-help")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guihelp=new char[strlen(ptr2)+1];strcpy_s(guihelp,strlen(ptr2)+1,ptr2);strip_quot(&guihelp);
+						guihelp=new char[strlen(ptr2)+1];strcpy_s(guihelp,strlen(ptr2)+1,ptr2);utils->StripQuot(&guihelp);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-vdist")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%i",&vdist);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-width")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&guiwidth);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-height")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&guiheight);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1120,50 +959,50 @@ out:
 					if (_stricmp(ptr2,"-text")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);strip_quot(&guitext);
+							guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitext);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-name")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);strip_quot(&guiname);
+							guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiname);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-help")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guihelp=new char[strlen(ptr2)+1];strcpy_s(guihelp,strlen(ptr2)+1,ptr2);strip_quot(&guihelp);
+							guihelp=new char[strlen(ptr2)+1];strcpy_s(guihelp,strlen(ptr2)+1,ptr2);utils->StripQuot(&guihelp);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-width")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&guiwidth);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-height")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&guiheight);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-vdist")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%i",&vdist);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -1177,50 +1016,50 @@ out:
 				if (_stricmp(ptr2,"-text")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);strip_quot(&guitext);
+						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitext);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);strip_quot(&guiname);
+						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-help")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guihelp=new char[strlen(ptr2)+1];strcpy_s(guihelp,strlen(ptr2)+1,ptr2);strip_quot(&guihelp);
+						guihelp=new char[strlen(ptr2)+1];strcpy_s(guihelp,strlen(ptr2)+1,ptr2);utils->StripQuot(&guihelp);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-vdist")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%i",&vdist);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-width")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&guiwidth);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-height")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&guiheight);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1234,29 +1073,29 @@ out:
 					if (_stricmp(ptr2,"-text")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);strip_quot(&guitext);
+							guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitext);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-name")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);strip_quot(&guiname);
+							guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiname);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-parent")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guiparent=new char[strlen(ptr2)+1];strcpy_s(guiparent,strlen(ptr2)+1,ptr2);strip_quot(&guiparent);
+							guiparent=new char[strlen(ptr2)+1];strcpy_s(guiparent,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiparent);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -1268,26 +1107,26 @@ out:
 				if (_stricmp(ptr2,"-text")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);strip_quot(&guitext);
+						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitext);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);strip_quot(&guiname);
+						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-vdist")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%i",&vdist);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} 
 		}
@@ -1302,15 +1141,15 @@ out:
 					if (_stricmp(ptr2,"-exe")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);strip_quot(&guitext);
+							guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitext);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -1327,15 +1166,15 @@ out:
 					if (_stricmp(ptr2,"-name")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);strip_quot(&guiname);
+							guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiname);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -1352,15 +1191,15 @@ out:
 					if (_stricmp(ptr2,"-name")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);strip_quot(&guiname);
+							guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiname);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -1375,15 +1214,15 @@ out:
 					if (_stricmp(ptr2,"-text")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);strip_quot(&guitext);
+							guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitext);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -1395,22 +1234,22 @@ out:
 				if (_stricmp(ptr2,"-text")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);strip_quot(&guitext);
+						guitext=new char[strlen(ptr2)+1];strcpy_s(guitext,strlen(ptr2)+1,ptr2);utils->StripQuot(&guitext);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-title")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);strip_quot(&guiname);
+						guiname=new char[strlen(ptr2)+1];strcpy_s(guiname,strlen(ptr2)+1,ptr2);utils->StripQuot(&guiname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1423,7 +1262,7 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridx);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				}
 				else if (_stricmp(ptr2,"-y")==0) {
@@ -1431,14 +1270,14 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridy);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} 
 			else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1450,36 +1289,36 @@ out:
 				if (_stricmp(ptr2,"-value")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);strip_quot(&myflagname);
+						myflagname=new char[strlen(ptr2)+1];strcpy_s(myflagname,strlen(ptr2)+1,ptr2);utils->StripQuot(&myflagname);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,"Unknown option [%s] after [GUIRequestVersion]",ptr);return com;
+					mesg->WriteNextLine(LOG_ERROR,"Unknown option [%s] after [GUIRequestVersion]",ptr);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}			
 		}
 
 		if (com == COM_FOCUSALL) {
 			CurrentCommand = COM_FOCUSALL_CMD;
 			if (ptr) {
-				mesg->WriteNextLine(MH_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
 			}
 		}
 
 		if (com == COM_TRIANGULATION) {
 			CurrentCommand = COM_TRIANGULATION_CMD;
 			if (ptr) {
-				mesg->WriteNextLine(MH_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
 			}
 		}
 
 		if (com == COM_REMOVEBROKENTRIANGLES) {
 			CurrentCommand = COM_REMOVEBROKENTRIANGLES_CMD;
 			if (ptr) {
-				mesg->WriteNextLine(MH_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1493,20 +1332,20 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&quadx);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&quady);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1519,34 +1358,34 @@ out:
 					if (ptr2) {
 						sscanf_s(ptr2,"%f",&x00);}
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y1")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
 						sscanf_s(ptr2,"%f",&y00);}
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-x2")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
 						sscanf_s(ptr2,"%f",&x11);}
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y2")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
 						sscanf_s(ptr2,"%f",&y11);}
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1562,13 +1401,13 @@ out:
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&zmin);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -1582,20 +1421,20 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridx);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridy);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1608,34 +1447,34 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridx);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridy);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-z")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&z);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-keepout")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&Keepout);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1652,43 +1491,43 @@ out:
 					if (strncmp(ptr2,"-texture",3)==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							texname=new char[strlen(ptr2)+1];strcpy_s(texname,strlen(ptr2)+1,ptr2);strip_quot(&texname);
+							texname=new char[strlen(ptr2)+1];strcpy_s(texname,strlen(ptr2)+1,ptr2);utils->StripQuot(&texname);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-transx")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&trans_x);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-transy")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&trans_y);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-transz")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&trans_z);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-name")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							optname=new char[strlen(ptr2)+1];strcpy_s(optname,strlen(ptr2)+1,ptr2);strip_quot(&optname);
+							optname=new char[strlen(ptr2)+1];strcpy_s(optname,strlen(ptr2)+1,ptr2);utils->StripQuot(&optname);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			} 
 		}
@@ -1700,13 +1539,13 @@ out:
 				if (strncmp(ptr2,"-filename",3)==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						datafile=new char[strlen(ptr2)+1];strcpy_s(datafile,strlen(ptr2)+1,ptr2);strip_quot(&datafile);
+						datafile=new char[strlen(ptr2)+1];strcpy_s(datafile,strlen(ptr2)+1,ptr2);utils->StripQuot(&datafile);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1717,22 +1556,22 @@ out:
 				if (strncmp(ptr2,"-filename",4)==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						datafile=new char[strlen(ptr2)+1];strcpy_s(datafile,strlen(ptr2)+1,ptr2);strip_quot(&datafile);
+						datafile=new char[strlen(ptr2)+1];strcpy_s(datafile,strlen(ptr2)+1,ptr2);utils->StripQuot(&datafile);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (strncmp(ptr2,"-name",4)==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);strip_quot(&polygon_name);
+						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);utils->StripQuot(&polygon_name);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,"Unknown option [%s] after [ReadPolygonDataFile]",ptr);return com;
+				mesg->WriteNextLine(LOG_ERROR,"Unknown option [%s] after [ReadPolygonDataFile]",ptr);return com;
 			}
 		}
 
@@ -1742,7 +1581,7 @@ out:
 			} else if (_stricmp(ptr,"-writenormalmap")==0) {
 				writenormalmap=1;
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1762,27 +1601,27 @@ out:
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&quadx);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-y")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&quady);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (strncmp(ptr2,"-texture",3)==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							texname=new char[strlen(ptr2)+1];strcpy_s(texname,strlen(ptr2)+1,ptr2);strip_quot(&texname);
+							texname=new char[strlen(ptr2)+1];strcpy_s(texname,strlen(ptr2)+1,ptr2);utils->StripQuot(&texname);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -1796,18 +1635,18 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridx);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridy);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1820,27 +1659,27 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridx);
 					else { 
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridy);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-min")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&zz1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1853,34 +1692,34 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridx);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridy);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-max")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&max);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-zmin")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&zmin);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1893,27 +1732,27 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&Highest);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (strncmp(ptr2,"-lowest",4)==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&Lowest);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (strncmp(ptr2,"-z",2)==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&z);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -1937,37 +1776,37 @@ out:
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&gridx);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-y")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&gridy);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-z")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&z);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-offsetx")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&offsetx);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-offsety")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&offsety);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;}
-					} else {mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;}
-				} else {mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;}
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;}
+					} else {mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;}
+				} else {mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;}
 			}
 		}
 
@@ -1980,20 +1819,20 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridx);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridy);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,"Unknown option [%s] after [%s]",ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,"Unknown option [%s] after [%s]",ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -2006,20 +1845,20 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridx);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&gridy);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -2032,34 +1871,34 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&xx1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y1")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&yy1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-x2")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&xx2);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y2")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&yy2);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -2072,41 +1911,41 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&xx1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y1")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&yy1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-x2")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&xx2);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y2")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&yy2);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);strip_quot(&polygon_name);
+						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);utils->StripQuot(&polygon_name);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -2119,7 +1958,7 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&xx1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				}
 				else if (_stricmp(ptr2,"-y")==0) {
@@ -2127,17 +1966,17 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&yy1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);strip_quot(&polygon_name);
+						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);utils->StripQuot(&polygon_name);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,"Unknown option [%s] after [AddVertexToPolygon]",ptr);return com;
+					mesg->WriteNextLine(LOG_ERROR,"Unknown option [%s] after [AddVertexToPolygon]",ptr);return com;
 				}
 			} 
 		}
@@ -2149,15 +1988,15 @@ out:
 				if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);strip_quot(&polygon_name);
+						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);utils->StripQuot(&polygon_name);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -2168,12 +2007,12 @@ out:
 				if (_stricmp(ptr2,"-name")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2) {
-						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);strip_quot(&polygon_name);
+						polygon_name=new char[strlen(ptr2)+1];strcpy_s(polygon_name,strlen(ptr2)+1,ptr2);utils->StripQuot(&polygon_name);
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,"Unknown option [%s] after [StencilPolygon]",ptr);return com;
+					mesg->WriteNextLine(LOG_ERROR,"Unknown option [%s] after [StencilPolygon]",ptr);return com;
 				}
 			} 
 		}
@@ -2181,14 +2020,14 @@ out:
 		if (com == COM_INACTIVATEALLVERTICES) {
 			CurrentCommand = COM_INACTIVATEALLVERTICES_CMD;
 			if (ptr) {
-				mesg->WriteNextLine(MH_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
 			}
 		}
 
 		if (com == COM_REMOVEINACTIVETRIANGLES) {
 			CurrentCommand = COM_REMOVEINACTIVETRIANGLES_CMD;
 			if (ptr) {
-				mesg->WriteNextLine(MH_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_NO_OPTION_ALLOWED,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -2201,34 +2040,34 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&xx1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-y")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&yy1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-z")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&zz1);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else if (_stricmp(ptr2,"-radius")==0) {
 					ptr2 = strtok_int(NULL, '=',&saveptr2);
 					if (ptr2)
 						sscanf_s(ptr2,"%f",&OptRadius);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -2242,13 +2081,13 @@ out:
 						if (ptr2)
 							sscanf_s(ptr2,"%i",&npoints);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 		}
 
@@ -2261,13 +2100,13 @@ out:
 					if (ptr2)
 						sscanf_s(ptr2,"%i",&npoints);
 					else {
-						mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 				}
 			} else {
-				mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
 
@@ -2283,10 +2122,10 @@ out:
 						if (ptr2)
 							sscanf_s(ptr2,"%i",&npoints);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} 
 			}
@@ -2304,13 +2143,13 @@ out:
 						if (ptr2)
 							sscanf_s(ptr2,"%i",&npoints);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -2327,17 +2166,17 @@ out:
 						if (ptr2)
 							sscanf_s(ptr2,"%i",&tes4qlod_q);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-options")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						if (ptr2) {
-							tes4qlod_options=new char[strlen(ptr2)+1];strcpy_s(tes4qlod_options,strlen(ptr2)+1,ptr2);strip_quot(&tes4qlod_options);
+							tes4qlod_options=new char[strlen(ptr2)+1];strcpy_s(tes4qlod_options,strlen(ptr2)+1,ptr2);utils->StripQuot(&tes4qlod_options);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} 
 			}
@@ -2346,87 +2185,87 @@ out:
 		if (com == COM_SETOPTION) {
 			CurrentCommand = COM_SETOPTION_CMD;
 			if (_stricmp(ptr,"-createpedestals")==0) {
-				mesg->WriteNextLine(MH_COMMAND,"SetOption -createpedestals");
+				mesg->WriteNextLine(LOG_COMMAND,"SetOption -createpedestals");
 				createpedestals=1;
 			} else if (_stricmp(ptr,"-useshapes")==0) {
-				mesg->WriteNextLine(MH_COMMAND,"SetOption -useshapes");
+				mesg->WriteNextLine(LOG_COMMAND,"SetOption -useshapes");
 				useshapes=1;
 			} else if (_stricmp(ptr,"-use16bit")==0) {
-				mesg->WriteNextLine(MH_COMMAND,"SetOption -use16bit");
+				mesg->WriteNextLine(LOG_COMMAND,"SetOption -use16bit");
 				use16bit=1;
 			} else if (_stricmp(ptr,"-lodshadows")==0) {
-				mesg->WriteNextLine(MH_COMMAND,"SetOption -lodshadows");
+				mesg->WriteNextLine(LOG_COMMAND,"SetOption -lodshadows");
 				lodshadows=1;
 			} else if (_stricmp(ptr,"-gamemodeoblivion")==0) {
-				mesg->WriteNextLine(MH_COMMAND,"SetOption -gamemodeoblivion");
+				mesg->WriteNextLine(LOG_COMMAND,"SetOption -gamemodeoblivion");
 				gamemode=2;
 			} else if (_stricmp(ptr,"-gamemodeskyrim")==0) {
-				mesg->WriteNextLine(MH_COMMAND,"SetOption -gamemodeskyrim");
+				mesg->WriteNextLine(LOG_COMMAND,"SetOption -gamemodeskyrim");
 				gamemode=5;
 			} else if (_stricmp(ptr,"-noskipinfo")==0) {		
-				mesg->WriteNextLine(MH_COMMAND,"SetOption -noskipinfo");
+				mesg->WriteNextLine(LOG_COMMAND,"SetOption -noskipinfo");
 				noskipinfo=1;
 			} else if (_stricmp(ptr,"-center")==0) {		
-				mesg->WriteNextLine(MH_COMMAND,"SetOption -center");
+				mesg->WriteNextLine(LOG_COMMAND,"SetOption -center");
 				center=1;
 			} else {
 				ptr2 = strtok_int(ptr, '=',&saveptr2);
 				if (ptr2!=NULL && strlen(ptr2)>0) {
 					if (_stricmp(ptr2,"-mindistance")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%i",&mindistance);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-zboost")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%f",&overdrawing);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-nquadmax")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%i",&nquadmax);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-sizex")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%i",&size_x);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-sizey")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2)
 							sscanf_s(ptr2,"%i",&size_y);
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-worldspaceid")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2) {
-							mesg->WriteNextLine(MH_INFO,"SetOption -worldspaceid=%s", ptr2);
-							worldname=new char[strlen(ptr2)+1];strcpy_s(worldname,strlen(ptr2)+1,ptr2);strip_quot(&worldname);
+							mesg->WriteNextLine(LOG_INFO,"SetOption -worldspaceid=%s", ptr2);
+							worldname=new char[strlen(ptr2)+1];strcpy_s(worldname,strlen(ptr2)+1,ptr2);utils->StripQuot(&worldname);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-installdirectory")==0) {					
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2) {
-							mesg->WriteNextLine(MH_INFO,"SetOption -installdirectory=%s", ptr2);
-							install_dir=new char[strlen(ptr2)+1];strcpy_s(install_dir,strlen(ptr2)+1,ptr2);strip_quot(&install_dir);
+							mesg->WriteNextLine(LOG_INFO,"SetOption -installdirectory=%s", ptr2);
+							install_dir=new char[strlen(ptr2)+1];strcpy_s(install_dir,strlen(ptr2)+1,ptr2);utils->StripQuot(&install_dir);
 							if (strlen(install_dir)>0) {
 								for (unsigned int i=0;i<strlen(install_dir);i++) {
 									if (install_dir[i]=='\\') {
@@ -2438,48 +2277,48 @@ out:
 								_mkdir(install_dir);
 							}
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-ddstool")==0) {					
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2) {
-							mesg->WriteNextLine(MH_INFO,"SetOption -ddstool=%s", ptr2);
-							dds_tool=new char[strlen(ptr2)+1];strcpy_s(dds_tool,strlen(ptr2)+1,ptr2);strip_quot(&dds_tool);
+							mesg->WriteNextLine(LOG_INFO,"SetOption -ddstool=%s", ptr2);
+							dds_tool=new char[strlen(ptr2)+1];strcpy_s(dds_tool,strlen(ptr2)+1,ptr2);utils->StripQuot(&dds_tool);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-minheight")==0) {					
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2) {
-							mesg->WriteNextLine(MH_INFO,"SetOption -minheight=%s", ptr2);
+							mesg->WriteNextLine(LOG_INFO,"SetOption -minheight=%s", ptr2);
 							sscanf_s(ptr2,"%f",&minheight);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-bmpscaling")==0) {					
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2) {
-							mesg->WriteNextLine(MH_INFO,"SetOption -bmpscaling=%s", ptr2);
+							mesg->WriteNextLine(LOG_INFO,"SetOption -bmpscaling=%s", ptr2);
 							sscanf_s(ptr2,"%f",&bmpscaling);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else if (_stricmp(ptr2,"-quadtreelevels")==0) {					
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
-						strip_quot(&ptr2);
+						utils->StripQuot(&ptr2);
 						if (ptr2) {
 							sscanf_s(ptr2,"%f",&quadtreelevels);
 						} else {
-							mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 					}
 				} else {
-					mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+					mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 				}
 			}
 		}
@@ -2499,14 +2338,14 @@ out:
 							if (ptr2)
 								sscanf_s(ptr2,"%f",&add);
 							else {
-								mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+								mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 							}
 						} else if (strncmp(ptr2,"-multiply",6)==0) {
 							ptr2 = strtok_int(NULL, '=',&saveptr2);
 							if (ptr2)
 								sscanf_s(ptr2,"%f",&multiply);
 							else {
-								mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+								mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 							}
 						} else if (strncmp(ptr2,"-lowest",4)==0 && (com == COM_ALGSLOPE || com == COM_ALGSTRIPE 
 							|| com == COM_ALGPEAKFINDER)) {
@@ -2514,42 +2353,42 @@ out:
 								if (ptr2)
 									sscanf_s(ptr2,"%f",&Lowest);
 								else {
-									mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+									mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 								}
 						} else if (strncmp(ptr2,"-highest",5)==0 && (com == COM_ALGSLOPE || com == COM_ALGSTRIPE)) {
 							ptr2 = strtok_int(NULL, '=',&saveptr2);
 							if (ptr2)
 								sscanf_s(ptr2,"%f",&Highest);
 							else {
-								mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+								mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 							}
 						} else if (strncmp(ptr2,"-near",4)==0 && (com == COM_ALGRADIAL)) {
 							ptr2 = strtok_int(NULL, '=',&saveptr2);
 							if (ptr2)
 								sscanf_s(ptr2,"%f",&Lowest);
 							else {
-								mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+								mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 							}
 						} else if (strncmp(ptr2,"-far",5)==0 && (com == COM_ALGRADIAL)) {
 							ptr2 = strtok_int(NULL, '=',&saveptr2);
 							if (ptr2)
 								sscanf_s(ptr2,"%f",&Highest);
 							else {
-								mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+								mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 							}
 						} else if (strcmp(ptr2,"-x")==0 && (com == COM_ALGRADIAL)) {
 							ptr2 = strtok_int(NULL, '=',&saveptr2);
 							if (ptr2)
 								sscanf_s(ptr2,"%f",&xx1);
 							else {
-								mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+								mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 							}
 						} else if (strcmp(ptr2,"-y")==0 && (com == COM_ALGRADIAL)) {
 							ptr2 = strtok_int(NULL, '=',&saveptr2);
 							if (ptr2)
 								sscanf_s(ptr2,"%f",&yy1);
 							else {
-								mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+								mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 							}
 						} else if (strncmp(ptr2,"-minval",4)==0 && (com == COM_ALGSLOPE || com == COM_ALGSTRIPE 
 							|| com == COM_ALGPEAKFINDER || com == COM_ALGRADIAL)) {
@@ -2557,7 +2396,7 @@ out:
 								if (ptr2)
 									sscanf_s(ptr2,"%f",&ValueAtLowest);
 								else {
-									mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+									mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 								}
 						} else if (strncmp(ptr2,"-maxval",4)==0 && (com == COM_ALGSLOPE || com == COM_ALGSTRIPE 
 							|| com == COM_ALGPEAKFINDER || com == COM_ALGRADIAL)) {
@@ -2565,28 +2404,28 @@ out:
 								if (ptr2)
 									sscanf_s(ptr2,"%f",&ValueAtHighest);
 								else {
-									mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+									mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 								}
 						} else if (strncmp(ptr2,"-radius",4)==0 && (com == COM_ALGPEAKFINDER)) {
 							ptr2 = strtok_int(NULL, '=',&saveptr2);
 							if (ptr2)
 								sscanf_s(ptr2,"%f",&Radius);
 							else {
-								mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+								mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 							}
 						} else if (strncmp(ptr2,"-scanradius",4)==0 && (com == COM_ALGPEAKFINDER)) {
 							ptr2 = strtok_int(NULL, '=',&saveptr2);
 							if (ptr2)
 								sscanf_s(ptr2,"%f",&Scanradius);
 							else {
-								mesg->WriteNextLine(MH_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
+								mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 							}
 						} 
 						else {
-							mesg->WriteNextLine(MH_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
+							mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);return com;
 						}
 					} else {
-						mesg->WriteNextLine(MH_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
+						mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 					}
 				}
 		}
@@ -2597,7 +2436,7 @@ out:
 	//afterburner
 	if (com == COM_FOCUSQUAD) {
 		if (quadx<-1110 || quady<-1110) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no quad specified (needs -x and -y)",COM_FOCUSQUAD_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no quad specified (needs -x and -y)",COM_FOCUSQUAD_CMD);
 			return -1;
 		}
 		x00 = quadx*32.f*4096.f;
@@ -2608,7 +2447,7 @@ out:
 
 	if (com == COM_WRITEQUAD) {
 		if (quadx<-1110 || quady<-1110) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no quad specified (needs -x and -y)",COM_WRITEQUAD_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no quad specified (needs -x and -y)",COM_WRITEQUAD_CMD);
 			return -1;
 		}
 		x00 = quadx*32.f*4096.f;
@@ -2619,78 +2458,78 @@ out:
 
 	if (com == COM_SETGRID) {
 		if (gridx<0 || gridy<0) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no grid specified (needs -x and -y)",COM_SETGRID_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no grid specified (needs -x and -y)",COM_SETGRID_CMD);
 			return -1;
 		}
 	}
 
 	if (com == COM_SETGRIDBORDER) {
 		if (gridx<0 || gridy<0) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no grid specified (needs -x and -y)",COM_SETGRIDBORDER_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no grid specified (needs -x and -y)",COM_SETGRIDBORDER_CMD);
 			return -1;
 		}
 	}
 
 	if (com == COM_BREAKATGRID) {
 		if (gridx<0 || gridy<0 || max<0) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no grid specified (needs -x and -y) or no -max",COM_BREAKATGRID_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no grid specified (needs -x and -y) or no -max",COM_BREAKATGRID_CMD);
 			return -1;
 		}
 	}
 
 	if (com == COM_SETSINGLEPOINT) {
 		if (gridx<-999999 || gridy<-999999) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no coordinates specified (needs -x and -y)", CurrentCommand);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no coordinates specified (needs -x and -y)", CurrentCommand);
 			return -1;
 		}
 	}
 
 	if (com == COM_DIVIDEBETWEEN) {
 		if (xx1 <-999999 || yy1<-999999 || xx2<-999999 || yy2<-999999) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no coordinates specified (needs -x1, -x2, -y1 and -y2)",COM_DIVIDEBETWEEN_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no coordinates specified (needs -x1, -x2, -y1 and -y2)",COM_DIVIDEBETWEEN_CMD);
 			return -1;
 		}
 	}
 
 	if (com == COM_CREATEPOLYGON) {
 		if (xx1 <-999999 || yy1<-999999 || xx2<-999999 || yy2<-999999) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no initial vertices specified (needs -x1, -x2, -y1 and -y2)", CurrentCommand);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no initial vertices specified (needs -x1, -x2, -y1 and -y2)", CurrentCommand);
 			return -1;
 		}
 		if (!polygon_name) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no name defined", CurrentCommand);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no name defined", CurrentCommand);
 			return -1;
 		}
 	}
 
 	if (com == COM_ADDVERTEXTOPOLYGON) {
 		if (xx1 <-999999 || yy1<-999999 ) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no vertex specified (needs -x and -x)", CurrentCommand);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no vertex specified (needs -x and -x)", CurrentCommand);
 			return -1;
 		}
 		if (!polygon_name) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no name defined", CurrentCommand);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no name defined", CurrentCommand);
 			return -1;
 		}
 	}
 
 	if (com == COM_ACTIVATEVISIBLEVERTICES) {
 		if (xx1 <-999999 || yy1<-999999 ) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no view point specified (needs -x and -x)",COM_ACTIVATEVISIBLEVERTICES_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no view point specified (needs -x and -x)",COM_ACTIVATEVISIBLEVERTICES_CMD);
 			return -1;
 		}
 	}
 
 	if (com == COM_STENCILPOLGON) {		
 		if (!polygon_name) {
-			mesg->WriteNextLine(MH_ERROR,"%s: no name defined",COM_STENCILPOLGON_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no name defined",COM_STENCILPOLGON_CMD);
 			return -1;
 		}
 	}
 
 	if (com == COM_BREAKLINE) {
 		if (z<-111111 )	{
-			mesg->WriteNextLine(MH_ERROR,"%s: no height specified (needs -z)",COM_BREAKLINE_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: no height specified (needs -z)",COM_BREAKLINE_CMD);
 			return -1;
 		}
 	}
@@ -2700,14 +2539,14 @@ out:
 	if (com == COM_SETPOINTS || com == COM_SETPOINTSPERQUAD || 
 		com == COM_SETMAXPOINTS || com == COM_SETMAXPOINTSPERQUAD) {
 			if (npoints<0) {
-				mesg->WriteNextLine(MH_ERROR,"%s: number of points not specified (needs -n)",CurrentCommand);
+				mesg->WriteNextLine(LOG_ERROR,"%s: number of points not specified (needs -n)",CurrentCommand);
 				return -1;
 			}
 	}
 
 	if (com == COM_FILTER) {
 		if (npoints<0) {
-			mesg->WriteNextLine(MH_ERROR,"%s: number of points not specified (needs -n)",CurrentCommand);
+			mesg->WriteNextLine(LOG_ERROR,"%s: number of points not specified (needs -n)",CurrentCommand);
 			return -1;
 		}
 	}
@@ -2720,7 +2559,7 @@ out:
 	if (com == COM_ALGCONST || com == COM_ALG1ST|| com == COM_ALG2ND || com == COM_ALGSLOPE 
 		|| com == COM_ALGSTRIPE || com == COM_ALGPEAKFINDER) {
 			if (add<0 && multiply<0) {
-				mesg->WriteNextLine(MH_WARNING,"%s: no add or multiply factor specified (assuming -multiply=1)",cmd);
+				mesg->WriteNextLine(LOG_WARNING,"%s: no add or multiply factor specified (assuming -multiply=1)",cmd);
 				multiply=1.;
 			}
 	}
@@ -2730,38 +2569,38 @@ out:
 
 	if (com == COM_GUIREQUESTVERSION) {
 		if (!myflagname) {
-			mesg->WriteNextLine(MH_ERROR,"%s: missing -value", CurrentCommand);
+			mesg->WriteNextLine(LOG_ERROR,"%s: missing -value", CurrentCommand);
 			myflagname="0.0";
 		} 
 	}
 
 	if (com == COM_SETFLAG) {
 		if (!myflagname) {
-			mesg->WriteNextLine(MH_ERROR,"%s: missing -name",COM_SETFLAG_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: missing -name",COM_SETFLAG_CMD);
 		} else {
 			if (myflagvalue) {
-				SetValue(myflagname,myflagvalue);
-				if (hidden) SetHidden(myflagname);
+				utils->SetValue(myflagname,myflagvalue);
+				if (hidden) utils->SetHidden(myflagname);
 			} else {
-				AddFlag(myflagname);
-				if (hidden) SetHidden(myflagname);
+				utils->AddFlag(myflagname);
+				if (hidden) utils->SetHidden(myflagname);
 			} 
-			if (unselect) DisableFlag(myflagname);
+			if (unselect) utils->DisableFlag(myflagname);
 		}
 	}
 
 #if 1
 	if (com == COM_LOGFILE) {
 		if (!myflagname) {
-			mesg->WriteNextLine(MH_ERROR,"%s: missing -value", CurrentCommand);
+			mesg->WriteNextLine(LOG_ERROR,"%s: missing -value", CurrentCommand);
 		} else {
 			if (fopen_s(&logfile,myflagname,"w")) {
-				mesg->WriteNextLine(MH_ERROR,"%s: unable to open %s", CurrentCommand,myflagname);
+				mesg->WriteNextLine(LOG_ERROR,"%s: unable to open %s", CurrentCommand,myflagname);
 			} else {
 				mesg->SetLogFile(logfile);
 				time_t rawtime;
 				time ( &rawtime );
-				mesg->WriteNextLine(MH_INFO,"%s: Start logging to %s on %s", CurrentCommand,myflagname,ctime (&rawtime));
+				mesg->WriteNextLine(LOG_INFO,"%s: Start logging to %s on %s", CurrentCommand,myflagname,ctime (&rawtime));
 			}
 		}
 	}
@@ -2769,16 +2608,16 @@ out:
 
     if (com == COM_ADDGAME) {
 		if (npoints<0) {
-			mesg->WriteNextLine(MH_ERROR,"%s: game number (-n) not set", CurrentCommand);
+			mesg->WriteNextLine(LOG_ERROR,"%s: game number (-n) not set", CurrentCommand);
 		} else {
-			mesg->WriteNextLine(MH_INFO,"%s: Game %s added", CurrentCommand, myflagname);
+			mesg->WriteNextLine(LOG_INFO,"%s: Game %s added", CurrentCommand, myflagname);
 			game[npoints]=myflagname;
 		}
 	}
 
     if (com == COM_SETGAMEPLUGINFILE) {
 		if (npoints<0 && !gamemode) {
-			mesg->WriteNextLine(MH_ERROR,"%s: game number (-n) not set",COM_SETGAMEPLUGINFILE_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: game number (-n) not set",COM_SETGAMEPLUGINFILE_CMD);
 		} else if (npoints<0 && gamemode) {
 			plugin[gamemode]=myflagname;
 		} else {
@@ -2788,7 +2627,7 @@ out:
 
 	if (com == COM_SETGAMESEARCHPATTERN) {
 		if (npoints<0 && !gamemode) {
-			mesg->WriteNextLine(MH_ERROR,"%s: game number (-n) not set",COM_SETGAMESEARCHPATTERN_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: game number (-n) not set",COM_SETGAMESEARCHPATTERN_CMD);
 		} else if (npoints<0 && gamemode) {
 			pattern[gamemode]=myflagname;
 		} else {
@@ -2798,7 +2637,7 @@ out:
 
 	if (com == COM_SETGAMESTDWS) {
 		if (npoints<0 && !gamemode) {
-			mesg->WriteNextLine(MH_ERROR,"%s: game number (-n) not set",COM_SETGAMESTDWS_CMD);
+			mesg->WriteNextLine(LOG_ERROR,"%s: game number (-n) not set",COM_SETGAMESTDWS_CMD);
 		} else if (npoints<0 && gamemode) {
 			std_ws[gamemode]=myflagname;
 		} else {
@@ -2811,17 +2650,17 @@ out:
 			gamemode = 0;
 			for (int i=0;i<MAX_GAMES;i++) {
 				if (game[i] && _stricmp(game[i],myflagname) == 0) {
-					mesg->WriteNextLine(MH_INFO,"%s: game set to %s (-n=%i)",COM_GAMEMODE_CMD,myflagname,i);
+					mesg->WriteNextLine(LOG_INFO,"%s: game set to %s (-n=%i)",COM_GAMEMODE_CMD,myflagname,i);
 					gamemode = i;
-					SetValue("_gamemode",game[gamemode]);
-					SetHidden("_gamemode");
+					utils->SetValue("_gamemode",game[gamemode]);
+					utils->SetHidden("_gamemode");
 				}
 			}
 			if (!gamemode)
-				mesg->WriteNextLine(MH_ERROR,"%s: game %s not defined",COM_GAMEMODE_CMD,myflagname);
+				mesg->WriteNextLine(LOG_ERROR,"%s: game %s not defined",COM_GAMEMODE_CMD,myflagname);
 		}
 		else
-			mesg->WriteNextLine(MH_ERROR,"%s: game not defined (needs -name)",COM_GAMEMODE_CMD,myflagname);
+			mesg->WriteNextLine(LOG_ERROR,"%s: game not defined (needs -name)",COM_GAMEMODE_CMD,myflagname);
 
 	}
 

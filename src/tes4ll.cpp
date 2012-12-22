@@ -23,6 +23,7 @@
 
 #include "..\externals\triangle\triangle.h"
 
+#include "..\include\llutils.h"
 #include "..\include\llmap.h"
 #include "..\include\llpointlist.h"
 #include "..\include\llpolygonlist.h"
@@ -49,7 +50,7 @@ int npoints = 1;
 #include "..\merged\tes4qlod.c"
 #endif
 
-int calltes4qlodwrapper(char *_command, llCommands *_batch) {
+int calltes4qlodwrapper(char *_command, llCommands *_batch, llUtils *_utils) {
 	char *mycommand = new char[strlen(_command)+1];
 	strcpy(mycommand,_command);
 	int argc = 1;
@@ -64,8 +65,8 @@ int calltes4qlodwrapper(char *_command, llCommands *_batch) {
 		} else if (mycommand[i]=='\"' ) found_quot = !found_quot;
 	}
 	for (int i=0;i<argc;i++) {
-		_batch->strip_spaces(&(argv[i]));
-		_batch->strip_quot(&(argv[i]));
+		_utils->StripSpaces(&(argv[i]));
+		_utils->StripQuot(&(argv[i]));
 	}
 #ifdef USE_TES4QLOD
 	if (strlen(_batch->install_dir)>0)
@@ -222,11 +223,11 @@ llLogger * mesg = NULL;
 
 void usage(void) {
 
-	mesg->WriteNextLine(MH_INFO,"Usage: tes4ll [-x xpos -y ypos] -b batchfile -f \"flags,flags,flags,...\" -w worldspace [heightmap.bmp]");
-	mesg->WriteNextLine(MH_INFO,"       xpos: x position of the lower left cell");
-	mesg->WriteNextLine(MH_INFO,"       batchfile: the name of the batch script");
-	mesg->WriteNextLine(MH_INFO,"       flags: the flags which are propagated to the batch script");
-	mesg->WriteNextLine(MH_INFO,"       heightmap.bmp: the heighmap in 32 bit");
+	mesg->WriteNextLine(LOG_INFO,"Usage: tes4ll [-x xpos -y ypos] -b batchfile -f \"flags,flags,flags,...\" -w worldspace [heightmap.bmp]");
+	mesg->WriteNextLine(LOG_INFO,"       xpos: x position of the lower left cell");
+	mesg->WriteNextLine(LOG_INFO,"       batchfile: the name of the batch script");
+	mesg->WriteNextLine(LOG_INFO,"       flags: the flags which are propagated to the batch script");
+	mesg->WriteNextLine(LOG_INFO,"       heightmap.bmp: the heighmap in 32 bit");
 	mesg->Dump();
 
 }
@@ -253,16 +254,16 @@ int WriteBMP(llMap *_heightmap,
 			}
 		}
 		if (!bmp_done) {
-			mesg->WriteNextLine(MH_INFO,"The bmp '%s' seems to be under water -> skipped compression, and deleted it",_filename);
+			mesg->WriteNextLine(LOG_INFO,"The bmp '%s' seems to be under water -> skipped compression, and deleted it",_filename);
 			return 0;
 		}
-		mesg->WriteNextLine(MH_INFO,"Generating %s",_filename);
+		mesg->WriteNextLine(LOG_INFO,"Generating %s",_filename);
 		mesg->Dump();
 
 		FILE *fptr;
 
 		if (fopen_s(&fptr,_filename,"wb")) {
-			mesg->WriteNextLine(MH_FATAL,"Unable to open BMP file '%s'\n",_filename);
+			mesg->WriteNextLine(LOG_FATAL,"Unable to open BMP file '%s'\n",_filename);
 			DumpExit();
 		}
 
@@ -298,7 +299,7 @@ int WriteBMP(llMap *_heightmap,
 		
 		/* Read and check the information header */
 		if (fwrite(&infoheader,sizeof(INFOHEADER),1,fptr) != 1) {
-			mesg->WriteNextLine(MH_FATAL,"Failed to write BMP info header");
+			mesg->WriteNextLine(LOG_FATAL,"Failed to write BMP info header");
 			DumpExit();
 		}
 
@@ -306,9 +307,9 @@ int WriteBMP(llMap *_heightmap,
 		float overdrawing = _batch->overdrawing;
 
 		if (_batch->lodshadows) {
-			mesg->WriteNextLine(MH_INFO,"Adding fake LOD shadows, 'north flip boost=%f'", _batch->overdrawing);
+			mesg->WriteNextLine(LOG_INFO,"Adding fake LOD shadows, 'north flip boost=%f'", _batch->overdrawing);
 		} else if (_batch->writenormalmap)
-			mesg->WriteNextLine(MH_INFO,"Contrast boost=%f", _batch->overdrawing);
+			mesg->WriteNextLine(LOG_INFO,"Contrast boost=%f", _batch->overdrawing);
 		mesg->Dump();
 
 		if (_batch->lodshadows) overdrawing=1.;
@@ -413,12 +414,12 @@ steigungs_loop:
 		if (strlen(_batch->dds_tool) > 1 && _compress) {
 			char command[1000];
 			sprintf_s(command,1000,"%s %s \n", _batch->dds_tool, _filename);
-			mesg->WriteNextLine(MH_INFO,"Executing '%s %s'", _batch->dds_tool, _filename);
+			mesg->WriteNextLine(LOG_INFO,"Executing '%s %s'", _batch->dds_tool, _filename);
 			mesg->Dump();
 			FILE *tes = _popen(command,"rt");
 			char c; 
 			if (tes==NULL) {
-				mesg->WriteNextLine(MH_ERROR,"Error calling '%s'",_batch->dds_tool);
+				mesg->WriteNextLine(LOG_ERROR,"Error calling '%s'",_batch->dds_tool);
 			} else {
 				int nn=0;
 				do {
@@ -474,7 +475,7 @@ void WriteNif(llPointList *_points, llTriangleList *_triangles, llMap *_heightma
 	}
 
 	if (!newpoints->GetN()) {
-		mesg->WriteNextLine(MH_WARNING,"The mesh %s is empty and was therefore not written",_filename);
+		mesg->WriteNextLine(LOG_WARNING,"The mesh %s is empty and was therefore not written",_filename);
 	    delete newpoints;
 	    return;
 	}
@@ -623,7 +624,7 @@ void WriteNif(llPointList *_points, llTriangleList *_triangles, llMap *_heightma
 
 		vector<Triangle> newt=node2_ptr->GetTriangles();
 
-		mesg->WriteNextLine(MH_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
+		mesg->WriteNextLine(LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
 			_filename, newt.size(), newpoints->GetVertices().size());
 
 		NifInfo info = NifInfo();
@@ -668,7 +669,7 @@ void WriteNif(llPointList *_points, llTriangleList *_triangles, llMap *_heightma
 
 		vector<Triangle> newt=node2_ptr->GetTriangles();
 
-		mesg->WriteNextLine(MH_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
+		mesg->WriteNextLine(LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
 			_filename, newt.size(), newpoints->GetVertices().size());
 
 		NifInfo info = NifInfo();
@@ -699,8 +700,9 @@ int main(int argc, char **argv) {
 	//char *worldspace="Tamriel";
 	
 	mesg = new llLogger();
-	llCommands * batch = new llCommands(mesg);
-	batch->SetValue("_worldspace","Tamriel");
+	llUtils    * utils = new llUtils();
+	llCommands * batch = new llCommands(mesg, utils);
+	utils->SetValue("_worldspace","Tamriel");
 
     std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@texnexus" << std::endl;
@@ -753,9 +755,9 @@ int main(int argc, char **argv) {
 				char *my_flag_list=new char[strlen(ptr)+2];
 				strcpy_s(my_flag_list,strlen(ptr)+1,ptr);
 				ptr = strtok_int(NULL, ',', &saveptr1);
-				batch->AddFlag(my_flag_list);
+				utils->AddFlag(my_flag_list);
 
-				mesg->WriteNextLine(MH_INFO,"Flag: %s",my_flag_list);
+				mesg->WriteNextLine(LOG_INFO,"Flag: %s",my_flag_list);
 			}
 		}
 
@@ -765,28 +767,28 @@ int main(int argc, char **argv) {
 
 		if (strcmp(argv[i],"-l")==0) {
 			list_string = argv[i+1];
-			mesg->WriteNextLine(MH_INFO,"Mod list: %s",list_string);
+			mesg->WriteNextLine(LOG_INFO,"Mod list: %s",list_string);
 		}
 
 		if (strcmp(argv[i],"-x")==0) {
 			sscanf_s(argv[i+1],"%i",&x_cell);
-			mesg->WriteNextLine(MH_INFO,"x corner: %i",x_cell);
+			mesg->WriteNextLine(LOG_INFO,"x corner: %i",x_cell);
 		}
 
 		if (strcmp(argv[i],"-y")==0) {
 			sscanf_s(argv[i+1],"%i",&y_cell);
-			mesg->WriteNextLine(MH_INFO,"y corner: %i",y_cell);
+			mesg->WriteNextLine(LOG_INFO,"y corner: %i",y_cell);
 		}
 
 		if (strcmp(argv[i],"-b")==0) {
 			batchname = argv[i+1];
-			mesg->WriteNextLine(MH_INFO,"Batch file: %s",batchname);
+			mesg->WriteNextLine(LOG_INFO,"Batch file: %s",batchname);
 		}
 
 		if (strcmp(argv[i],"-w")==0) {
 			//worldspace = argv[i+1];
-			batch->SetValue("_worldspace",argv[i+1]);
-			mesg->WriteNextLine(MH_INFO,"Worldspace: %s",batch->GetValue("_worldspace"));
+			utils->SetValue("_worldspace",argv[i+1]);
+			mesg->WriteNextLine(LOG_INFO,"Worldspace: %s",utils->GetValue("_worldspace"));
 		}
 	}
 
@@ -827,7 +829,7 @@ int main(int argc, char **argv) {
 
 	batch->install_dir="";
 
-	if (!batch->IsEnabled("_gamedir")) {
+	if (!utils->IsEnabled("_gamedir")) {
 		if( RegOpenKeyEx(    HKEY_LOCAL_MACHINE, 
 			"SOFTWARE\\Bethesda Softworks\\Oblivion",0, 
 			KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
@@ -836,21 +838,21 @@ int main(int argc, char **argv) {
 				(LPBYTE)rgValue,&size1);
 			char *oblivion_path = new char[strlen(rgValue)+2];
 			strcpy_s(oblivion_path,strlen(rgValue)+1,rgValue);
-			mesg->WriteNextLine(MH_INFO,"Game path is: %s",oblivion_path);
-			batch->SetValue("_gamedir",oblivion_path);
+			mesg->WriteNextLine(LOG_INFO,"Game path is: %s",oblivion_path);
+			utils->SetValue("_gamedir",oblivion_path);
 		} else {
-			mesg->WriteNextLine(MH_WARNING,"Game not installed, I will use the working directory.");
-			batch->SetValue("_gamedir",".");
+			mesg->WriteNextLine(LOG_WARNING,"Game not installed, I will use the working directory.");
+			utils->SetValue("_gamedir",".");
 			//DumpExit();
 		}
 		RegCloseKey(keyHandle);
 	} else {
-		mesg->WriteNextLine(MH_INFO,"Game path is: %s",batch->GetValue("_gamedir"));
+		mesg->WriteNextLine(LOG_INFO,"Game path is: %s",utils->GetValue("_gamedir"));
 	}
 
 	mesg->Dump();
 
-	mesg->WriteNextLine(MH_INFO,"****** Go into batch mode ******");
+	mesg->WriteNextLine(LOG_INFO,"****** Go into batch mode ******");
 
 	float minab=256;
 
@@ -888,14 +890,14 @@ int main(int argc, char **argv) {
 								(LPBYTE)rgValue,&size1); //win XP
 						}
 						if (strlen(rgValue) == 0) {
-							mesg->WriteNextLine(MH_FATAL,"Could not get Appdata path!");
+							mesg->WriteNextLine(LOG_FATAL,"Could not get Appdata path!");
 							DumpExit();
 						}
 						strcpy_s(oblivion_app_path,1024,rgValue);
-						mesg->WriteNextLine(MH_INFO,"Appdata path is: %s",oblivion_app_path);
+						mesg->WriteNextLine(LOG_INFO,"Appdata path is: %s",oblivion_app_path);
 				}     
 				else {
-					mesg->WriteNextLine(MH_FATAL,"Could not get Appdata path!");
+					mesg->WriteNextLine(LOG_FATAL,"Could not get Appdata path!");
 					DumpExit();
 				}
 				RegCloseKey(keyHandle);
@@ -903,20 +905,20 @@ int main(int argc, char **argv) {
 				sprintf_s(listname,2000,"%s\\Oblivion\\plugins.txt\0",oblivion_app_path);
 
 				if (fopen_s(&fesplist,listname,"r")) {
-					mesg->WriteNextLine(MH_FATAL,"Unable to open plugin file \"%s\"\n",listname);
+					mesg->WriteNextLine(LOG_FATAL,"Unable to open plugin file \"%s\"\n",listname);
 					DumpExit();
 				}
 				while (fgets(esp_list[num_esp],1000,fesplist)) {
 					if (esp_list[num_esp][0] != '#' && strlen(esp_list[num_esp])>5) {
 						//remove the trailing \n
 						if (num_esp==256) {
-							mesg->WriteNextLine(MH_FATAL,"Too many plugins\n");
+							mesg->WriteNextLine(LOG_FATAL,"Too many plugins\n");
 							DumpExit();
 						}
 						esp_list[num_esp][strlen(esp_list[num_esp])-1] = '\0';
 
 						if (strstr(esp_list[num_esp],",") > 0) {
-							mesg->WriteNextLine(MH_WARNING,"The esp '%s' contains an illegal character - skipped",
+							mesg->WriteNextLine(LOG_WARNING,"The esp '%s' contains an illegal character - skipped",
 								esp_list[num_esp]);
 						} else {
 							//cout << esp_list[num_esp];
@@ -926,7 +928,7 @@ int main(int argc, char **argv) {
 					}
 				}
 
-				mesg->WriteNextLine(MH_INFO,"%i plugins will be used",num_esp);
+				mesg->WriteNextLine(LOG_INFO,"%i plugins will be used",num_esp);
 
 				for (int i=0; i<num_esp;i++) {
 					//open the esp
@@ -936,7 +938,7 @@ int main(int argc, char **argv) {
 					wchar_t tmpName[2000]; 
 					swprintf(tmpName, 2000,L"%s", tmpName2); 
 					if (!GetFileAttributesEx(tmpName2,GetFileExInfoStandard,&fAt)) {
-						mesg->WriteNextLine(MH_FATAL,"The esp '%s' was not found",esp_list[i]);
+						mesg->WriteNextLine(LOG_FATAL,"The esp '%s' was not found",esp_list[i]);
 						//cout << GetLastError() << endl;
 						DumpExit();
 					}
@@ -964,8 +966,8 @@ int main(int argc, char **argv) {
 					for (unsigned int jj=0;jj<strlen(my_flag_list);jj++) {
 						if (*(my_flag_list+jj) == ' ') *(my_flag_list+jj)='_';
 					}
-					mesg->WriteNextLine(MH_INFO,"Flag: %s",my_flag_list);
-					batch->AddFlag(my_flag_list);
+					mesg->WriteNextLine(LOG_INFO,"Flag: %s",my_flag_list);
+					utils->AddFlag(my_flag_list);
 				}
 			} else { //list mod option -l provided
 				char *ptr;          
@@ -980,8 +982,8 @@ int main(int argc, char **argv) {
 						if (*(flag_list+j) == ' ') *(flag_list+j)='_';
 					}
 					ptr = strtok_int(NULL, ',', &saveptr1);
-					mesg->WriteNextLine(MH_INFO,"Flag: %s",flag_list);
-					batch->AddFlag(flag_list);
+					mesg->WriteNextLine(LOG_INFO,"Flag: %s",flag_list);
+					utils->AddFlag(flag_list);
 				}
 			}
 		}
@@ -989,14 +991,14 @@ int main(int argc, char **argv) {
 		if (com == COM_CALLTESANNWYN) {
 			char all[256*1000];
 			if (!list_string) {
-				sprintf_s(all,256*1000,"TESAnnwyn.exe -c -p 2 -b 32 -w %s \"%s",batch->GetValue("_worldspace"),esp_list_sorted[0]);
+				sprintf_s(all,256*1000,"TESAnnwyn.exe -c -p 2 -b 32 -w %s \"%s",utils->GetValue("_worldspace"),esp_list_sorted[0]);
 				for (int i=1;i<num_esp_sorted;i++) sprintf_s(all,256*1000,"%s,%s",all,esp_list_sorted[i]);
 				sprintf_s(all,256*1000,"%s\"\n",all);
 			} else {
-				sprintf_s(all,256*1000,"TESAnnwyn.exe -c -p 2 -b 32 -w \"%s\" \"%s\"",batch->GetValue("_worldspace"),list_string);				
+				sprintf_s(all,256*1000,"TESAnnwyn.exe -c -p 2 -b 32 -w \"%s\" \"%s\"",utils->GetValue("_worldspace"),list_string);				
 			}
 
-			mesg->WriteNextLine(MH_INFO,"Call Tesannwyn with the following command:\n%s",all);
+			mesg->WriteNextLine(LOG_INFO,"Call Tesannwyn with the following command:\n%s",all);
 			mesg->Dump();
 
 			//FILE *tes = _popen("TESAnnwyn.exe -c -p 2 -b 32 -w Tamriel Oblivion.esm","rt");
@@ -1007,7 +1009,7 @@ int main(int argc, char **argv) {
 			char testst[1000], testst2[1000];
 
 			if (tes==NULL) {
-				mesg->WriteNextLine(MH_FATAL,"Error calling Tesannwyn");
+				mesg->WriteNextLine(LOG_FATAL,"Error calling Tesannwyn");
 				DumpExit();
 			} else {
 				do {
@@ -1032,13 +1034,13 @@ int main(int argc, char **argv) {
 				} while (c != EOF);
 				fclose (tes);
 				if (seekmode!=-1) {
-					mesg->WriteNextLine(MH_FATAL,"Tesannwyn failed");
+					mesg->WriteNextLine(LOG_FATAL,"Tesannwyn failed");
 					DumpExit();
 				} else {
 					sscanf_s(testst2," (%i, %i)",&x_cell,&y_cell);
-					mesg->WriteNextLine(MH_INFO,"****** Tesannwyn finished ******");
-					mesg->WriteNextLine(MH_INFO,"x corner: %i",x_cell);
-					mesg->WriteNextLine(MH_INFO,"y corner: %i",y_cell);
+					mesg->WriteNextLine(LOG_INFO,"****** Tesannwyn finished ******");
+					mesg->WriteNextLine(LOG_INFO,"x corner: %i",x_cell);
+					mesg->WriteNextLine(LOG_INFO,"y corner: %i",y_cell);
 				}
 			}
 			tesannwyn_called = 1;
@@ -1053,23 +1055,23 @@ int main(int argc, char **argv) {
 			} else {
 				sprintf_s(int_list_string,256*1000,"%s",list_string);				
 			}
-			sprintf_s(all,256*1000,"tes4qlod.exe %s \"%s\" \"%s\" ",batch->tes4qlod_options,batch->GetValue("_worldspace"),int_list_string);	
-			mesg->WriteNextLine(MH_INFO,"Call build-in TES4qLOD with the following command:\n%s",all);
+			sprintf_s(all,256*1000,"tes4qlod.exe %s \"%s\" \"%s\" ",batch->tes4qlod_options,utils->GetValue("_worldspace"),int_list_string);	
+			mesg->WriteNextLine(LOG_INFO,"Call build-in TES4qLOD with the following command:\n%s",all);
 			mesg->Dump();
 			if (strlen(batch->dds_tool) > 1)
 				DDS_CONVERTOR = batch->dds_tool;
 			if (batch->tes4qlod_silent) verbosity = 0;
 			else verbosity = 1;
-			calltes4qlodwrapper(all, batch);
+			calltes4qlodwrapper(all, batch, utils);
 		} //end COM_CALLQLOD
 
 
 		if (com == COM_READBMP) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: reading the bitmap from file %s",COM_READBMP_CMD,bmpfilename);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: reading the bitmap from file %s",COM_READBMP_CMD,bmpfilename);
 			mesg->Dump();
 
 			if (!tesannwyn_called && calltesanwynn) {
-				mesg->WriteNextLine(MH_FATAL,"Before reading the bitmap, TESAnnwyn must be called.");
+				mesg->WriteNextLine(LOG_FATAL,"Before reading the bitmap, TESAnnwyn must be called.");
 				DumpExit();
 			}
 			//******************
@@ -1077,7 +1079,7 @@ int main(int argc, char **argv) {
 			//******************
 			
 			if (fopen_s(&fptr,bmpfilename,"rb")) {
-				mesg->WriteNextLine(MH_FATAL,"Unable to open BMP file \"%s\"",bmpfilename);
+				mesg->WriteNextLine(LOG_FATAL,"Unable to open BMP file \"%s\"",bmpfilename);
 				DumpExit();
 			}
 
@@ -1089,7 +1091,7 @@ int main(int argc, char **argv) {
 			ReadUShort(fptr,&header.type,0);
 			//fprintf(stderr,"ID is: %d, should be %d\n",header.type,'M'*256+'B');
 			ReadUInt(fptr,&header.size,0);
-			mesg->WriteNextLine(MH_INFO,"File size is %d bytes",header.size);
+			mesg->WriteNextLine(LOG_INFO,"File size is %d bytes",header.size);
 			ReadUShort(fptr,&header.reserved1,0);
 			ReadUShort(fptr,&header.reserved2,0);
 			ReadUInt(fptr,&header.offset,0);
@@ -1097,21 +1099,21 @@ int main(int argc, char **argv) {
 
 			/* Read and check the information header */
 			if (fread(&infoheader,sizeof(INFOHEADER),1,fptr) != 1) {
-				mesg->WriteNextLine(MH_FATAL,"Failed to read BMP info header");
+				mesg->WriteNextLine(LOG_FATAL,"Failed to read BMP info header");
 				DumpExit();
 			}
-			mesg->WriteNextLine(MH_INFO,"Image size = %d x %d",infoheader.width,infoheader.height);
-			mesg->WriteNextLine(MH_INFO,"Bits per pixel is %d",infoheader.bits);
+			mesg->WriteNextLine(LOG_INFO,"Image size = %d x %d",infoheader.width,infoheader.height);
+			mesg->WriteNextLine(LOG_INFO,"Bits per pixel is %d",infoheader.bits);
 
 			if (infoheader.bits != 32) {
-				mesg->WriteNextLine(MH_FATAL,"Not a 32-bit file");
+				mesg->WriteNextLine(LOG_FATAL,"Not a 32-bit file");
 				DumpExit();
 			}
 			int max = 0, min=0;
 			if (heightmap) {
 				//fprintf(stderr,"[Fatal] Called ReadHeightMap 2 times\n");
 				//exit(-1);
-				mesg->WriteNextLine(MH_INFO,"Delete old heightmap");
+				mesg->WriteNextLine(LOG_INFO,"Delete old heightmap");
 				if (der && der!=heightmap) delete der;
 				delete heightmap;
 				heightmap=NULL;
@@ -1139,7 +1141,7 @@ int main(int argc, char **argv) {
 			quady2=int(floor((float(batch->y2)/batch->quadsize_y)/batch->cellsize_y));
 
 			nquads=(quadx2-quadx1+1)*(quady2-quady1+1);
-			mesg->WriteNextLine(MH_INFO,"The map covers %i quads",nquads);
+			mesg->WriteNextLine(LOG_INFO,"The map covers %i quads",nquads);
 			quads= new llQuadList(mesg, nquads);
 			for (int ix=quadx1;ix<=quadx2;ix++) {
 				for (int iy=quady1;iy<=quady2;iy++) {
@@ -1190,7 +1192,7 @@ int main(int argc, char **argv) {
 					if (val < min) min=val;
 				}
 			}
-			mesg->WriteNextLine(MH_INFO,"Lowest point: %i, highest point: %i",min*8,max*8);
+			mesg->WriteNextLine(LOG_INFO,"Lowest point: %i, highest point: %i",min*8,max*8);
 
 			points    = new llPointList(npoints+4,quads);
 			polygons  = new llPolygonList(mesg,points,heightmap);
@@ -1207,12 +1209,12 @@ int main(int argc, char **argv) {
 			//******************
 			char all[256*1000];
 
-			mesg->WriteNextLine(MH_COMMAND,"%s: generate heightmap from esp/esm list",COM_GENERATEHEIGHTMAP_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: generate heightmap from esp/esm list",COM_GENERATEHEIGHTMAP_CMD);
 			mesg->Dump();
 
 			int max = 0, min=0;
 			if (heightmap) {
-				mesg->WriteNextLine(MH_INFO,"Delete old heightmap");
+				mesg->WriteNextLine(LOG_INFO,"Delete old heightmap");
 				if (der && der!=heightmap) delete der;
 				der=NULL;
 				delete heightmap;
@@ -1232,11 +1234,11 @@ int main(int argc, char **argv) {
 
 			verbosity = 0; //disable tes4qlod blabla
 			if (!batch->quick) {
-				sprintf_s(all,256*1000,"tes4qlod.exe -x \"%s\" \"%s\" ",batch->GetValue("_worldspace"),int_list_string);	
-				mesg->WriteNextLine(MH_INFO,"Call build-in TES4qLOD with the following command: '%s'",all);
+				sprintf_s(all,256*1000,"tes4qlod.exe -x \"%s\" \"%s\" ",utils->GetValue("_worldspace"),int_list_string);	
+				mesg->WriteNextLine(LOG_INFO,"Call build-in TES4qLOD with the following command: '%s'",all);
 				mesg->Dump();
 				
-				calltes4qlodwrapper(all, batch);
+				calltes4qlodwrapper(all, batch, utils);
 			}
 			//now I know the dimensions
 			if (batch->minheight>-999999.f)
@@ -1247,8 +1249,8 @@ int main(int argc, char **argv) {
 			heightmap->SetScaling(batch->npoints);
 			x_cell = min_x;
 			y_cell = min_y;
-			mesg->WriteNextLine(MH_INFO,"x corner: %i",x_cell);
-			mesg->WriteNextLine(MH_INFO,"y corner: %i",y_cell);
+			mesg->WriteNextLine(LOG_INFO,"x corner: %i",x_cell);
+			mesg->WriteNextLine(LOG_INFO,"y corner: %i",y_cell);
 
 			//caluclate coord system
 			x1 = x_cell*int(batch->cellsize_x);
@@ -1267,7 +1269,7 @@ int main(int argc, char **argv) {
 
 
 			nquads=(quadx2-quadx1+1)*(quady2-quady1+1);
-			mesg->WriteNextLine(MH_INFO,"The map covers %i quads",nquads);
+			mesg->WriteNextLine(LOG_INFO,"The map covers %i quads",nquads);
 			mesg->Dump();
 			quads= new llQuadList(mesg, nquads);
 			//quads= new llquadlist(1);
@@ -1293,10 +1295,10 @@ int main(int argc, char **argv) {
 			batch->gridy = batch->cellsize_y;
 
 			opt_read_heightmap = 1;
-			sprintf_s(all,256*1000,"tes4qlod.exe -x \"%s\" \"%s\" ",batch->GetValue("_worldspace"),int_list_string);	
-			mesg->WriteNextLine(MH_INFO,"I have generated the heightmap and call build-in TES4qLOD again for filling the heights");
+			sprintf_s(all,256*1000,"tes4qlod.exe -x \"%s\" \"%s\" ",utils->GetValue("_worldspace"),int_list_string);	
+			mesg->WriteNextLine(LOG_INFO,"I have generated the heightmap and call build-in TES4qLOD again for filling the heights");
 			mesg->Dump();
-			calltes4qlodwrapper(all, batch);
+			calltes4qlodwrapper(all, batch, utils);
 			verbosity = 1;
 			opt_read_heightmap = 0;
 
@@ -1332,7 +1334,7 @@ int main(int argc, char **argv) {
 				}
 			}
 #endif
-			mesg->WriteNextLine(MH_INFO,"Lowest point: %i, highest point: %i",min*8,max*8);
+			mesg->WriteNextLine(LOG_INFO,"Lowest point: %i, highest point: %i",min*8,max*8);
 
 			points    = new llPointList(npoints+4,quads);
 			polygons  = new llPolygonList(mesg,points,heightmap);
@@ -1343,25 +1345,25 @@ int main(int argc, char **argv) {
 
 
 		if (com == COM_EXIT) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: Bye...", COM_EXIT_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: Bye...", COM_EXIT_CMD);
 			DumpExit();
 		}
 
 		if (com == COM_SETPATH) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: change directory path to %s", COM_SETPATH_CMD, batch->myflagname);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: change directory path to %s", COM_SETPATH_CMD, batch->myflagname);
 			_chdir(batch->myflagname);
 		}
 
 		if (com == COM_SETGRID) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: -x=%.0f -y=%.0f",COM_SETGRID_CMD, batch->gridx, batch->gridy);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f",COM_SETGRID_CMD, batch->gridx, batch->gridy);
 			mesg->Dump();
 
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called after triangulation.",COM_SETGRID_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.",COM_SETGRID_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 
@@ -1381,17 +1383,17 @@ int main(int argc, char **argv) {
 
 		if (com == COM_SETGRIDBORDER) {
 			if (batch->zz1 > -999999.f)
-				mesg->WriteNextLine(MH_COMMAND,"%s: -x=%.0f -y=%.0f -min=%.0f", COM_SETGRIDBORDER_CMD, batch->gridx, batch->gridy, batch->zz1);
+				mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f -min=%.0f", COM_SETGRIDBORDER_CMD, batch->gridx, batch->gridy, batch->zz1);
 			else
-				mesg->WriteNextLine(MH_COMMAND,"%s: -x=%.0f -y=%.0f", COM_SETGRIDBORDER_CMD, batch->gridx, batch->gridy);
+				mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f", COM_SETGRIDBORDER_CMD, batch->gridx, batch->gridy);
 			mesg->Dump();
 
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called after triangulation.", COM_SETGRIDBORDER_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.", COM_SETGRIDBORDER_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -1425,10 +1427,10 @@ int main(int argc, char **argv) {
 
 			if (batch->usegameunits) batch->zmin /= 8.0f; //convert to heightmap units
 
-			mesg->WriteNextLine(MH_COMMAND,"%s: -x1=%.0f -y1=%.0f -x1=%.0f -y1=%.0f -z=%.0f", COM_SETHEIGHT_CMD,
+			mesg->WriteNextLine(LOG_COMMAND,"%s: -x1=%.0f -y1=%.0f -x1=%.0f -y1=%.0f -z=%.0f", COM_SETHEIGHT_CMD,
 				batch->x00, batch->x11, batch->y00, batch->y11, batch->zmin);
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 
@@ -1450,16 +1452,16 @@ int main(int argc, char **argv) {
 		}
 
 		if (com == COM_BREAKATGRID) {
-			mesg->WriteNextLine(MH_INFO,"%s: -x=%.0f -y=%.0f -max=%.0f -zmin=%.0f", COM_BREAKATGRID_CMD,
+			mesg->WriteNextLine(LOG_INFO,"%s: -x=%.0f -y=%.0f -max=%.0f -zmin=%.0f", COM_BREAKATGRID_CMD,
 				batch->gridx, batch->gridy, batch->max, batch->zmin);
 			mesg->Dump();
 
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"BreakAtGrid called after triangulation.");
+				mesg->WriteNextLine(LOG_FATAL,"BreakAtGrid called after triangulation.");
 				DumpExit();				
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			int gb_points=0;
@@ -1567,26 +1569,26 @@ int main(int argc, char **argv) {
 #endif
 				}
 			}
-			mesg->WriteNextLine(MH_INFO,"%i break vertices set",gb_points);
+			mesg->WriteNextLine(LOG_INFO,"%i break vertices set",gb_points);
 		}
 
 		if (com == COM_PANORAMA) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: -x=%.0f -y=%.0f", COM_PANORAMA_CMD, batch->gridx, batch->gridy);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f", COM_PANORAMA_CMD, batch->gridx, batch->gridy);
 			mesg->Dump();
 
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called after triangulation.", COM_PANORAMA_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.", COM_PANORAMA_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			float minab2 = 1024; //BUGBUG
 			int pan_points=0;
 
 			if (!heightmap->IsInMap(batch->gridx,batch->gridy)) {
-				mesg->WriteNextLine(MH_ERROR,"Point not in map");
+				mesg->WriteNextLine(LOG_ERROR,"Point not in map");
 				goto panorama_end;
 			}
 			float myz=heightmap->GetZ(batch->gridx,batch->gridy); 
@@ -1686,48 +1688,48 @@ int main(int argc, char **argv) {
 					}
 				} 		
 			} //for x
-			mesg->WriteNextLine(MH_INFO,"%i panorama vertices set",pan_points);
+			mesg->WriteNextLine(LOG_INFO,"%i panorama vertices set",pan_points);
 
 panorama_end: ;
 
 		}
 
 		if (com == COM_SETSINGLEPOINT) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: -x=%.0f -y=%.0f", COM_SETSINGLEPOINT_CMD, batch->gridx, batch->gridy);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f", COM_SETSINGLEPOINT_CMD, batch->gridx, batch->gridy);
 			mesg->Dump();
 
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called after triangulation.", COM_SETSINGLEPOINT_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.", COM_SETSINGLEPOINT_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
 			if (!heightmap->IsInMap(batch->gridx,batch->gridy)) {
-				mesg->WriteNextLine(MH_ERROR,"Point not in map");
+				mesg->WriteNextLine(LOG_ERROR,"Point not in map");
 			} else {
 				points->AddPoint(batch->gridx, batch->gridy, heightmap->GetZ(batch->gridx,batch->gridy));	
 			}
 		}
 
 		if (com == COM_READFILE) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: %s", COM_READFILE_CMD, batch->datafile);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: %s", COM_READFILE_CMD, batch->datafile);
 			mesg->Dump();
 
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called after triangulation.", COM_READFILE_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.", COM_READFILE_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			FILE *fptr_data;
 
 			if (fopen_s(&fptr_data,batch->datafile,"r")) {
-				mesg->WriteNextLine(MH_FATAL,"Unable to open Data file \"%s\"",batch->datafile);
+				mesg->WriteNextLine(LOG_FATAL,"Unable to open Data file \"%s\"",batch->datafile);
 				DumpExit();
 			}
 
@@ -1736,36 +1738,36 @@ panorama_end: ;
 			size_t size=1000;
 			int lp=0;
 			while (fgets(line,1000,fptr_data)) {
-				batch->strip_spaces(&linex);
+				utils->StripSpaces(&linex);
 				float x,y;
 				if ((strlen(linex)>2) && (linex[0]!=';') && (linex[0]!='#') && (linex[0]!='[')) {
 					if (sscanf_s(line,"%f %f",&x,&y) == 2) {
 						if (!heightmap->IsInMap(x,y)) {
-							mesg->WriteNextLine(MH_ERROR,"Point (%.0f,%.0f) not in map",x,y);
+							mesg->WriteNextLine(LOG_ERROR,"Point (%.0f,%.0f) not in map",x,y);
 						} else {
 							points->AddPoint(x,y,heightmap->GetZ(x,y));	
 							lp++;
 						}
 					} else 
-						mesg->WriteNextLine(MH_ERROR,"Syntax error in data file \"%s\" in the line: %i",batch->datafile,line);
+						mesg->WriteNextLine(LOG_ERROR,"Syntax error in data file \"%s\" in the line: %i",batch->datafile,line);
 				}
 			}
-			mesg->WriteNextLine(MH_INFO,"%s: %i vertex points added from data file %s", COM_READFILE_CMD, lp, batch->datafile);
+			mesg->WriteNextLine(LOG_INFO,"%s: %i vertex points added from data file %s", COM_READFILE_CMD, lp, batch->datafile);
 		}
 
 		if (com == COM_SETOPTION) {
 			if (batch->quadtreelevels > 1) {
 				quadtreelevels = batch->quadtreelevels;
 				batch->quadtreelevels = 1;
-				mesg->WriteNextLine(MH_INFO,"SetOption -quadtreelevels=%s", quadtreelevels);
+				mesg->WriteNextLine(LOG_INFO,"SetOption -quadtreelevels=%s", quadtreelevels);
 				quads->SubQuadLevels(quadtreelevels - 1);
 			}
 			if (batch->mindistance>0) {
-				mesg->WriteNextLine(MH_INFO,"SetOption -mindistance=%i", batch->mindistance);
+				mesg->WriteNextLine(LOG_INFO,"SetOption -mindistance=%i", batch->mindistance);
 				minab = float(batch->mindistance);
 			}
 			if (batch->nquadmax>0) {
-				mesg->WriteNextLine(MH_INFO,"SetOption -nquadmax=%i", batch->nquadmax);
+				mesg->WriteNextLine(LOG_INFO,"SetOption -nquadmax=%i", batch->nquadmax);
 				quads->SetMaxPoints(batch->nquadmax);
 			}
 			opt_size_x = batch->size_x;
@@ -1774,24 +1776,24 @@ panorama_end: ;
 		}
 
 		if (com == COM_FILTER) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: -n=%i", COM_FILTER_CMD, batch->npoints);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: -n=%i", COM_FILTER_CMD, batch->npoints);
 			mesg->Dump();
 			
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
 			der = heightmap->Filter(batch->npoints, int(batch->overwrite), batch);
 			der->MakeDerivative(batch->use16bit);
-			mesg->WriteNextLine(MH_COMMAND,"%s: done", COM_FILTER_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_FILTER_CMD);
 		}
 
 		if (com == COM_BREAKLINE) {
 			if (triangulation) {
-				mesg->WriteNextLine(MH_COMMAND,"%s, %i new triangles added", COM_BREAKLINE_CMD, triangles->DivideAtZ(batch->z,minab,heightmap));
+				mesg->WriteNextLine(LOG_COMMAND,"%s, %i new triangles added", COM_BREAKLINE_CMD, triangles->DivideAtZ(batch->z,minab,heightmap));
 			} else {
-				mesg->WriteNextLine(MH_COMMAND,"%s: -x=%.0f -y=%.0f -z=%.0f -offsetx=%.0f -offsety=%.0f", 
+				mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f -z=%.0f -offsetx=%.0f -offsety=%.0f", 
 					COM_BREAKLINE_CMD, batch->gridx, batch->gridy, batch->z, batch->offsetx, batch->offsety);
 			if (batch->findmin) mesg->AddToLine(" -findmin");
 			if (batch->findmax) mesg->AddToLine(" -findmax");
@@ -1800,7 +1802,7 @@ panorama_end: ;
 			mesg->Dump();
 
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 		    int con_points=0;
@@ -1854,7 +1856,7 @@ panorama_end: ;
 								if (numx) {
 									myx /= numx;
 								} else {
-									mesg->WriteNextLine(MH_WARNING,"ContourLine: contour not found for x");
+									mesg->WriteNextLine(LOG_WARNING,"ContourLine: contour not found for x");
 								}
 							}
 							int flag=1;
@@ -1946,7 +1948,7 @@ panorama_end: ;
 								if (numy) {
 									myy /= numy;
 								} else {
-									mesg->WriteNextLine(MH_WARNING,"ContourLine: contour not found for y");
+									mesg->WriteNextLine(LOG_WARNING,"ContourLine: contour not found for y");
 								}
 							}
 							int flag=1;
@@ -1989,20 +1991,20 @@ panorama_end: ;
 					}
 				}
 			}
-			mesg->WriteNextLine(MH_COMMAND,"%s: %i vertices set", COM_BREAKLINE_CMD, con_points);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: %i vertices set", COM_BREAKLINE_CMD, con_points);
 			}
 		}
 
 		if (com == COM_DIVIDEGRID) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: -x=%.0f -y=%.0f", COM_DIVIDEGRID_CMD, batch->gridx, batch->gridy);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f", COM_DIVIDEGRID_CMD, batch->gridx, batch->gridy);
 			mesg->Dump();
 
 			if (!triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called but no triangulation. Call MakeTriangulation before", COM_DIVIDEGRID_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called but no triangulation. Call MakeTriangulation before", COM_DIVIDEGRID_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2013,42 +2015,42 @@ panorama_end: ;
 			for (float x=floor(batch->x00/batch->gridx)*batch->gridx;x<=batch->x11;x+=batch->gridx) {
 				triangles->DivideAt(true,x,heightmap);    
 			}
-			mesg->WriteNextLine(MH_COMMAND,"%s: done", COM_DIVIDEGRID_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_DIVIDEGRID_CMD);
 		}
 
 		if (com == COM_BREAKFLATTRIANGLES) {
 			if (batch->Highest < batch->Lowest) {
-				mesg->WriteNextLine(MH_ERROR,"%s: Low must be lower as High", COM_BREAKFLATTRIANGLES_CMD);
+				mesg->WriteNextLine(LOG_ERROR,"%s: Low must be lower as High", COM_BREAKFLATTRIANGLES_CMD);
 			} else {
-				mesg->WriteNextLine(MH_COMMAND,"%s -low=%.0f, -high=%.0f, -z=%.0f", 
+				mesg->WriteNextLine(LOG_COMMAND,"%s -low=%.0f, -high=%.0f, -z=%.0f", 
 					COM_BREAKFLATTRIANGLES_CMD, batch->Lowest, batch->Highest,batch->z);
 				mesg->Dump();
-				mesg->WriteNextLine(MH_INFO,"%i triangles splitted",triangles->SplitFlatTriangles(batch->Lowest,batch->Highest,batch->z,heightmap));
+				mesg->WriteNextLine(LOG_INFO,"%i triangles splitted",triangles->SplitFlatTriangles(batch->Lowest,batch->Highest,batch->z,heightmap));
 			}
 
 			if (!triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called but no triangulation. Call MakeTriangulation before", COM_BREAKFLATTRIANGLES_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called but no triangulation. Call MakeTriangulation before", COM_BREAKFLATTRIANGLES_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}			
 		}
 
 		if (com == COM_REMOVEBROKENTRIANGLES) {
-			mesg->WriteNextLine(MH_COMMAND,"%s", COM_REMOVEBROKENTRIANGLES_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s", COM_REMOVEBROKENTRIANGLES_CMD);
 			mesg->Dump();
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
-			mesg->WriteNextLine(MH_COMMAND,"%s: %i triangles corrected", 
+			mesg->WriteNextLine(LOG_COMMAND,"%s: %i triangles corrected", 
 				COM_REMOVEBROKENTRIANGLES_CMD, triangles->RemoveBrokenTriangles(heightmap));
 		}
 
 		if (com == COM_DIVIDEAT) {
-			mesg->WriteNextLine(MH_COMMAND,"%s:", COM_DIVIDEAT_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s:", COM_DIVIDEAT_CMD);
 			if (batch->gridx>-1000000.) {
 				mesg->AddToLine(" -x=",batch->gridx);
 			}
@@ -2057,11 +2059,11 @@ panorama_end: ;
 			}
 
 			if (!triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_DIVIDEAT_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_DIVIDEAT_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			if (batch->gridx>-1000000.) {
@@ -2070,40 +2072,40 @@ panorama_end: ;
 			if (batch->gridy>-1000000.) {
 				triangles->DivideAt(false,batch->gridy,heightmap);    	    
 			}
-			mesg->WriteNextLine(MH_COMMAND,"%s: done", COM_DIVIDEAT_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_DIVIDEAT_CMD);
 		}
 
 		if (com == COM_DIVIDEBETWEEN) {
-			mesg->WriteNextLine(MH_COMMAND,"%s -x1=%f -y1=%f -x2=%f -y2=%f ", 
+			mesg->WriteNextLine(LOG_COMMAND,"%s -x1=%f -y1=%f -x2=%f -y2=%f ", 
 				COM_DIVIDEBETWEEN_CMD, batch->xx1, batch->yy1, batch->xx2, batch->yy2);		
 			mesg->Dump();	
 
 			if (!triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_DIVIDEBETWEEN_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_DIVIDEBETWEEN_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			triangles->DivideBetween((batch->xx1),(batch->yy1),(batch->xx2),(batch->yy2),heightmap);    	    			
-			mesg->WriteNextLine(MH_COMMAND,"%s: done", COM_DIVIDEBETWEEN_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_DIVIDEBETWEEN_CMD);
 		}
 
 		if (com == COM_DIVIDEATPOLGONBORDER) {
 			if (batch->polygon_name)
-				mesg->WriteNextLine(MH_COMMAND,"%s -name=%s", COM_DIVIDEATPOLGONBORDER_CMD, batch->polygon_name);			
+				mesg->WriteNextLine(LOG_COMMAND,"%s -name=%s", COM_DIVIDEATPOLGONBORDER_CMD, batch->polygon_name);			
 			else
-				mesg->WriteNextLine(MH_COMMAND,"%s", COM_DIVIDEATPOLGONBORDER_CMD);		
+				mesg->WriteNextLine(LOG_COMMAND,"%s", COM_DIVIDEATPOLGONBORDER_CMD);		
 			mesg->Dump();
 
 			if (!triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called without triangulation. Call MakeTriangulation before", 
+				mesg->WriteNextLine(LOG_FATAL,"%s called without triangulation. Call MakeTriangulation before", 
 					COM_DIVIDEATPOLGONBORDER_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2119,7 +2121,7 @@ panorama_end: ;
 						}
 					}				
 				} else {
-					mesg->WriteNextLine(MH_ERROR,"%s: Polygon not found.", COM_DIVIDEATPOLGONBORDER_CMD);
+					mesg->WriteNextLine(LOG_ERROR,"%s: Polygon not found.", COM_DIVIDEATPOLGONBORDER_CMD);
 				}
 			} else {
 				for (int i=0;i<polygons->GetSize();i++) {
@@ -2133,19 +2135,19 @@ panorama_end: ;
 					}	
 				}
 			}
-			mesg->WriteNextLine(MH_COMMAND,"%s: done", COM_DIVIDEATPOLGONBORDER_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_DIVIDEATPOLGONBORDER_CMD);
 		}
 
 		if (com == COM_STENCILPOLGON) {
-			mesg->WriteNextLine(MH_COMMAND,"%s (%s)", COM_STENCILPOLGON_CMD, batch->polygon_name);			
+			mesg->WriteNextLine(LOG_COMMAND,"%s (%s)", COM_STENCILPOLGON_CMD, batch->polygon_name);			
 			mesg->Dump();
 
 			if (!triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_STENCILPOLGON_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_STENCILPOLGON_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2182,39 +2184,39 @@ panorama_end: ;
 					}
 
 				}
-				mesg->WriteNextLine(MH_COMMAND,"%s: done", COM_STENCILPOLGON_CMD);
+				mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_STENCILPOLGON_CMD);
 			} else {
-				mesg->WriteNextLine(MH_ERROR,"%s: Polygon not found.", COM_STENCILPOLGON_CMD);
+				mesg->WriteNextLine(LOG_ERROR,"%s: Polygon not found.", COM_STENCILPOLGON_CMD);
 			}
 		}
 
 		if (com == COM_CREATEPOLYGON) {
-			mesg->WriteNextLine(MH_COMMAND,"%s (%s) -x1=%.0f -y1=%.0f -x2=%.0f -y2=%.0f ", COM_CREATEPOLYGON_CMD,
+			mesg->WriteNextLine(LOG_COMMAND,"%s (%s) -x1=%.0f -y1=%.0f -x2=%.0f -y2=%.0f ", COM_CREATEPOLYGON_CMD,
 				batch->polygon_name, batch->xx1,batch->yy1, batch->xx2,batch->yy2);			
 			mesg->Dump();
 			
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called after triangulation.", COM_CREATEPOLYGON_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.", COM_CREATEPOLYGON_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			polygons->AddPolygon((batch->xx1),(batch->yy1),(batch->xx2),(batch->yy2),batch->polygon_name);    	    			
 		}
 
 		if (com == COM_ADDVERTEXTOPOLYGON) {
-			mesg->WriteNextLine(MH_COMMAND,"%s (%s) -x=%.0f -y=%.0f ",
+			mesg->WriteNextLine(LOG_COMMAND,"%s (%s) -x=%.0f -y=%.0f ",
 				COM_ADDVERTEXTOPOLYGON_CMD, batch->polygon_name, batch->xx1,batch->yy1);	
 			mesg->Dump();
 			
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called after triangulation.", COM_ADDVERTEXTOPOLYGON_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.", COM_ADDVERTEXTOPOLYGON_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			polygons->AddVertexToPolygon((batch->xx1),(batch->yy1),batch->polygon_name);    	    			
@@ -2222,27 +2224,27 @@ panorama_end: ;
 
 		if (com == COM_READPOLYGONDATAFILE) {
 			if (!batch->polygon_name)
-				mesg->WriteNextLine(MH_COMMAND,"%s -filename=%s", COM_READPOLYGONDATAFILE, batch->datafile);			
+				mesg->WriteNextLine(LOG_COMMAND,"%s -filename=%s", COM_READPOLYGONDATAFILE_CMD, batch->datafile);			
 			else
-				mesg->WriteNextLine(MH_COMMAND,"%s -filename=%s -name=%s", COM_READPOLYGONDATAFILE, batch->datafile, batch->polygon_name);	
+				mesg->WriteNextLine(LOG_COMMAND,"%s -filename=%s -name=%s", COM_READPOLYGONDATAFILE_CMD, batch->datafile, batch->polygon_name);	
 			mesg->Dump();
 			
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called after triangulation.", COM_READPOLYGONDATAFILE);
+				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.", COM_READPOLYGONDATAFILE_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			if (!strlen(batch->datafile)) {
-				mesg->WriteNextLine(MH_FATAL,"No file name.");
+				mesg->WriteNextLine(LOG_FATAL,"No file name.");
 				DumpExit();
 			}
 			
 			FILE * file;
 			if (fopen_s(&file,batch->datafile,"r")) {
-				mesg->WriteNextLine(MH_ERROR,"Unable to open %s", batch->datafile);
+				mesg->WriteNextLine(LOG_ERROR,"Unable to open %s", batch->datafile);
 			} else {
 				char line[1000];
 				char *linenew;
@@ -2251,7 +2253,7 @@ panorama_end: ;
 				float x1,y1,x2,y2;
 				while (fgets(line,1000,file)) {
 					linenew = line;
-					batch->strip_spaces(&linenew);
+					utils->StripSpaces(&linenew);
 					if (strlen(linenew)) {
 						if (linenew[0] == '[') {
 							//new polygon name
@@ -2263,7 +2265,7 @@ panorama_end: ;
 						} else if (linenew[0] != '#' && linenew[0] != ';') {
 							//read coordinates
 							if (!current_polygon) {
-								mesg->WriteNextLine(MH_ERROR,"ReadPolygonDataFile: no polygon section for [%s]",linenew);
+								mesg->WriteNextLine(LOG_ERROR,"%s: no polygon section for [%s]", COM_READPOLYGONDATAFILE_CMD, linenew);
 							} else {
 								if (!batch->polygon_name || _stricmp(batch->polygon_name,current_polygon)==0) {
 									num_vertex++;
@@ -2286,7 +2288,7 @@ panorama_end: ;
 		}
 
 		if (com == COM_INACTIVATEALLVERTICES) {
-			mesg->WriteNextLine(MH_COMMAND,"%s", COM_INACTIVATEALLVERTICES_CMD);		
+			mesg->WriteNextLine(LOG_COMMAND,"%s", COM_INACTIVATEALLVERTICES_CMD);		
 			mesg->Dump();
 			for (int j=0;j<points->GetN();j++) {
 				points->SetInactive(j);
@@ -2295,26 +2297,26 @@ panorama_end: ;
 
 		if (com == COM_ACTIVATEVISIBLEVERTICES) {
 			if (batch->zz1<-999999 )  {
-				mesg->WriteNextLine(MH_WARNING,"%s: -z not set, I take the height.", COM_ACTIVATEVISIBLEVERTICES_CMD);
+				mesg->WriteNextLine(LOG_WARNING,"%s: -z not set, I take the height.", COM_ACTIVATEVISIBLEVERTICES_CMD);
 				batch->zz1 = heightmap->GetZ(batch->xx1,batch->yy1);
 			}
 			int n_rounds = 1;
 			if (batch->OptRadius > 0) {
 				n_rounds = 1 + 6;
-				mesg->WriteNextLine(MH_COMMAND,"%s -x=%.0f -y=%.0f -z=%.0f -radius=%.0f", COM_ACTIVATEVISIBLEVERTICES_CMD,
+				mesg->WriteNextLine(LOG_COMMAND,"%s -x=%.0f -y=%.0f -z=%.0f -radius=%.0f", COM_ACTIVATEVISIBLEVERTICES_CMD,
 					batch->xx1, batch->yy1, batch->zz1, batch->OptRadius);		
 			} else {
-				mesg->WriteNextLine(MH_COMMAND,"%s -x=%.0f -y=%.0f -z=%.0f", COM_ACTIVATEVISIBLEVERTICES_CMD,
+				mesg->WriteNextLine(LOG_COMMAND,"%s -x=%.0f -y=%.0f -z=%.0f", COM_ACTIVATEVISIBLEVERTICES_CMD,
 					batch->xx1,batch->yy1,batch->zz1);		
 			}
 			mesg->Dump();
 			
 			if (!triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_ACTIVATEVISIBLEVERTICES_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_ACTIVATEVISIBLEVERTICES_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2331,7 +2333,7 @@ panorama_end: ;
 					unsigned int current_step = (round * v) + i;
 					if ( ((current_step * 100) / total_steps) != last_step) {
 						last_step = (current_step * 100) / total_steps;
-						mesg->WriteNextLine(MH_INFO,"%i percent complete",last_step);
+						mesg->WriteNextLine(LOG_INFO,"%i percent complete",last_step);
 						mesg->Dump();
 					}
 
@@ -2381,15 +2383,15 @@ panorama_end: ;
 		}
 
 		if (com == COM_REMOVEINACTIVETRIANGLES) {
-			mesg->WriteNextLine(MH_COMMAND,"%s", COM_REMOVEINACTIVETRIANGLES_CMD);	
+			mesg->WriteNextLine(LOG_COMMAND,"%s", COM_REMOVEINACTIVETRIANGLES_CMD);	
 			mesg->Dump();
 
 			if (!triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_REMOVEINACTIVETRIANGLES_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called without triangulation. Call MakeTriangulation before", COM_REMOVEINACTIVETRIANGLES_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			int v = triangles->GetN();
@@ -2405,19 +2407,19 @@ panorama_end: ;
 					i--;v--;num++;
 				}
 			}
-			mesg->WriteNextLine(MH_INFO,"%s: %i triangles removed", COM_REMOVEINACTIVETRIANGLES_CMD, num);
+			mesg->WriteNextLine(LOG_INFO,"%s: %i triangles removed", COM_REMOVEINACTIVETRIANGLES_CMD, num);
 		}
 
 		if (com == COM_TRIANGULATION) {
-			mesg->WriteNextLine(MH_COMMAND,"%s: Start Delaunay triangulation", COM_TRIANGULATION_CMD);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: Start Delaunay triangulation", COM_TRIANGULATION_CMD);
 			mesg->Dump();
 
 			if (triangulation) {
-				mesg->WriteNextLine(MH_FATAL,"Triangulation already done.");
+				mesg->WriteNextLine(LOG_FATAL,"Triangulation already done.");
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			int good_flag=1;
@@ -2444,7 +2446,7 @@ panorama_end: ;
 			}
 			in.numberofpoints = rnum;
 			
-			mesg->WriteNextLine(MH_INFO,"Number of vertices forwarded to Delaunay algorithm: %i",rnum);
+			mesg->WriteNextLine(LOG_INFO,"Number of vertices forwarded to Delaunay algorithm: %i",rnum);
 
 			mid.pointlist = (REAL *) NULL;            /* Not needed if -N switch used. */
 			/* Not needed if -N switch used or number of point attributes is zero: */
@@ -2472,8 +2474,8 @@ panorama_end: ;
 			/*   zero (z), assign a regional attribute to each element (A), and  */
 			/*   produce an edge list (e), a Voronoi diagram (v), and a triangle */
 			/*   neighbor list (n).   */
-			mesg->WriteNextLine(MH_INFO,"Call Triangle algorithm");
-			mesg->WriteNextLine(MH_INFO,"(written by by J. R. Shewchuk, see README)");
+			mesg->WriteNextLine(LOG_INFO,"Call Triangle algorithm");
+			mesg->WriteNextLine(LOG_INFO,"(written by by J. R. Shewchuk, see README)");
 			mesg->Dump();
 			//triangulate("pczAevn", &in, &mid, &vorout);
 			triangulate("-YY -D -z -A -v -S0", &in, &mid, &vorout);
@@ -2482,7 +2484,7 @@ panorama_end: ;
 
 			int ntri = mid.numberoftriangles;
 
-			mesg->WriteNextLine(MH_INFO,"Number of triangles in entire worldspace: %i",ntri);
+			mesg->WriteNextLine(LOG_INFO,"Number of triangles in entire worldspace: %i",ntri);
 
 			for (int i = 0; i < ntri; i++) {
 				int new_num1 = mid.trianglelist[i * 3];
@@ -2493,20 +2495,20 @@ panorama_end: ;
 			}
 
 			if (!good_flag) {
-				mesg->WriteNextLine(MH_ERROR,"Triangulation (partly) failed.");
+				mesg->WriteNextLine(LOG_ERROR,"Triangulation (partly) failed.");
 			}
 		}
 
 		if (com == COM_WRITEQUAD || com == COM_WRITEALLQUADS) {
-			mesg->WriteNextLine(MH_COMMAND,"%s", batch->CurrentCommand);
+			mesg->WriteNextLine(LOG_COMMAND,"%s", batch->CurrentCommand);
 			mesg->Dump();
 
 			if (!triangulation && !batch->writenormalmap && !batch->writeheightmap) {
-				mesg->WriteNextLine(MH_FATAL,"%s called but no triangulation. Call %s before", batch->CurrentCommand, COM_TRIANGULATION_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called but no triangulation. Call %s before", batch->CurrentCommand, COM_TRIANGULATION_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			if (com == COM_WRITEALLQUADS) quads->Reset();
@@ -2576,7 +2578,7 @@ writequadsloop:
 					if (strlen(batch->install_dir) && bmp_done) {
 						remove (filename2);
 						if ((rename (filename1, filename2)) != 0) {
-							mesg->WriteNextLine(MH_ERROR,"Could not move %s to %s",filename1,filename2);
+							mesg->WriteNextLine(LOG_ERROR,"Could not move %s to %s",filename1,filename2);
 						}						
 						
 					}
@@ -2589,15 +2591,15 @@ writequadsloop:
 		}
 
 		if (com == COM_WRITEALL) {
-			mesg->WriteNextLine(MH_COMMAND,"%s", batch->CurrentCommand);
+			mesg->WriteNextLine(LOG_COMMAND,"%s", batch->CurrentCommand);
 			mesg->Dump();
 
 			if (!triangulation && !batch->writenormalmap && !batch->writeheightmap) {
-				mesg->WriteNextLine(MH_FATAL,"%s called but no triangulation. Call %s before", batch->CurrentCommand, COM_TRIANGULATION_CMD);
+				mesg->WriteNextLine(LOG_FATAL,"%s called but no triangulation. Call %s before", batch->CurrentCommand, COM_TRIANGULATION_CMD);
 				DumpExit();
 			}
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			char * texname=NULL;
@@ -2610,7 +2612,7 @@ writequadsloop:
 						sprintf_s(filename,1000,"%s",batch->optname);
 					} else {
 						if (strlen(batch->install_dir))
-							sprintf_s(filename,1000,"%s\\%s.nif",batch->install_dir,batch->GetValue("_worldspace"));
+							sprintf_s(filename,1000,"%s\\%s.nif",batch->install_dir,utils->GetValue("_worldspace"));
 						else
 							sprintf_s(filename,1000,"%s.nif",batch->worldname);
 					}
@@ -2620,7 +2622,7 @@ writequadsloop:
 						sprintf_s(filename,1000,"%s",batch->optname);
 					} else {
 						if (strlen(batch->install_dir))
-							sprintf_s(filename,1000,"%s\\%s_tex.nif",batch->install_dir,batch->GetValue("_worldspace"));
+							sprintf_s(filename,1000,"%s\\%s_tex.nif",batch->install_dir,utils->GetValue("_worldspace"));
 						else
 							sprintf_s(filename,1000,"%s_tex.nif",batch->worldname);
 					}
@@ -2646,9 +2648,9 @@ writequadsloop:
 				char filename1[1000];
 				char filename2[1000];
 				if (strlen(batch->install_dir))
-					sprintf_s(filename2,1000,"%s\\%sMap_fn.dds",batch->install_dir,batch->GetValue("_worldspace"));
-				sprintf_s(filename,1000,"%sMap_fn.bmp",batch->GetValue("_worldspace"));
-				sprintf_s(filename1,1000,"%sMap_fn.dds",batch->GetValue("_worldspace"));
+					sprintf_s(filename2,1000,"%s\\%sMap_fn.dds",batch->install_dir,utils->GetValue("_worldspace"));
+				sprintf_s(filename,1000,"%sMap_fn.bmp",utils->GetValue("_worldspace"));
+				sprintf_s(filename1,1000,"%sMap_fn.dds",utils->GetValue("_worldspace"));
 				if (strlen(batch->install_dir)) {
 					remove (filename);
 				}
@@ -2660,7 +2662,7 @@ writequadsloop:
 						sprintf_s(filename2,1000,"%s",batch->optname);
 					} 
 					if ((rename (filename1, filename2)) != 0) {
-						mesg->WriteNextLine(MH_ERROR,"Could not move %s to %s",filename1,filename2);
+						mesg->WriteNextLine(LOG_ERROR,"Could not move %s to %s",filename1,filename2);
 						mesg->Dump();
 					}						
 				}
@@ -2670,11 +2672,11 @@ writequadsloop:
 
 		if ((com == COM_SETPOINTS) || (com == COM_SETPOINTSPERQUAD) || 
 			(com == COM_SETMAXPOINTS) || (com == COM_SETMAXPOINTSPERQUAD)) {
-				mesg->WriteNextLine(MH_COMMAND,"%s: -n=%i", batch->CurrentCommand, batch->npoints);
+				mesg->WriteNextLine(LOG_COMMAND,"%s: -n=%i", batch->CurrentCommand, batch->npoints);
 				mesg->Dump();
 
 				if (!heightmap) {
-					mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+					mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 					DumpExit();
 				}
 
@@ -2688,7 +2690,7 @@ setquadsloop:
 					mynum -= quad->GetPoints();
 #endif
 					mynum -= gen_npoints;
-					mesg->WriteNextLine(MH_INFO,"Vertices left to be placed: %i",mynum);
+					mesg->WriteNextLine(LOG_INFO,"Vertices left to be placed: %i",mynum);
 				}
 
 				llQuad * my_quad = NULL;
@@ -2702,13 +2704,13 @@ setquadsloop:
 					batch->quadx = float(quads->GetCurrentX());
 					batch->quady = float(quads->GetCurrentY());
 
-					mesg->WriteNextLine(MH_INFO,"Current quad: x=%.0f,y=%.0f",batch->quadx,batch->quady);
+					mesg->WriteNextLine(LOG_INFO,"Current quad: x=%.0f,y=%.0f",batch->quadx,batch->quady);
 
 					if (com == COM_SETMAXPOINTSPERQUAD) {
 						my_quad = 
 							quads->GetQuad((batch->x00+batch->x11)/2, (batch->y00+batch->y11)/2);
 						mynum -= my_quad->GetNumPoints();
-						mesg->WriteNextLine(MH_INFO,"Vertices left to be placed: %i",mynum);
+						mesg->WriteNextLine(LOG_INFO,"Vertices left to be placed: %i",mynum);
 					}
 
 					if (batch->x00<float(batch->x1)) batch->x00=float(batch->x1);
@@ -2717,12 +2719,12 @@ setquadsloop:
 					if (batch->y11>float(batch->y2)) batch->y11=float(batch->y2);
 					int mynum2 = int(float(mynum)*((batch->x11-batch->x00)*(batch->y11-batch->y00))/(batch->cellsize_x*batch->quadsize_x*batch->cellsize_y*batch->quadsize_y));
 					if (mynum2<mynum)
-						mesg->WriteNextLine(MH_INFO,"Partly filled quad: vertices reduced to: %i",mynum2);
+						mesg->WriteNextLine(LOG_INFO,"Partly filled quad: vertices reduced to: %i",mynum2);
 					mynum=mynum2;
 				}
 
 				if (alg_list.size() == 0) {
-					mesg->WriteNextLine(MH_ERROR,"%s: no algorithm specified", batch->CurrentCommand);
+					mesg->WriteNextLine(LOG_ERROR,"%s: no algorithm specified", batch->CurrentCommand);
 					goto end;
 				}
 
@@ -2730,7 +2732,7 @@ setquadsloop:
 					int maxtry=0,maxtry_total=0;
 					mesg->Dump();
 					if ((num_point % 1000) == 0 && num_point) 
-						mesg->WriteNextLine(MH_INFO,"[%i]",num_point);
+						mesg->WriteNextLine(LOG_INFO,"[%i]",num_point);
 			
 loop:	    
 					float x=float((batch->x11 - batch->x00) * float(rand())/float(RAND_MAX)) + batch->x00;
@@ -2748,7 +2750,7 @@ loop:
 					}
 
 					if (empty>1000) {
-						mesg->WriteNextLine(MH_WARNING,"This quad seems to be empty, skipped after %i vertices",num_point);
+						mesg->WriteNextLine(LOG_WARNING,"This quad seems to be empty, skipped after %i vertices",num_point);
 						goto end;
 					} else if (value<0.0000001) { //filter very small
 						empty++;
@@ -2792,7 +2794,7 @@ loop:
 								maxtry_total++;
 								goto loop;
 							} else {
-								mesg->WriteNextLine(MH_WARNING,"Mesh is too dense: quad aborted after %i vertices",num_point);
+								mesg->WriteNextLine(LOG_WARNING,"Mesh is too dense: quad aborted after %i vertices",num_point);
 								goto end;
 							}
 						}
@@ -2802,7 +2804,7 @@ loop:
 							maxtry_total++;
 							goto loop;
 						} else {
-							mesg->WriteNextLine(MH_WARNING,"Mesh is too dense: quad aborted after %i vertices",num_point);
+							mesg->WriteNextLine(LOG_WARNING,"Mesh is too dense: quad aborted after %i vertices",num_point);
 							goto end;
 						}
 					}
@@ -2815,11 +2817,11 @@ end:
 		llAlg * alg = NULL;
 
 		if (com == COM_ALGCONST) {
-			mesg->WriteNextLine(MH_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALGCONST_CMD, batch->add, batch->multiply);
+			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALGCONST_CMD, batch->add, batch->multiply);
 			mesg->Dump();
 
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2831,11 +2833,11 @@ end:
 		}
 
 		if (com == COM_ALG1ST) {
-			mesg->WriteNextLine(MH_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALG1ST_CMD, batch->add, batch->multiply);
+			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALG1ST_CMD, batch->add, batch->multiply);
 			mesg->Dump();
 
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2847,11 +2849,11 @@ end:
 		}
 
 		if (com == COM_ALG2ND) {
-			mesg->WriteNextLine(MH_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALG2ND_CMD, batch->add, batch->multiply);
+			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALG2ND_CMD, batch->add, batch->multiply);
 			mesg->Dump();
 
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2863,12 +2865,12 @@ end:
 		}
 
 		if (com == COM_ALGSLOPE ) {
-			mesg->WriteNextLine(MH_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f -highest=%.0f -minval=%.0f -maxval=%.0f",
+			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f -highest=%.0f -minval=%.0f -maxval=%.0f",
 				COM_ALGSLOPE_CMD, batch->add, batch->multiply, batch->Lowest, batch->Highest, batch->ValueAtLowest, batch->ValueAtHighest);
 			mesg->Dump();
 
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2884,13 +2886,13 @@ end:
 		}
 
 		if (com == COM_ALGRADIAL ) {
-			mesg->WriteNextLine(MH_ALGORITHM,"%s: -add=%f -multiply=%f -near=%.0f -far=%.0f -minval=%.0f -maxval=%.0f -x=%.0f -y=%.0f",
+			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f -near=%.0f -far=%.0f -minval=%.0f -maxval=%.0f -x=%.0f -y=%.0f",
 				COM_ALGRADIAL_CMD, batch->add, batch->multiply, batch->Lowest, batch->Highest, batch->ValueAtLowest,
 				batch->ValueAtHighest, batch->xx1,batch->yy1);
 			mesg->Dump();
 
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2908,12 +2910,12 @@ end:
 		}
 
 		if ( com == COM_ALGSTRIPE) {
-			mesg->WriteNextLine(MH_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f -highest=%.0f -minval=%.0f -maxval=%.0f",
+			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f -highest=%.0f -minval=%.0f -maxval=%.0f",
 				COM_ALGSTRIPE_CMD, batch->add, batch->multiply, batch->Lowest, batch->Highest, batch->ValueAtLowest, batch->ValueAtHighest);
 			mesg->Dump();
 
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2929,12 +2931,12 @@ end:
 		}
 
 		if ( com == COM_ALGPEAKFINDER) {
-			mesg->WriteNextLine(MH_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f radius=%.0f -scanradius=%.0f -minval=%.0f -maxval=%.0f",
+			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f radius=%.0f -scanradius=%.0f -minval=%.0f -maxval=%.0f",
 				COM_ALGPEAKFINDER_CMD, batch->add, batch->multiply, batch->Lowest, batch->Radius, batch->Scanradius, batch->ValueAtLowest, batch->ValueAtHighest);
 			mesg->Dump();
 
 			if (!heightmap) {
-				mesg->WriteNextLine(MH_FATAL,"No heightmap present.");
+				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 			
@@ -2951,6 +2953,8 @@ end:
 			alg_list[alg_counter++] = alg2;
 			if (alg_counter == alg_list.size()) alg_list.resize(alg_counter + 100);
 		}
+
+		mesg->Dump();
 
 		FILETIME userTime_old = userTime;
 
@@ -2974,8 +2978,6 @@ end:
 			strcpy_s(time_statistics_cmdname[time_statistics_pointer],strlen(batch->CurrentCommand)+1,batch->CurrentCommand);
 			time_statistics_pointer++;
 		}
-
-		mesg->Dump();
 	}
 
 	std::cout << "****** Batch loop done ******" << std::endl;

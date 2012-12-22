@@ -1755,6 +1755,9 @@
     <ClInclude Include="merged\strtok_r.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\llutils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\niflib\src\kfm.cpp">
@@ -3468,6 +3471,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="externals\triangle\triangle.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

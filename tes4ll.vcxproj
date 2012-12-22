@@ -590,6 +590,7 @@
     <ClInclude Include="include\llpolygonlist.h" />
     <ClInclude Include="include\llquadlist.h" />
     <ClInclude Include="include\lltrianglelist.h" />
+    <ClInclude Include="include\llutils.h" />
     <ClInclude Include="merged\strtok_r.h" />
   </ItemGroup>
   <ItemGroup>
@@ -1163,6 +1164,7 @@
     <ClCompile Include="src\llpolygonlist.cpp" />
     <ClCompile Include="src\llquadlist.cpp" />
     <ClCompile Include="src\lltrianglelist.cpp" />
+    <ClCompile Include="src\llutils.cpp" />
     <ClCompile Include="src\tes4ll.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -1229,6 +1231,7 @@
       <LargeAddressAware>true</LargeAddressAware>
       <AdditionalDependencies>Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <StackReserveSize>10000000</StackReserveSize>
+      <GenerateMapFile>true</GenerateMapFile>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -10,68 +10,78 @@
 
 
 class llShortarray {
+
 private:
-	short *myarray;
-	float *testarray;
+
+	short *my_shortarray;
+	float *my_longarray;
 	int mysize;
-	int out_of_bounds,num_total;
+	int out_of_bounds, num_total;
 
 public:
 
 	llShortarray();
 	~llShortarray() {
-		if (myarray) delete[] myarray;
-		if (testarray) delete[] testarray;
+		if (my_shortarray) delete[] my_shortarray;
+		if (my_longarray)  delete[] my_longarray;
 	}
 
-	llShortarray(int _size, int _makeshort=0, float _default = 0) {
-		myarray=NULL;
-		testarray=NULL;
+	llShortarray(int _size, int _makeshort = 0, float _default = 0) {
+		my_shortarray = NULL;
+		my_longarray  = NULL;
 		if (_makeshort)
-			myarray = new short[_size];
+			my_shortarray = new (std::nothrow) short[_size];
 		else
-			testarray = new float[_size];
-		mysize        = _size;
-		out_of_bounds = num_total = 0;
-		for (int i=0; i < _size ; i++) {
-			SetElement(i, _default);
+			my_longarray  = new (std::nothrow) float[_size];
+
+		if (my_shortarray || my_longarray) {
+			mysize        = _size;
+			out_of_bounds = num_total = 0;
+			for (int i=0; i < _size ; i++) {
+				SetElement(i, _default);
+			}
+		} else {
+			mysize = 0;
 		}
+
 	}
 
 	int SetElement(int _x, float _val) {
 
-		if (testarray) {
-			testarray[_x] = _val;
+		if ((!my_shortarray && !my_longarray) || !mysize) return 0;
+
+		if (my_longarray) {
+			my_longarray[_x] = _val;
 			return 1;
 		}
-		if (_val> 122872  && myarray) {out_of_bounds++;_val=122872;}
-		if (_val< -122880 && myarray) {out_of_bounds++;_val=-122880;}	
+		if (_val > 122872  && my_shortarray) {out_of_bounds++;_val=122872;}
+		if (_val < -122880 && my_shortarray) {out_of_bounds++;_val=-122880;}	
 		
 		num_total++;
 
 		float mult=1;
 		if (_val<0) mult=-1;
 		if (fabs(_val)<8192.5)
-			myarray[_x]=short(_val);
+			my_shortarray[_x]=short(_val);
 		else if (fabs(_val) < 24574.5)
-			myarray[_x]=short((_val - mult*8192)/2 + mult*8192);
+			my_shortarray[_x]=short((_val - mult*8192)/2 + mult*8192);
 		else if (fabs(_val) < 57340.5)
-			myarray[_x]=short((_val - mult*24576)/4 + mult*16384);
+			my_shortarray[_x]=short((_val - mult*24576)/4 + mult*16384);
 		else 
-			myarray[_x]=short((_val - mult*57344)/8 + mult*24576);
+			my_shortarray[_x]=short((_val - mult*57344)/8 + mult*24576);
 		return 1;
 	}
 
 	void Print(char *_st, llLogger *_mesg) {
 		if (_mesg) {
-			if (testarray) _mesg->WriteNextLine(MH_INFO,"Array '%s' has 32 bit floats",_st);
-			if (myarray)   _mesg->WriteNextLine(MH_INFO,"Array '%s' has 16 bit shorts",_st);
+			if (my_longarray)  _mesg->WriteNextLine(LOG_INFO,"Array '%s' has 32 bit floats",_st);
+			if (my_shortarray) _mesg->WriteNextLine(LOG_INFO,"Array '%s' has 16 bit shorts",_st);
 			if (out_of_bounds) {
-				_mesg->WriteNextLine(MH_INFO,"Array '%s' has %i elements, out of which %i had to be truncated",_st,num_total,out_of_bounds);
+				_mesg->WriteNextLine(LOG_INFO,"Array '%s' has %i elements, out of which %i had to be truncated",_st,num_total,out_of_bounds);
 			}
 		} else {
-			if (testarray) std::cout << "[Info] Array '"<< _st <<"' has 32 bit floats" <<  std::endl;
-			if (myarray) std::cout << "[Info] Array '"<< _st <<"' has 16 bit shorts" <<  std::endl;
+			if (my_longarray)  std::cout << "[Info] Array '"<< _st <<"' has 32 bit floats" <<  std::endl;
+			if (my_shortarray) std::cout << "[Info] Array '"<< _st <<"' has 16 bit shorts" <<  std::endl;
 			if (out_of_bounds) {
 				std::cout << "[Info] Array '"<< _st <<"' has "  << num_total 
 					<< " elements, out of which " << out_of_bounds  <<  " had to be truncated" <<  std::endl;
@@ -84,7 +94,7 @@ public:
 			std::cout << "[Fatal] Index "  << _x << " out of bounds" <<  std::endl;
 			exit(1);
 		}
-		if (testarray) return testarray[_x];
+		if (my_longarray) return my_longarray[_x];
 		float val;
 
 		// Range
@@ -93,7 +103,7 @@ public:
 // 16384-24575 : 24576-57340 (x4)
 // 24576-32767 : 57344-122880 (x8)
 		
-		short y = myarray[_x];
+		short y = my_shortarray[_x];
 		short mult = 1;
 		if (y<0) mult=-1;
 

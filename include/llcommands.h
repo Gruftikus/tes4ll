@@ -184,9 +184,8 @@
 #include <stdarg.h>
 
 #include "../include/lllogger.h"
+#include "../include/llutils.h"
 
-
-char *strtok_int(char *_ptr, const char _delim, char **_saveptr1);
 
 class llCommands {
 
@@ -196,24 +195,18 @@ class llCommands {
 	FILE * logfile;
 	char * filename;
 	llLogger *mesg;
+	llUtils  *utils;
 	char * lines[MAX_LINES];
 	unsigned int num_lines, line_pointer;
 	
-	char *flag_list[MAX_FLAGS];
-	const char *flag_value[MAX_FLAGS];
-	char *flag_description[MAX_FLAGS]; //for dropdowns
-	int flag_enable[MAX_FLAGS];
-	int flag_hidden[MAX_FLAGS];
-	unsigned int num_flags;
-
 	char * crunch_string, *crunch_saveptr, *crunch_current;
 
  public:
 
     //constructor
-    llCommands(llLogger *_mesg, FILE *_file, char *_section = NULL);
-	llCommands(llLogger *_mesg, const char *_file, char *_section = NULL);
-	llCommands(llLogger *_mesg);
+    llCommands(llLogger *_mesg, llUtils *_utils,  FILE *_file, char *_section = NULL);
+	llCommands(llLogger *_mesg, llUtils *_utils, const char *_file, char *_section = NULL);
+	llCommands(llLogger *_mesg, llUtils *_utils);
 	int Reopen(char *_section);
 	int Open(const char *_file, char *_section = NULL);
 	int ReadCache(void);
@@ -225,12 +218,7 @@ class llCommands {
     int GetCommand(void);
 	void Init(void);
 
-	int CrunchStart(char *_s);
-	int CrunchNext(void);
-	char *CrunchCurrent(void) {return crunch_current;};
-
-
-    int x1,y1,x2,y2; //coordinate system
+	int x1,y1,x2,y2; //coordinate system
     float x00,y00,x11,y11; //focus
     float gridx,gridy,z,offsetx, offsety;
 	float xx1,xx2,yy1,yy2, zz1, zz2; //tool variables
@@ -272,174 +260,6 @@ class llCommands {
 	int vdist;
 	int hidden;
 	float bmpscaling;
-
-	//tool functions used everywhere:
-	void strip_quot(char **_tmp);
-	void strip_spaces(char **_tmp);
-
-	int AddFlag(const char *_name) {
-		if (EnableFlag(_name)) return 0; //already there
-		char * tmp = new char[strlen(_name)+2];
-		strcpy_s(tmp,strlen(_name)+1,_name);
-		if (num_flags == MAX_FLAGS) {
-			mesg->WriteNextLine(MH_ERROR,"Maximal number of flags (%i) reached, flag %s not added", MAX_FLAGS, _name);
-			return 0;
-		}
-		char *val = NULL;
-		for (unsigned int i = 0; i < strlen(tmp); i++) {
-			if (tmp[i] == '=') {
-				tmp[i] = '\0';
-				val = tmp + i + 1;
-				break;
-			}
-		}
-		flag_list[num_flags] = tmp;
-		flag_value[num_flags] = val;
-		flag_description[num_flags] = NULL;
-		flag_enable[num_flags] = 1;
-		flag_hidden[num_flags] = 0;
-		num_flags++;
-		return 1;
-	}
-
-	int EnableFlag(const char *_name) {
-		//mesg->WriteNextLine(MH_ERROR,"Enable flag [%s]",myname);
-		for (unsigned int i=0;i<num_flags;i++) {
-			if (_stricmp(_name,flag_list[i])==0) {
-				flag_enable[i] = 1;
-				return 1;
-			}
-		}
-		return 0;
-	}
-
-	int DisableFlag(const char *_name) {
-		for (unsigned int i=0;i<num_flags;i++) {
-			if (_stricmp(_name,flag_list[i])==0) {
-				flag_enable[i] = 0;
-				return 1;
-			}
-		}
-		return 0;
-	}
-
-	int IsEnabled(const char *_name) {
-		unsigned int pos=strlen(_name);
-		for (unsigned int i=0;i<strlen(_name);i++) {
-			if (_name[i]=='=') pos=i;
-		}
-		for (unsigned int i=0;i<num_flags;i++) {
-			if (_strnicmp(_name,flag_list[i],pos)==0 && pos==strlen(flag_list[i])) {
-				if (pos==strlen(_name)) {
-					return flag_enable[i];
-				} else {
-					char *val = (char *)GetValue(flag_list[i]);
-					char * newname = new char[strlen(_name+pos+1)+1];
-					strcpy_s(newname,strlen(_name+pos+1)+1,_name+pos+1);
-					strip_quot(&newname);
-					if (_stricmp(newname,val)==0) {					
-						return flag_enable[i];
-					}
-				}
-			}
-		}
-		return 0;
-	}
-
-	int SetValue(const char *_name, const char *_value) {
-		AddFlag(_name);
-		for (unsigned int i=0;i<num_flags;i++) {
-			if (_stricmp(_name,flag_list[i])==0) {
-				flag_value[i] = _value;
-				return 1;
-			}
-		}
-		return 0;
-	}
-
-	int SetHidden(const char *_name) {
-		AddFlag(_name);
-		for (unsigned int i=0;i<num_flags;i++) {
-			if (_stricmp(_name,flag_list[i])==0) {
-				flag_hidden[i] = 1;
-				return 1;
-			}
-		}
-		return 0;
-	}
-
-	const char* GetValue(const char *_name) {
-		int p=0;
-		if (_stricmp(_name,"_flaglist")==0) {
-			char tmp[MH_MAX_LENGTH];
-			sprintf_s(tmp,100000,"\0");
-			for (unsigned int i=0;i<num_flags;i++) {
-				if (flag_enable[i] && (_stricmp(flag_list[i],"_modlist")!=0) && !flag_hidden[i]) {
-					int g=strlen(tmp);
-					if (flag_value[i]) {
-						if (p>0) sprintf_s(tmp,100000-g,"%s,%s=%s",tmp,flag_list[i],flag_value[i]); 
-						else sprintf_s(tmp,100000,"%s=%s",flag_list[i],flag_value[i]); 
-						p++;
-					} else {
-						if (p>0) sprintf_s(tmp,100000-g,"%s,%s",tmp,flag_list[i]); 
-						else sprintf_s(tmp,100000,"%s",flag_list[i]); 
-						p++;
-					}
-				}
-			}
-			char *tmp2 = new char[strlen(tmp)+1];
-			strcpy_s(tmp2,strlen(tmp)+1,tmp);
-			return tmp2;
-		}
-		for (unsigned int i=0;i<num_flags;i++) {
-			if (_stricmp(_name,flag_list[i])==0) {
-				if (flag_value[i]) return flag_value[i];
-				if (flag_enable[i]) return "<true>";
-				return "<false>";
-			}
-		}
-		return "<flag not found>";
-	}
-
-	int SetDescription(const char *_name, char *_value) {
-		AddFlag(_name);
-		for (unsigned int i=0;i<num_flags;i++) {
-			if (_stricmp(_name,flag_list[i])==0) {
-				flag_description[i] = _value;
-				return 1;
-			}
-		}
-		return 0;
-	}
-
-	char* GetDescription(const char *_name) {
-		for (unsigned int i=0;i<num_flags;i++) {
-			if (_stricmp(_name,flag_list[i])==0) {
-				return flag_description[i];
-			}
-		}
-		return NULL;
-	}
-
-	char * GetFlagViaDescription(const char *_value) {
-		for (unsigned int i=0;i<num_flags;i++) {
-			if (flag_description[i]) {
-				if (_stricmp(_value,flag_description[i])==0) {
-					return flag_list[i];
-				}
-			}
-		}
-		return NULL;
-	}
-
-	int myisprint(char _c) {
-		if (_c == '\n') return 1;
-		if (_c == '\r') return 1;
-		if (_c == '\t') return 1;
-
-		if (_c>= 0x20 && _c <=0x7E) return 1;
-		return 0;
-	}
 
 	void Close(void) {
 		if (logfile)

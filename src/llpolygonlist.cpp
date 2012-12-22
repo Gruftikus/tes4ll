@@ -58,7 +58,7 @@ llPolygonList::llPolygonList(llLogger *_mesg, llPointList *_points, llMap *_map)
 int llPolygonList::AddPolygon(float _x1, float _y1, float _x2, float _y2, char *_name) {
 
 	if (GetPolygon(_name)) {
-		mesg->WriteNextLine(MH_ERROR,"Polygon (%s) already existing",_name);
+		mesg->WriteNextLine(LOG_ERROR,"Polygon (%s) already existing",_name);
 		return 0;
 	}
 
@@ -85,7 +85,7 @@ int llPolygonList::AddVertexToPolygon(float _x, float _y, char *_name) {
 	llPolygon * mypoly = GetPolygon(_name);
 
 	if (!mypoly) {
-		mesg->WriteNextLine(MH_ERROR,"Polygon (%s) not existing",_name);
+		mesg->WriteNextLine(LOG_ERROR,"Polygon (%s) not existing",_name);
 		return 0;
 	}
 

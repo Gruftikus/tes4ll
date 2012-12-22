@@ -98,7 +98,7 @@ llQuad * llQuadList::GetQuad(float _x, float _y, int _num) {
 		}
 	}
 	if (_num<0) {
-		mesg->WriteNextLine(MH_FATAL,"Quad not found (x=%f ,y=%f)",_x,_y);
+		mesg->WriteNextLine(LOG_FATAL,"Quad not found (x=%f ,y=%f)",_x,_y);
 		mesg->Dump();
 		exit(1);
 	}
@@ -111,7 +111,7 @@ void llQuadList::SubQuadLevels(int _levels) {
 	if (subtree) {
 		subtree->SubQuadLevels(_levels - 1);
 	} else {
-		mesg->WriteNextLine(MH_FATAL,"Allocation of subtree failed (out of memory?)");
+		mesg->WriteNextLine(LOG_FATAL,"Allocation of subtree failed (out of memory?)");
 		exit(-1);
 	}
 }

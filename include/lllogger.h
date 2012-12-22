@@ -1,52 +1,66 @@
-#ifndef _PLLMH_H_
-#define _PLLMH_H_
+#ifndef _PLLLOGGER_H_
+#define _PLLLOGGER_H_
 
 #include <iostream>
 #include <stdarg.h>
 
-#define MH_NUM_LINES 500
-#define MH_MAX_LENGTH 50000
+#define LOG_NUM_LINES  500
+#define LOG_MAX_LENGTH 50000
 
-#define MH_DEBUG	0
-#define MH_INFO		1
-#define MH_WARNING	2
-#define MH_ERROR	3
-#define MH_FATAL	5
-#define MH_ECHO  	4
-#define MH_COMMAND  	6
-#define MH_ALGORITHM  	7
+#define LOG_DEBUG	0
+#define LOG_INFO		1
+#define LOG_WARNING	2
+#define LOG_ERROR	3
+#define LOG_FATAL	5
+#define LOG_ECHO  	4
+#define LOG_COMMAND  	6
+#define LOG_ALGORITHM  	7
 
 
 class llLogger {
 
+private:
+
 	FILE *logfile;
+
+	unsigned int write_pointer, read_pointer, tot_lines;
+	char *lines[LOG_NUM_LINES];
+	int counter;
 
 public:
 
 	llLogger();
 	char *ReadNextLine(void);
-	int   WriteNextLine(int level, char *format, ...);
+	int   WriteNextLine(int _level, char *_format, ...);
 
-	unsigned int write_pointer, read_pointer, tot_lines;
-	char *lines[MH_NUM_LINES];
-	int counter;
-
-	void SetLogFile(FILE *myfile) {
-		logfile=myfile;
+	void SetLogFile(FILE *_file) {
+		logfile = _file;
 	};
 
-	void Log(const char * log) {
-		if (logfile) fprintf(logfile,"%s",log);
+	void Log(const char *_log) {
+		if (logfile) fprintf(logfile,"%s", _log);
 	};
 
-	void AddToLine(char * add) {
-		sprintf_s(lines[write_pointer-1],MH_MAX_LENGTH,"%s%s",lines[write_pointer-1],add);
+	void AddToLine(char *_add) {
+		char *delme = lines[write_pointer-1];
+		unsigned int len = strlen(delme) + 1 + strlen(_add);
+		lines[write_pointer-1] = new char[len];
+		sprintf_s(lines[write_pointer-1], len, "%s%s", delme, _add);
+		delete delme;
 	}
-	void AddToLine(char add) {
-		sprintf_s(lines[write_pointer-1],MH_MAX_LENGTH,"%s%c",lines[write_pointer-1],add);
+	void AddToLine(char _add) {
+		char *delme = lines[write_pointer-1];
+		unsigned int len = strlen(delme) + 2;
+		lines[write_pointer-1] = new char[len];
+		sprintf_s(lines[write_pointer-1], LOG_MAX_LENGTH, "%s%c", lines[write_pointer-1], _add);
+		delete delme;
 	}
-	void AddToLine(char * add, float f) {
-		sprintf_s(lines[write_pointer-1],MH_MAX_LENGTH,"%s%s%f",lines[write_pointer-1],add,f);
+	void AddToLine(char * _add, float _f) {
+		char *delme = lines[write_pointer-1];
+		unsigned int len = strlen(delme) + 100 + strlen(_add);
+		lines[write_pointer-1] = new char[len];
+		sprintf_s(lines[write_pointer-1], LOG_MAX_LENGTH, "%s%s%f", lines[write_pointer-1], _add, _f);
+		delete delme;
 	}
 
 	void Dump(void) {		
@@ -56,7 +70,6 @@ public:
 			x = ReadNextLine();
 		}			
 	}
-
 
 };
 
