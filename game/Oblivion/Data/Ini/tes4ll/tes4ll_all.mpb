@@ -73,6 +73,7 @@ SetFlag -name=tes4qlod_flag_B -value=""
 @2048 GenerateHeightmap -n=1 -quick ;;reread standard resolution
 ; fixes bug in Valenwood-Elsweyr patch
 
+@writeout SetOption -installdirectory="$_gamedir\Data"
 @writeout WriteAll -writeheightmap
 
 ; ****************************
