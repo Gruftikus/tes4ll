@@ -6,6 +6,7 @@
 #include <direct.h>
 #include <winreg.h>
 
+
 //#include <windowsx.h>
 //#include <d3d9.h>
 
@@ -219,25 +220,19 @@ int WriteUInt(FILE *fptr,unsigned int n,int swap)
    return(TRUE);
 }
 
-llLogger * mesg = NULL;
-
 void usage(void) {
 
-	mesg->WriteNextLine(LOG_INFO,"Usage: tes4ll [-x xpos -y ypos] -b batchfile -f \"flags,flags,flags,...\" -w worldspace [heightmap.bmp]");
-	mesg->WriteNextLine(LOG_INFO,"       xpos: x position of the lower left cell");
-	mesg->WriteNextLine(LOG_INFO,"       batchfile: the name of the batch script");
-	mesg->WriteNextLine(LOG_INFO,"       flags: the flags which are propagated to the batch script");
-	mesg->WriteNextLine(LOG_INFO,"       heightmap.bmp: the heighmap in 32 bit");
-	mesg->Dump();
+	_llLogger()->WriteNextLine(LOG_INFO,"Usage: tes4ll [-x xpos -y ypos] -b batchfile -f \"flags,flags,flags,...\" -w worldspace [heightmap.bmp]");
+	_llLogger()->WriteNextLine(LOG_INFO,"       xpos: x position of the lower left cell");
+	_llLogger()->WriteNextLine(LOG_INFO,"       batchfile: the name of the batch script");
+	_llLogger()->WriteNextLine(LOG_INFO,"       flags: the flags which are propagated to the batch script");
+	_llLogger()->WriteNextLine(LOG_INFO,"       heightmap.bmp: the heighmap in 32 bit");
+	_llLogger()->Dump();
 
 }
 
-
-
-
-
 void DumpExit(void) {		
-	mesg->Dump();
+	_llLogger()->Dump();
 	exit(-1);
 	//while (1);
 }
@@ -254,16 +249,16 @@ int WriteBMP(llMap *_heightmap,
 			}
 		}
 		if (!bmp_done) {
-			mesg->WriteNextLine(LOG_INFO,"The bmp '%s' seems to be under water -> skipped compression, and deleted it",_filename);
+			_llLogger()->WriteNextLine(LOG_INFO,"The bmp '%s' seems to be under water -> skipped compression, and deleted it",_filename);
 			return 0;
 		}
-		mesg->WriteNextLine(LOG_INFO,"Generating %s",_filename);
-		mesg->Dump();
+		_llLogger()->WriteNextLine(LOG_INFO,"Generating %s",_filename);
+		_llLogger()->Dump();
 
 		FILE *fptr;
 
 		if (fopen_s(&fptr,_filename,"wb")) {
-			mesg->WriteNextLine(LOG_FATAL,"Unable to open BMP file '%s'\n",_filename);
+			_llLogger()->WriteNextLine(LOG_FATAL,"Unable to open BMP file '%s'\n",_filename);
 			DumpExit();
 		}
 
@@ -299,7 +294,7 @@ int WriteBMP(llMap *_heightmap,
 		
 		/* Read and check the information header */
 		if (fwrite(&infoheader,sizeof(INFOHEADER),1,fptr) != 1) {
-			mesg->WriteNextLine(LOG_FATAL,"Failed to write BMP info header");
+			_llLogger()->WriteNextLine(LOG_FATAL,"Failed to write BMP info header");
 			DumpExit();
 		}
 
@@ -307,10 +302,10 @@ int WriteBMP(llMap *_heightmap,
 		float overdrawing = _batch->overdrawing;
 
 		if (_batch->lodshadows) {
-			mesg->WriteNextLine(LOG_INFO,"Adding fake LOD shadows, 'north flip boost=%f'", _batch->overdrawing);
+			_llLogger()->WriteNextLine(LOG_INFO,"Adding fake LOD shadows, 'north flip boost=%f'", _batch->overdrawing);
 		} else if (_batch->writenormalmap)
-			mesg->WriteNextLine(LOG_INFO,"Contrast boost=%f", _batch->overdrawing);
-		mesg->Dump();
+			_llLogger()->WriteNextLine(LOG_INFO,"Contrast boost=%f", _batch->overdrawing);
+		_llLogger()->Dump();
 
 		if (_batch->lodshadows) overdrawing=1.;
 
@@ -409,17 +404,17 @@ steigungs_loop:
 		}
 
 		fclose(fptr);
-		mesg->Dump();
+		_llLogger()->Dump();
 
 		if (strlen(_batch->dds_tool) > 1 && _compress) {
 			char command[1000];
 			sprintf_s(command,1000,"%s %s \n", _batch->dds_tool, _filename);
-			mesg->WriteNextLine(LOG_INFO,"Executing '%s %s'", _batch->dds_tool, _filename);
-			mesg->Dump();
+			_llLogger()->WriteNextLine(LOG_INFO,"Executing '%s %s'", _batch->dds_tool, _filename);
+			_llLogger()->Dump();
 			FILE *tes = _popen(command,"rt");
 			char c; 
 			if (tes==NULL) {
-				mesg->WriteNextLine(LOG_ERROR,"Error calling '%s'",_batch->dds_tool);
+				_llLogger()->WriteNextLine(LOG_ERROR,"Error calling '%s'",_batch->dds_tool);
 			} else {
 				int nn=0;
 				do {
@@ -435,7 +430,7 @@ steigungs_loop:
 		} else {
 			return 0;
 		}
-		mesg->Dump();
+		_llLogger()->Dump();
 		return 1;
 }
 
@@ -475,14 +470,14 @@ void WriteNif(llPointList *_points, llTriangleList *_triangles, llMap *_heightma
 	}
 
 	if (!newpoints->GetN()) {
-		mesg->WriteNextLine(LOG_WARNING,"The mesh %s is empty and was therefore not written",_filename);
+		_llLogger()->WriteNextLine(LOG_WARNING,"The mesh %s is empty and was therefore not written",_filename);
 	    delete newpoints;
 	    return;
 	}
     
     
 	//copy all triangles which have all 3 points in newpoints
-	llTriangleList * newtriangles = new llTriangleList(newpoints->GetN(), newpoints, mesg);
+	llTriangleList * newtriangles = new llTriangleList(newpoints->GetN(), newpoints);
 	
 	if (lowestz>0) lowestz=0;
 	else lowestz-=100;
@@ -624,7 +619,7 @@ void WriteNif(llPointList *_points, llTriangleList *_triangles, llMap *_heightma
 
 		vector<Triangle> newt=node2_ptr->GetTriangles();
 
-		mesg->WriteNextLine(LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
+		_llLogger()->WriteNextLine(LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
 			_filename, newt.size(), newpoints->GetVertices().size());
 
 		NifInfo info = NifInfo();
@@ -669,7 +664,7 @@ void WriteNif(llPointList *_points, llTriangleList *_triangles, llMap *_heightma
 
 		vector<Triangle> newt=node2_ptr->GetTriangles();
 
-		mesg->WriteNextLine(LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
+		_llLogger()->WriteNextLine(LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
 			_filename, newt.size(), newpoints->GetVertices().size());
 
 		NifInfo info = NifInfo();
@@ -699,9 +694,9 @@ int main(int argc, char **argv) {
 	int calltesanwynn = 0;
 	//char *worldspace="Tamriel";
 	
-	mesg = new llLogger();
-	llUtils    * utils = new llUtils();
-	llCommands * batch = new llCommands(mesg, utils);
+	llLogger   *mesg  = _llLogger();
+	llUtils    *utils = _llUtils();
+	llCommands *batch = new llCommands();
 	utils->SetValue("_worldspace","Tamriel");
 
     std::cout << "Landscape LOD generator" << std::endl;
@@ -786,14 +781,13 @@ int main(int argc, char **argv) {
 		}
 
 		if (strcmp(argv[i],"-w")==0) {
-			//worldspace = argv[i+1];
 			utils->SetValue("_worldspace",argv[i+1]);
 			mesg->WriteNextLine(LOG_INFO,"Worldspace: %s",utils->GetValue("_worldspace"));
 		}
 	}
 
 	//add NULL objects
-	llQuadList    *quads= NULL;
+	llQuadList    *quads    = NULL;
 	llPolygonList *polygons = NULL;
 
 	int x1=0,y1=0,x2=0,y2=0;
@@ -873,8 +867,12 @@ int main(int argc, char **argv) {
 		BOOL res = GetSystemTimes( &idleTime, &kernelTime, &userTime );
 
 		mesg->Dump();
-		
+
+		try {
+
 		if (com == COM_PARSEMODLIST) {
+
+
 			if (!list_string) {
 				char oblivion_app_path[1024];
 				if( RegOpenKeyEx(    HKEY_CURRENT_USER, 
@@ -1122,7 +1120,7 @@ int main(int argc, char **argv) {
 				delete triangles;
 				
 			}
-			heightmap = new llMap(mesg,infoheader.width*batch->npoints, infoheader.height*batch->npoints);
+			heightmap = new llMap(infoheader.width*batch->npoints, infoheader.height*batch->npoints);
 			heightmap->SetScaling(batch->npoints);
 
 			//caluclate coord system
@@ -1196,7 +1194,7 @@ int main(int argc, char **argv) {
 
 			points    = new llPointList(npoints+4,quads);
 			polygons  = new llPolygonList(mesg,points,heightmap);
-			triangles = new llTriangleList(npoints,points,mesg);
+			triangles = new llTriangleList(npoints, points);
 			der = heightmap;
 		} //end readbmp
 
@@ -1242,9 +1240,9 @@ int main(int argc, char **argv) {
 			}
 			//now I know the dimensions
 			if (batch->minheight>-999999.f)
-				heightmap = new llMap(mesg,(max_x - min_x + 1)*32*batch->npoints, (max_y - min_y + 1)*32*batch->npoints, 0, (batch->minheight)/8.f);
+				heightmap = new llMap((max_x - min_x + 1)*32*batch->npoints, (max_y - min_y + 1)*32*batch->npoints, 0, (batch->minheight)/8.f);
 			else
-				heightmap = new llMap(mesg,(max_x - min_x + 1)*32*batch->npoints, (max_y - min_y + 1)*32*batch->npoints, 0, 0);
+				heightmap = new llMap((max_x - min_x + 1)*32*batch->npoints, (max_y - min_y + 1)*32*batch->npoints, 0, 0);
 			npoints = batch->npoints;
 			heightmap->SetScaling(batch->npoints);
 			x_cell = min_x;
@@ -1336,9 +1334,9 @@ int main(int argc, char **argv) {
 #endif
 			mesg->WriteNextLine(LOG_INFO,"Lowest point: %i, highest point: %i",min*8,max*8);
 
-			points    = new llPointList(npoints+4,quads);
-			polygons  = new llPolygonList(mesg,points,heightmap);
-			triangles = new llTriangleList(npoints,points,mesg);
+			points    = new llPointList(npoints+4, quads);
+			polygons  = new llPolygonList(mesg, points, heightmap);
+			triangles = new llTriangleList(npoints, points);
 			der = heightmap;
 #endif
 		} //end readbmp
@@ -2745,8 +2743,8 @@ loop:
 					float value  =alg_list[0]->GetValue(x,y);
 
 					for (int a=1;a<alg_counter;a++) {
+						alg_list[a]->GetValue(x, y, &value);
 						alg_list[a]->GetCeiling(&ceiling);
-						alg_list[a]->GetValue(x,y,&value);
 					}
 
 					if (empty>1000) {
@@ -2952,6 +2950,26 @@ end:
 			alg2->Init();
 			alg_list[alg_counter++] = alg2;
 			if (alg_counter == alg_list.size()) alg_list.resize(alg_counter + 100);
+		}
+
+		} catch (char * str) {
+			if (batch->CurrentCommand)
+				mesg->WriteNextLine(LOG_FATAL,"Catched exception [%s] in [%s]", str, batch->CurrentCommand);
+			else 
+				mesg->WriteNextLine(LOG_FATAL,"Catched exception [%s]", str);
+			DumpExit();
+		} catch (int str) {
+			if (batch->CurrentCommand)
+				mesg->WriteNextLine(LOG_FATAL,"Catched exception [%i] in [%s]", str, batch->CurrentCommand);
+			else
+				mesg->WriteNextLine(LOG_FATAL,"Catched exception [%i]", str);
+			DumpExit();
+		} catch (...) {
+			if (batch->CurrentCommand)
+				mesg->WriteNextLine(LOG_FATAL,"Catched exception in [%s]", batch->CurrentCommand);
+			else
+				mesg->WriteNextLine(LOG_FATAL,"Catched exception");
+			DumpExit();
 		}
 
 		mesg->Dump();

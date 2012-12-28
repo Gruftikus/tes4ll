@@ -72,16 +72,6 @@ SetFlag -name=tes4qlod_flag_B -value=""
 
 @2048 GenerateHeightmap -n=1 -quick ;;reread standard resolution
 ; fixes bug in Valenwood-Elsweyr patch
-@ElsweyrValenwoodImprovedPatch.esp FocusRec -x1=-65536 -x2=-36864 -y1=-229336 -y2=-220120
-@ElsweyrValenwoodImprovedPatch.esp SetHeight -z=-2048 -gameunits
-@ElsweyrValenwoodImprovedPatch.esp FocusRec -x1=-81920 -x2=-61312 -y1=-229336 -y2=-211800
-@ElsweyrValenwoodImprovedPatch.esp SetHeight -z=-2048 -gameunits
-@ElsweyrValenwoodImprovedPatch.esp FocusRec -x1=-37120 -x2=-28672 -y1=-221144 -y2=-211800
-@ElsweyrValenwoodImprovedPatch.esp SetHeight -z=-2048 -gameunits
-@ElsweyrValenwoodImprovedPatch.esp FocusRec -x1=-37120 -x2=-32768 -y1=-225240 -y2=-219992
-@ElsweyrValenwoodImprovedPatch.esp SetHeight -z=-2048 -gameunits
-@ElsweyrValenwoodImprovedPatch.esp FocusRec -x1=-81920 -x2=-73728 -y1=-233432 -y2=-211800
-@ElsweyrValenwoodImprovedPatch.esp SetHeight -z=-2048 -gameunits
 
 @writeout WriteAll -writeheightmap
 

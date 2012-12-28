@@ -122,6 +122,16 @@ char * strtok_int(char *ptr, const char delim, char **saveptr1) {
 	return ptr1;
 }
 
+llUtils& _fllUtils()
+{
+    static llUtils* ans = new llUtils();
+    return *ans;
+}
+
+llUtils * _llUtils()
+{
+    return &_fllUtils();
+}
 
 //constructor
 llUtils::llUtils() {

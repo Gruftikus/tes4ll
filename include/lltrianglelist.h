@@ -125,11 +125,11 @@ private:
 public:
 
 	//constructor
-	llTriangleList(int _n, llPointList *_x, llLogger *_mesg);
+	llTriangleList(int _n, llPointList *_x);
 
-	int AddTriangle(int _p1, int _p2, int _p3);
+	int  AddTriangle(int _p1, int _p2, int _p3);
 	void Add2Triangles(int _p1, int _p2, int _p3, int _p4);
-	int RemoveTriangle(unsigned int _n);
+	int  RemoveTriangle(unsigned int _n);
 
 	llTriangle * GetTriangle(unsigned int _n);
 	int GetTriangle(int _p1, int _p2); //returns triangle which shares p1 and p2

@@ -50,9 +50,9 @@ void llCommands::Init() {
 }
 
 //constructor
-llCommands::llCommands(llLogger *_mesg, llUtils *_utils, FILE *_file, char *_section) {
-	mesg     = _mesg;
-	utils    = _utils;
+llCommands::llCommands(FILE *_file, char *_section) {
+	mesg     = _llLogger();
+	utils    = _llUtils();
 	section  = _section;
 	file     = _file;
 	filename = NULL;
@@ -60,9 +60,9 @@ llCommands::llCommands(llLogger *_mesg, llUtils *_utils, FILE *_file, char *_sec
 }
 
 //constructor
-llCommands::llCommands(llLogger *_mesg, llUtils *_utils, const char *_file, char *_section) {
-	mesg     = _mesg;
-	utils    = _utils;
+llCommands::llCommands(const char *_file, char *_section) {
+	mesg     = _llLogger();
+	utils    = _llUtils();
 	section  = _section;
 	filename = new char[strlen(_file)];
 	strcpy_s(filename,strlen(_file) + 1, _file);
@@ -72,9 +72,9 @@ llCommands::llCommands(llLogger *_mesg, llUtils *_utils, const char *_file, char
 	Init();
 }
 
-llCommands::llCommands(llLogger *_mesg, llUtils *_utils) {
-	mesg     = _mesg;
-	utils    = _utils;
+llCommands::llCommands() {
+	mesg     = _llLogger();
+	utils    = _llUtils();
 	section  = "[None]";
 	filename = NULL;
 	file     = NULL;

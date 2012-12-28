@@ -1,6 +1,6 @@
 #include "..\include\llpolygonlist.h"
 
-llPolygon::llPolygon(int _n1, int _n2, char *_name, llLogger *_mesg, llPointList *_r) {
+llPolygon::llPolygon(int _n1, int _n2, char *_name, llPointList *_r) {
 	p.resize(2);
 	p[0] = _n1;
 	p[1] = _n2;
@@ -74,7 +74,7 @@ int llPolygonList::AddPolygon(float _x1, float _y1, float _x2, float _y2, char *
 	
 	p.resize(p.size()+1);
 
-	llPolygon * mypoly = new llPolygon(point1,point2,myname2,mesg,points);
+	llPolygon * mypoly = new llPolygon(point1, point2, myname2, points);
 	p[p.size()-1]=mypoly;
 
 	return 1;

@@ -12,6 +12,10 @@
 
 char *strtok_int(char *_ptr, const char _delim, char **_saveptr1);
 
+class     llUtils;
+llUtils* _llUtils();
+llUtils& _fllUtils();
+
 class llUtils {
 
  private:

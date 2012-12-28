@@ -142,7 +142,7 @@ void llTriangle::FlipEdge(int _nei) {
 }
 
 //constructor
-llTriangleList::llTriangleList(int _n, llPointList *_x, llLogger *_mesg) {
+llTriangleList::llTriangleList(int _n, llPointList *_x) {
 
 	v.resize(_n);
 	counter = 0;
@@ -151,7 +151,7 @@ llTriangleList::llTriangleList(int _n, llPointList *_x, llLogger *_mesg) {
 	length_strip.resize(1);
 	num_strips = 0;
 	pos_strip  = 0;
-	mesg = _mesg;
+	mesg = _llLogger();
 } 
 
 void llTriangleList::Print(void) {

@@ -7,8 +7,9 @@
 //constructor
 llAlgFirst::llAlgFirst(llMap *_map, float _x00, float _y00, float _x11, float _y11) :
 llAlg( _map, _x00, _y00, _x11, _y11) {
+
 	_map->MakeDerivative();
-	loc_ceiling=0;
+	loc_ceiling = 0;
 }
 
 float llAlgFirst::GetCeiling(float *_ceiling) {
@@ -25,7 +26,7 @@ float llAlgFirst::GetCeiling(float *_ceiling) {
 
 float llAlgFirst::GetValue(float _x, float _y,float *_value) {
 
-	float loc_value=0;
+	float loc_value = 0;
 	int xx = heightmap->GetX(int(_x));
 	int yy = heightmap->GetY(int(_y));
 
@@ -35,7 +36,7 @@ float llAlgFirst::GetValue(float _x, float _y,float *_value) {
 			fabs(float(heightmap->GetY1Coord(xx,yy))) );
 	}
 
-	if (loc_value>loc_ceiling) loc_ceiling=loc_value;
+	if (loc_value > loc_ceiling && loc_value < 10.0f) loc_ceiling=loc_value;
 
 	if (_value) {
 		if (add)

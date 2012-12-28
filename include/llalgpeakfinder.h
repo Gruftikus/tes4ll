@@ -21,7 +21,7 @@ class llAlgPeakFinder : public llAlg {
 
     float GetCeiling(float *_ceiling=NULL); 
     float GetValue(float _x, float _y,float *_value=NULL); 
-    int Init(void);
+    int   Init(void);
 };
 
 #endif

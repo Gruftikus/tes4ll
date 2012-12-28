@@ -11,12 +11,11 @@ private:
 
 	std::vector<int> p; //points of polygon
 	
-	llLogger *mesg;
 	llPointList *points;
 
 public:
 
-	llPolygon(int _n1, int _n2, char *_name, llLogger *_mesg, llPointList *_r);
+	llPolygon(int _n1, int _n2, char *_name, llPointList *_r);
 	char *name;
 	int AddPoint(int _n);
 	int GetPoint(unsigned int _n) {if (_n<p.size()) return p[_n];return -1;};

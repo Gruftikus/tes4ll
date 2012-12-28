@@ -4,26 +4,27 @@
 
 //constructor
 llAlgPeakFinder::llAlgPeakFinder(llMap *_map, float _x00, float _y00, float _x11, float _y11) :
-llAlg( _map, _x00, _y00, _x11, _y11) {
+llAlg(_map, _x00, _y00, _x11, _y11) {
 
-	loc_ceiling=0;
+	loc_ceiling = 0;
 
-	Radius=4096;
-	Scanradius=8192;
-	ValueAtLowest=0.2f;
-	ValueAtHighest=1.0f;
+	Radius         = 4096;
+	Scanradius     = 8192;
+	ValueAtLowest  = 0.2f;
+	ValueAtHighest = 1.0f;
 
-	points = new llPointList(100,NULL);
+	points = new llPointList(100, NULL);
 
 };
 
 int llAlgPeakFinder::Init(void) {
 
+	int stepsize = 1024;
 	int numfound=0;
 
 	//let us scan over the heightmap 
-	for (float x = x00+Scanradius; x< x11-Scanradius; x+=256) {
-		for (float y = y00+Scanradius; y<y11-Scanradius; y+=256) {
+	for (float x = x00+Scanradius; x< x11-Scanradius; x+=stepsize) {
+		for (float y = y00+Scanradius; y<y11-Scanradius; y+=stepsize) {
 
 			if (points->GetMinDistance(x,y) > Scanradius) {
 				int is_highest=1;
@@ -32,8 +33,8 @@ int llAlgPeakFinder::Init(void) {
 				//check for distance in pointlist
 
 				//is this point the highest point?
-				for (float x1 = 0; x1< Scanradius; x1 +=256) {
-					for (float y1 = 0; y1< Scanradius; y1 +=256) {
+				for (float x1 = 0; x1< Scanradius; x1 +=stepsize) {
+					for (float y1 = 0; y1< Scanradius; y1 +=stepsize) {
 						//is this point the highest point?
 						if (heightmap->GetZ(x+x1,y+y1)>z || heightmap->GetZ(x-x1,y+y1)>z ||
 							heightmap->GetZ(x+x1,y-y1)>z || heightmap->GetZ(x-x1,y-y1)>z) {
@@ -52,7 +53,7 @@ int llAlgPeakFinder::Init(void) {
 		}   
 	}
 
-	//	std::cout << "[Info] AlgPeakFinder identified " << numfound << " peaks" << std::endl;
+	_llLogger()->WriteNextLine(-LOG_INFO, "AlgPeakFinder identified %i peaks", numfound);
 
 	return 1;
 }
@@ -74,17 +75,18 @@ float llAlgPeakFinder::GetCeiling(float *_ceiling) {
 
 float llAlgPeakFinder::GetValue(float _x, float _y, float *_value) {
 
-	float loc_value=ValueAtLowest;
+	float loc_value = ValueAtLowest;
 
 	float z = float(heightmap->GetZ(_x, _y));
 
 	if (points->GetMinDistance(_x, _y) < Radius && z > Lowest) {
 		loc_value=ValueAtHighest; 
 		if (linear) 
-			loc_value=ValueAtLowest + ((Radius-points->GetMinDistance(_x, _y))/Radius)*(ValueAtHighest-ValueAtLowest);
+			loc_value = ValueAtLowest + ((Radius-points->GetMinDistance(_x, _y))/Radius)*(ValueAtHighest-ValueAtLowest);
 	}
 
-	if (loc_value>loc_ceiling) loc_ceiling=loc_value;
+	if (loc_value > loc_ceiling && loc_value < ValueAtLowest && loc_value < ValueAtHighest) 
+		loc_ceiling = loc_value;
 
 	if (_value) {
 		if (add)

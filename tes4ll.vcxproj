@@ -1221,6 +1221,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>

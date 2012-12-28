@@ -204,9 +204,9 @@ class llCommands {
  public:
 
     //constructor
-    llCommands(llLogger *_mesg, llUtils *_utils,  FILE *_file, char *_section = NULL);
-	llCommands(llLogger *_mesg, llUtils *_utils, const char *_file, char *_section = NULL);
-	llCommands(llLogger *_mesg, llUtils *_utils);
+    llCommands(FILE *_file, char *_section = NULL);
+	llCommands(const char *_file, char *_section = NULL);
+	llCommands();
 	int Reopen(char *_section);
 	int Open(const char *_file, char *_section = NULL);
 	int ReadCache(void);

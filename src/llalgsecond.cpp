@@ -8,7 +8,7 @@ llAlgSecond::llAlgSecond(llMap *_map, float _x00, float _y00, float _x11, float 
 llAlg( _map, _x00, _y00, _x11, _y11) {
 
 	_map->MakeDerivative();
-	loc_ceiling=0;
+	loc_ceiling = 0;
 }
 
 float llAlgSecond::GetCeiling(float *_ceiling) {
@@ -36,7 +36,8 @@ float llAlgSecond::GetValue(float _x, float _y, float *_value) {
 			fabs(float(heightmap->GetY2Coord(xx,yy))) );
 	}
 
-	if (loc_value>loc_ceiling) loc_ceiling=loc_value;
+	if (loc_value>loc_ceiling && loc_value < 10.f) 
+		loc_ceiling = loc_value;
 
 	if (_value) {
 		if (add)

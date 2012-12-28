@@ -162,7 +162,7 @@ public:
 		data->SetElement(_x + _y*widthx, (*data)[_x+_y*widthx] + _val);
 	};
 	//constructor
-	llMap(llLogger *_mesg, unsigned long _x = 0, unsigned long _y = 0, int _makeshort=0, float _default = 0);
+	llMap(unsigned long _x = 0, unsigned long _y = 0, int _makeshort=0, float _default = 0);
 
 	~llMap();
 

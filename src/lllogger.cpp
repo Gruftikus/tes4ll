@@ -7,6 +7,16 @@
 #include <stdio.h>
 #include <iostream>
 
+llLogger& _fllLogger()
+{
+    static llLogger* ans = new llLogger();
+    return *ans;
+}
+
+llLogger * _llLogger()
+{
+    return &_fllLogger();
+}
 
 llLogger::llLogger() {
 	write_pointer =  LOG_NUM_LINES;

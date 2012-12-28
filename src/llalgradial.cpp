@@ -9,12 +9,12 @@ llAlgRadial::llAlgRadial(llMap *_map, float _x00, float _y00, float _x11, float 
 llAlg( _map, _x00, _y00, _x11, _y11) {
 
 	_map->MakeDerivative();
-	loc_ceiling=0;
+	loc_ceiling = 0;
 
 	Near=0;
 	Far=100000;
 	ValueAtNear  = 0.5f;
-	ValueAtFar = 1.0f;
+	ValueAtFar   = 1.0f;
 	X = 0.f;
 	Y = 0.f;
 }
@@ -40,13 +40,15 @@ float llAlgRadial::GetValue(float _x, float _y, float *_value) {
 
 	float z = sqrt((_x-X)*(_x-X) + (_y-Y)*(_y-Y));
 
-	if (z<Near) loc_value=ValueAtNear;
-	else if (z>Far) loc_value=ValueAtFar;
-	else loc_value =  ValueAtNear + (ValueAtFar - ValueAtNear) * ( (z - Far) / (Far / Near));
+	if (z<Near) 
+		loc_value=ValueAtNear;
+	else if (z>Far) 
+		loc_value=ValueAtFar;
+	else 
+		loc_value =  ValueAtNear + (ValueAtFar - ValueAtNear) * ( (z - Far) / (Far / Near));
 
-	if (loc_value>loc_ceiling) loc_ceiling=loc_value;
-
-	//std::cout << z << ":" << loc_value << std::endl;
+	if (loc_value > loc_ceiling  && loc_value < ValueAtFar && loc_value < ValueAtNear) 
+		loc_ceiling = loc_value;
 
 	if (_value) {
 		if (add)

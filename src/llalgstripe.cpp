@@ -9,12 +9,12 @@ llAlgStripe::llAlgStripe(llMap *_map, float _x00, float _y00, float _x11, float 
 llAlg( _map, _x00, _y00, _x11, _y11) {
 
 	_map->MakeDerivative();
-	loc_ceiling=0;
+	loc_ceiling = 0;
 
-	Lowest=-8000;
-	Highest=8000;
-	ValueAtLowest  = 0.2f;
-	ValueAtHighest = 1.0f;
+	Lowest         = -8000;
+	Highest        =  8000;
+	ValueAtLowest  =  0.2f;
+	ValueAtHighest =  1.0f;
 }
 
 
@@ -41,7 +41,8 @@ float llAlgStripe::GetValue(float _x, float _y, float *_value) {
 	if (z<Lowest) loc_value=ValueAtLowest;
 	else if (z>Highest) loc_value=ValueAtLowest;
 
-	if (loc_value>loc_ceiling) loc_ceiling=loc_value;
+	if (loc_value > loc_ceiling && loc_value < ValueAtLowest && loc_value < ValueAtHighest) 
+		loc_ceiling=loc_value;
 
 	if (_value) {
 		if (add)

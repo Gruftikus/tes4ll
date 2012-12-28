@@ -16,6 +16,9 @@
 #define LOG_COMMAND  	6
 #define LOG_ALGORITHM  	7
 
+class      llLogger;
+llLogger* _llLogger();
+llLogger& _fllLogger();
 
 class llLogger {
 

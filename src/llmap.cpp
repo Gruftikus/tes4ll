@@ -1,10 +1,10 @@
 #include "..\include\llmap.h"
 
 //constructor
-llMap::llMap(llLogger *_mesg, unsigned long _x, unsigned long _y, int _makeshort, float _default) {
+llMap::llMap(unsigned long _x, unsigned long _y, int _makeshort, float _default) {
 	widthx=_x;
 	widthy=_y;
-	mesg = _mesg;
+	mesg = _llLogger();
 
 	makeshort = _makeshort;
     data = new llShortarray(widthx*widthy,makeshort, _default); 
@@ -16,7 +16,7 @@ llMap::llMap(llLogger *_mesg, unsigned long _x, unsigned long _y, int _makeshort
 }
 
 llMap * llMap::Clone(int _expand, int _makeshort) {
-	llMap *dummy = new llMap(mesg, widthx*_expand, widthy*_expand, makeshort, default);
+	llMap *dummy = new llMap(widthx*_expand, widthy*_expand, makeshort, default);
 	dummy->SetCoordSystem(x1,y1,x2,y2);
 	return dummy;
 }
@@ -37,7 +37,7 @@ void llMap::SetPoint(unsigned int _x, unsigned int _y, int _val) {
 
 llMap * llMap::Filter(unsigned long _dist, int _overwrite, llCommands *_batch) {
 
-	llMap *tmp= new llMap(mesg, widthx, widthy, makeshort, default);
+	llMap *tmp= new llMap(widthx, widthy, makeshort, default);
 	float minheight = default + 1.0f;
 
 	for (unsigned long y=0;y<widthy;y++) {

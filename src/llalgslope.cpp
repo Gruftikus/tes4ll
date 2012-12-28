@@ -38,14 +38,17 @@ float llAlgSlope::GetValue(float _x, float _y, float *_value) {
 
 	float z = float(heightmap->GetZ(_x, _y));
 
-	if (z<Lowest) loc_value=ValueAtLowest;
-	else if (z>Highest) loc_value=ValueAtHighest;
+	if (z<Lowest) 
+		loc_value=ValueAtLowest;
+	else if (z>Highest) 
+		loc_value=ValueAtHighest;
 	else {
 		loc_value= ValueAtLowest + 
 			((z - Lowest)/(Highest-Lowest)) * (ValueAtHighest-ValueAtLowest);
 	}
 
-	if (loc_value>loc_ceiling) loc_ceiling=loc_value;
+	if (loc_value > loc_ceiling && loc_value < ValueAtLowest && loc_value < ValueAtHighest) 
+		loc_ceiling = loc_value;
 
 	if (_value) {
 		if (add)
