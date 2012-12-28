@@ -34,6 +34,7 @@ ParseModList  ; reads mod list from Plugins.txt (or from -l option) and sets the
 ; Make color maps
 ; ****************************
 
+@overwritelods SetOption -installdirectory="$_gamedir\Data\Textures\landscapelod\generated"
 SetFlag -name=tes4qlod_flag_a -value="" 
 @option_blending SetFlag -name=tes4qlod_flag_a -value="-a"
 SetFlag -name=tes4qlod_flag_f -value=""
