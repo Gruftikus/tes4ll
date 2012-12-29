@@ -69,6 +69,11 @@ In STEP 5, the mesh is furthermore divided into the final LOD meshed (the "quads
 
 In STEP 6, the triangles are written and (optionally) stitched together in triangle strips (see links below). 
 
+The syntax of the batch file
+============================
+A full reference manual can be obtained via this link:
+https://github.com/Gruftikus/tes4ll/blob/master/REFERENCE_MANUAL-tes4ll.pdf?raw=true
+
 Source code
 ===========
 The source code should be freely available from Github (https://github.com/Gruftikus/tes4ll.git). You can check out the repository and compile tes4ll from scratch. In order to do so, the following steps have to be done in addition:
@@ -150,8 +155,6 @@ Literature
 
 Credits
 =======
-Thanks to all users for testing and suggestions.
-
 This program uses the following 3rd party source code:
 
 * niflib: http://niftools.sourceforge.net/wiki/NifSkope

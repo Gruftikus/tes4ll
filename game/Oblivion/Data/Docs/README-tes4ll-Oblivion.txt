@@ -10,7 +10,7 @@ Moreover, a configuration file (multi purpose batch file) with a command list al
 
 Author
 ======
-gruftikus@nexus
+gruftikus@"nexusmods"
 
 Why?
 ====
@@ -75,7 +75,9 @@ I recommend the 1024x1024 version, because it has less tiling.
 
 Generation of meshes (expert modus)
 ===================================
-Adapt the configuration file for your needs. A detailed manual of the commands can be found in MANUAL.txt (if you don't want to be expert you can basically ignore this manual). There are many things possible, tes4ll is highly adaptable. The details of this goes beyond this README. If you are in trouble, please contact me.
+Adapt the configuration file for your needs. A detailed manual of the commands can be found at github:
+https://github.com/Gruftikus/tes4ll/blob/master/REFERENCE_MANUAL-tes4ll.pdf?raw=true
+There are many things possible, tes4ll is highly adaptable. The details of this goes beyond this README. If you are in trouble, please contact me.
 
 Known issues
 ============
@@ -95,20 +97,9 @@ This data file can be added to the batch file (e.g. tes4ll_all.mpb).
 
 Rerun tes4ll - and the additional vertices should cure the problem.
 
-Disclaimer
-==========
-This software comes without warranty.
-
 Credits
 =======
-
-Thanks to all users for testing and suggestions.
-
-This program uses the following 3rd party source code:
-* niflib: http://niftools.sourceforge.net/wiki/NifSkope
-* bmp file reader: written by P. Pourke
-* Triangle: by J. R. Shewchuk (see reference above)
-* TES4qLOD by Lightwave (taken from http://projectmanager.f2s.com/morrowind/TES4qLOD.html)
+Thanks to all users for testing and suggestions, in particular Auryga and Supierce for testing the program.
 
 License
 =======
