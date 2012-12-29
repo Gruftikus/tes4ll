@@ -72,17 +72,11 @@ AlgLayer -multiply=1 -lowest=-999999 -highest=10 -minval=1 -maxval=0
 ; ============================
 
 FocusAll 
-;;todo
-;;FocusRec -x1=100000 -x2=140000 -y1=60000 -y2=100000 ;; not yet working
 
 SetMaxVertices -n=25000
 
 FocusAll 
 MakeTriangulation
-
-;;DivideBetween -x1=-20000 -y1=40000 -x2=80000 -y2=-200000 
-;;DivideAtPolygonBorder -name=Cheydinhal_border
-;;DivideAtPolygonBorder
 
 @cheydinhal StencilPolygon -name=Cheydinhal_border
 @chorrol    StencilPolygon -name=Chorrol_border
@@ -150,5 +144,5 @@ GUICheckBox -name=removeinvisibletriangles -text="Remove invisible triangles (ca
 GUIButton -name=exec_tes4ll -text="Click me if you are ready" -vdist=30
 
 
-@exec_tes4ll GUIExec -exe="tes4ll.exe -t -w Tamriel -f \"$_flaglist\" -t -l \"$_modlist\" " -dumpbatch
+@exec_tes4ll GUIExec -exe="tes4ll.exe -w Tamriel -f \"$_flaglist\" -l \"$_modlist\" " -dumpbatch
 

@@ -223,7 +223,7 @@ int WriteUInt(FILE *fptr,unsigned int n,int swap)
 void usage(void) {
 
 	_llLogger()->WriteNextLine(LOG_INFO,"Usage: tes4ll [-x xpos -y ypos] -b batchfile -f \"flags,flags,flags,...\" -w worldspace [heightmap.bmp]");
-	_llLogger()->WriteNextLine(LOG_INFO,"       xpos: x position of the lower left cell");
+	_llLogger()->WriteNextLine(LOG_INFO,"       x/ypos: x/y position of the lower left cell");
 	_llLogger()->WriteNextLine(LOG_INFO,"       batchfile: the name of the batch script");
 	_llLogger()->WriteNextLine(LOG_INFO,"       flags: the flags which are propagated to the batch script");
 	_llLogger()->WriteNextLine(LOG_INFO,"       heightmap.bmp: the heighmap in 32 bit");
@@ -701,7 +701,7 @@ int main(int argc, char **argv) {
 
     std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@texnexus" << std::endl;
-	std::cout << "V4.10, 14.12.2012" << std::endl;
+	std::cout << "V4.10, 29.12.2012" << std::endl;
     std::cout << "***********************" << std::endl;
 
 	//open registry

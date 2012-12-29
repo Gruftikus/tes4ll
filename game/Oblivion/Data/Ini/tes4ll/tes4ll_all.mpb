@@ -314,7 +314,7 @@ GUIEnable -name=exec_tes4ll
 
 
 @exec_tes4ll @!overwritelods GUIMessageBox -title="Hint" -text="You have not selected the option to overwrite the original files. Do not forget to copy your files by hand to the appropriate place (or stop the process, and check the \"overwrite\" option)"
-@exec_tes4ll @_worldspace GUIExec -exe="tes4ll.exe -f \"$_flaglist\" -t -w $_worldspace -l \"$_modlist\" tesannwyn.bmp" -dumpbatch
+@exec_tes4ll @_worldspace GUIExec -exe="tes4ll.exe -f \"$_flaglist\" -w $_worldspace -l \"$_modlist\" " -dumpbatch
 
 
 ; ****************************
