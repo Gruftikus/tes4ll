@@ -26,11 +26,13 @@
 
 #include "..\include\llutils.h"
 #include "..\include\llmap.h"
+#include "..\include\llmaplist.h"
 #include "..\include\llpointlist.h"
 #include "..\include\llpolygonlist.h"
 #include "..\include\lltrianglelist.h"
 #include "..\include\llcommands.h"
 #include "..\include\llalg.h"
+#include "..\include\llalglist.h"
 #include "..\include\llalgconst.h"
 #include "..\include\llalgfirst.h"
 #include "..\include\llalgsecond.h"
@@ -814,12 +816,22 @@ int main(int argc, char **argv) {
 		
 	int gen_npoints=0;    
 	int com = 0;
-	std::vector<llAlg*> alg_list;
-	alg_list.resize(100);
-	int alg_counter=0;
+
+	llAlgList *alg_list = new llAlgList();
+	batch->RegisterWorker(new llAlgConst     (alg_list, NULL));
+	batch->RegisterWorker(new llAlgFirst     (alg_list, "_derivatives"));
+	batch->RegisterWorker(new llAlgSecond    (alg_list, "_derivatives"));
+	batch->RegisterWorker(new llAlgRadial    (alg_list, NULL));
+	batch->RegisterWorker(new llAlgSlope     (alg_list, "_derivatives"));
+	batch->RegisterWorker(new llAlgStripe    (alg_list, "_heightmap"));
+	batch->RegisterWorker(new llAlgPeakFinder(alg_list, "_heightmap"));
+
+
 	int triangulation=0;
 
 	llMap *der = NULL; //dervatives
+	_llMapList()->AddMap("_heightmap",   NULL);
+	_llMapList()->AddMap("_derivatives", NULL);
 
 	batch->install_dir="";
 
@@ -1121,6 +1133,7 @@ int main(int argc, char **argv) {
 				
 			}
 			heightmap = new llMap(infoheader.width*batch->npoints, infoheader.height*batch->npoints);
+			_llMapList()->AddMap("_heightmap", heightmap);
 			heightmap->SetScaling(batch->npoints);
 
 			//caluclate coord system
@@ -1196,6 +1209,7 @@ int main(int argc, char **argv) {
 			polygons  = new llPolygonList(mesg,points,heightmap);
 			triangles = new llTriangleList(npoints, points);
 			der = heightmap;
+			_llMapList()->AddMap("_derivatives", heightmap);
 		} //end readbmp
 
 
@@ -1243,6 +1257,7 @@ int main(int argc, char **argv) {
 				heightmap = new llMap((max_x - min_x + 1)*32*batch->npoints, (max_y - min_y + 1)*32*batch->npoints, 0, (batch->minheight)/8.f);
 			else
 				heightmap = new llMap((max_x - min_x + 1)*32*batch->npoints, (max_y - min_y + 1)*32*batch->npoints, 0, 0);
+			_llMapList()->AddMap("_heightmap", heightmap);
 			npoints = batch->npoints;
 			heightmap->SetScaling(batch->npoints);
 			x_cell = min_x;
@@ -1338,6 +1353,7 @@ int main(int argc, char **argv) {
 			polygons  = new llPolygonList(mesg, points, heightmap);
 			triangles = new llTriangleList(npoints, points);
 			der = heightmap;
+			_llMapList()->AddMap("_derivatives", heightmap);
 #endif
 		} //end readbmp
 
@@ -1783,6 +1799,7 @@ panorama_end: ;
 			}
 			
 			der = heightmap->Filter(batch->npoints, int(batch->overwrite), batch);
+			_llMapList()->AddMap("_derivatives", der);
 			der->MakeDerivative(batch->use16bit);
 			mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_FILTER_CMD);
 		}
@@ -2692,7 +2709,7 @@ setquadsloop:
 				}
 
 				llQuad * my_quad = NULL;
-				float mean=0,num=0,num_real=0,empty=0;
+				double mean=0,num=0,num_real=0,empty=0;
 				if (com == COM_SETPOINTSPERQUAD || com == COM_SETMAXPOINTSPERQUAD) {
 
 					batch->x00 = float(quads->GetCurrentX())*batch->cellsize_x*batch->quadsize_x;
@@ -2721,7 +2738,7 @@ setquadsloop:
 					mynum=mynum2;
 				}
 
-				if (alg_list.size() == 0) {
+				if (alg_list->GetSize() == 0) {
 					mesg->WriteNextLine(LOG_ERROR,"%s: no algorithm specified", batch->CurrentCommand);
 					goto end;
 				}
@@ -2739,12 +2756,12 @@ loop:
 					
 					float z=heightmap->GetZ(x,y);
 					
-					float ceiling=alg_list[0]->GetCeiling();
-					float value  =alg_list[0]->GetValue(x,y);
+					double ceiling = alg_list->GetAlg(0)->GetCeiling();
+					double value   = alg_list->GetAlg(0)->GetValue(x,y);
 
-					for (int a=1;a<alg_counter;a++) {
-						alg_list[a]->GetValue(x, y, &value);
-						alg_list[a]->GetCeiling(&ceiling);
+					for (int a=1; a<alg_list->GetSize(); a++) {
+						alg_list->GetAlg(a)->GetValue(x, y, &value);
+						alg_list->GetAlg(a)->GetCeiling(&ceiling);
 					}
 
 					if (empty>1000) {
@@ -2761,7 +2778,7 @@ loop:
 
 					empty=0;
 					mean+=value;num++;
-					float idealdist=4096.f-(((4096.f-minab)/(mean/num))*value);
+					double idealdist=4096.f-(((4096.f-minab)/(mean/num))*value);
 
 					if (idealdist<minab) idealdist=minab;
 
@@ -2812,8 +2829,7 @@ end:
 				if (com == COM_SETPOINTSPERQUAD || com == COM_SETMAXPOINTSPERQUAD) if (quads->GetNextQuad()) goto setquadsloop;
 		}
 
-		llAlg * alg = NULL;
-
+#if 0
 		if (com == COM_ALGCONST) {
 			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALGCONST_CMD, batch->add, batch->multiply);
 			mesg->Dump();
@@ -2826,8 +2842,7 @@ end:
 			alg = new llAlgConst(heightmap, batch->x00, batch->y00,
 				batch->x11, batch->y11);
 			alg->add=batch->add;alg->multiply=batch->multiply;
-			alg_list[alg_counter++] = alg;
-			if (alg_counter == alg_list.size()) alg_list.resize(alg_counter + 100);
+			alg_list->AddAlg(alg);
 		}
 
 		if (com == COM_ALG1ST) {
@@ -2842,8 +2857,7 @@ end:
 			alg = new llAlgFirst(der, batch->x00, batch->y00,
 				batch->x11, batch->y11);
 			alg->add=batch->add;alg->multiply=batch->multiply;
-			alg_list[alg_counter++] = alg;
-			if (alg_counter == alg_list.size()) alg_list.resize(alg_counter + 100);
+			alg_list->AddAlg(alg);
 		}
 
 		if (com == COM_ALG2ND) {
@@ -2858,8 +2872,7 @@ end:
 			alg = new llAlgSecond(der, batch->x00, batch->y00,
 				batch->x11, batch->y11);
 			alg->add=batch->add;alg->multiply=batch->multiply;
-			alg_list[alg_counter++] = alg;
-			if (alg_counter == alg_list.size()) alg_list.resize(alg_counter + 100);
+			alg_list->AddAlg(alg);
 		}
 
 		if (com == COM_ALGSLOPE ) {
@@ -2879,8 +2892,7 @@ end:
 			alg2->Highest=batch->Highest;
 			alg2->ValueAtLowest=batch->ValueAtLowest;
 			alg2->ValueAtHighest=batch->ValueAtHighest;
-			alg_list[alg_counter++] = alg2;
-			if (alg_counter == alg_list.size()) alg_list.resize(alg_counter + 100);
+			alg_list->AddAlg(alg2);
 		}
 
 		if (com == COM_ALGRADIAL ) {
@@ -2903,8 +2915,7 @@ end:
 			alg2->ValueAtFar=batch->ValueAtHighest;
 			alg2->X=batch->xx1;
 			alg2->Y=batch->yy1;
-			alg_list[alg_counter++] = alg2;
-			if (alg_counter == alg_list.size()) alg_list.resize(alg_counter + 100);
+			alg_list->AddAlg(alg2);
 		}
 
 		if ( com == COM_ALGSTRIPE) {
@@ -2924,9 +2935,9 @@ end:
 			alg2->Highest=batch->Highest;
 			alg2->ValueAtLowest=batch->ValueAtLowest;
 			alg2->ValueAtHighest=batch->ValueAtHighest;
-			alg_list[alg_counter++] = alg2;
-			if (alg_counter == alg_list.size()) alg_list.resize(alg_counter + 100);
+			alg_list->AddAlg(alg2);
 		}
+
 
 		if ( com == COM_ALGPEAKFINDER) {
 			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f radius=%.0f -scanradius=%.0f -minval=%.0f -maxval=%.0f",
@@ -2948,10 +2959,9 @@ end:
 			alg2->ValueAtLowest=batch->ValueAtLowest;
 			alg2->ValueAtHighest=batch->ValueAtHighest;
 			alg2->Init();
-			alg_list[alg_counter++] = alg2;
-			if (alg_counter == alg_list.size()) alg_list.resize(alg_counter + 100);
+			alg_list->AddAlg(alg2);
 		}
-
+#endif
 		} catch (char * str) {
 			if (batch->CurrentCommand)
 				mesg->WriteNextLine(LOG_FATAL,"Catched exception [%s] in [%s]", str, batch->CurrentCommand);

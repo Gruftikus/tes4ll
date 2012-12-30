@@ -55,16 +55,31 @@ public:
 		char *delme = lines[write_pointer-1];
 		unsigned int len = strlen(delme) + 2;
 		lines[write_pointer-1] = new char[len];
-		sprintf_s(lines[write_pointer-1], LOG_MAX_LENGTH, "%s%c", lines[write_pointer-1], _add);
+		sprintf_s(lines[write_pointer-1], len, "%s%c", delme, _add);
+		delete delme;
+	}
+	void AddToLine(char * _add, double _f) {
+		char *delme = lines[write_pointer-1];
+		unsigned int len = strlen(delme) + 100 + strlen(_add);
+		lines[write_pointer-1] = new char[len];
+		sprintf_s(lines[write_pointer-1], len, "%s%s%f", delme, _add, _f);
 		delete delme;
 	}
 	void AddToLine(char * _add, float _f) {
 		char *delme = lines[write_pointer-1];
 		unsigned int len = strlen(delme) + 100 + strlen(_add);
 		lines[write_pointer-1] = new char[len];
-		sprintf_s(lines[write_pointer-1], LOG_MAX_LENGTH, "%s%s%f", lines[write_pointer-1], _add, _f);
+		sprintf_s(lines[write_pointer-1], len, "%s%s%f", delme, _add, _f);
 		delete delme;
 	}
+	void AddToLine(char * _add, int _f) {
+		char *delme = lines[write_pointer-1];
+		unsigned int len = strlen(delme) + 100 + strlen(_add);
+		lines[write_pointer-1] = new char[len];
+		sprintf_s(lines[write_pointer-1], len, "%s%s%i", delme, _add, _f);
+		delete delme;
+	}
+
 
 	void Dump(void) {		
 		char *x = ReadNextLine();

@@ -125,8 +125,8 @@
 #define COM_ALGSLOPE_CMD		"AlgLinear"
 #define COM_ALGSTRIPE			84
 #define COM_ALGSTRIPE_CMD		"AlgLayer"
-#define COM_ALGPEAKFINDER		85
-#define COM_ALGPEAKFINDER_CMD	"AlgPeakFinder"
+//#define COM_ALGPEAKFINDER		85
+//#define COM_ALGPEAKFINDER_CMD	"AlgPeakFinder"
 #define COM_ALGRADIAL			86
 #define COM_ALGRADIAL_CMD		"AlgRadial"
 
@@ -167,6 +167,7 @@
 #define COM_CALLTES4QLOD		131
 #define COM_CALLTES4QLOD_CMD	"CallTes4qlod"
 	
+#define COM_REGISTERED_COMMAND  139
 
 #define COM_MAX_CMD				140
 
@@ -182,9 +183,11 @@
 
 #include <iostream>
 #include <stdarg.h>
+#include <vector>
 
 #include "../include/lllogger.h"
 #include "../include/llutils.h"
+#include "../include/llworker.h"
 
 
 class llCommands {
@@ -199,14 +202,17 @@ class llCommands {
 	char * lines[MAX_LINES];
 	unsigned int num_lines, line_pointer;
 	
-	char * crunch_string, *crunch_saveptr, *crunch_current;
+	//char * crunch_string, *crunch_saveptr, *crunch_current;
+
+	std::vector<llWorker*> worker_list;
 
  public:
 
-    //constructor
+    //constructors
     llCommands(FILE *_file, char *_section = NULL);
 	llCommands(const char *_file, char *_section = NULL);
 	llCommands();
+
 	int Reopen(char *_section);
 	int Open(const char *_file, char *_section = NULL);
 	int ReadCache(void);
@@ -214,6 +220,17 @@ class llCommands {
 	void ReadStdin(char *_section) {section = _section;};
 	char *GetNextLine(int _cmd);
 	int SaveFile(const char *_file);
+
+	int RegisterWorker(llWorker *_worker) {
+		if (_worker->GetCommandName()) {
+			worker_list.resize(worker_list.size() + 1);
+			worker_list[worker_list.size()-1] = _worker;
+			return 1;
+		} else {
+			_llLogger()->WriteNextLine(-LOG_ERROR, "A worker has no command name");
+			return 0;
+		}
+	};
 
     int GetCommand(void);
 	void Init(void);

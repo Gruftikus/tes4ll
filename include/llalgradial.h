@@ -1,22 +1,30 @@
 #ifndef _PLLALGRADIAL_H_
 #define _PLLALGRADIAL_H_
 
-#include <iostream>
-#include "../include/llmap.h"
-#include "../include/llalg.h"
+#include "../include/llalglist.h"
 
 class llAlgRadial : public llAlg {
 
- private:
+private:
 
- public:
+	llAlgList *alg_list;
+	float my_near, my_far;
+	float value_at_near, value_at_far, x, y;
 
-float Near, Far, ValueAtNear, ValueAtFar, X, Y;
-    //constructor
-    llAlgRadial(llMap *_map, float _x00, float _y00, float _x11, float _y11);
+public:
 
-    float GetCeiling(float *_ceiling=NULL); 
-    float GetValue(float _x, float _y, float *_value=NULL); 
+
+	//constructor
+	llAlgRadial(llAlgList *_alg_list, char *_map);
+
+    double GetCeiling(double *_ceiling = NULL); 
+    double GetValue(float _x, float _y, double *_value = NULL); 
+
+	virtual llWorker * Clone() {
+		return new llAlgRadial(*this);
+	}
+
+	int    Init(void);
 
 };
 

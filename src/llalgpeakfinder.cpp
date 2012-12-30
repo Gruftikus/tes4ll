@@ -3,38 +3,51 @@
 #include <stdio.h>
 
 //constructor
-llAlgPeakFinder::llAlgPeakFinder(llMap *_map, float _x00, float _y00, float _x11, float _y11) :
-llAlg(_map, _x00, _y00, _x11, _y11) {
+llAlgPeakFinder::llAlgPeakFinder(llAlgList *_alg_list, char *_map) : llAlg(_map) {
+
+	alg_list = _alg_list;
 
 	loc_ceiling = 0;
 
-	Radius         = 4096;
-	Scanradius     = 8192;
-	ValueAtLowest  = 0.2f;
-	ValueAtHighest = 1.0f;
+	radius           = 4096.f;
+	scan_radius      = 8192.f;
+	value_at_lowest  = 0.2f;
+	value_at_highest = 1.0f;
+	linear           = 0;
+	lowest           = -2000.f;
 
 	points = new llPointList(100, NULL);
 
+	SetCommandName("AlgPeakFinder");
+
+	RegisterFlag( "-linear",     &linear);
+	RegisterValue("-lowest",     &lowest);
+	RegisterValue("-minval",     &value_at_lowest);
+	RegisterValue("-maxval",     &value_at_highest);
+	RegisterValue("-radius",     &radius);
+	RegisterValue("-scanradius", &scan_radius);
 };
 
 int llAlgPeakFinder::Init(void) {
+	if (!llAlg::Init()) return 0;
+	alg_list->AddAlg(this);
 
 	int stepsize = 1024;
-	int numfound=0;
+	int numfound = 0;
 
 	//let us scan over the heightmap 
-	for (float x = x00+Scanradius; x< x11-Scanradius; x+=stepsize) {
-		for (float y = y00+Scanradius; y<y11-Scanradius; y+=stepsize) {
+	for (float x = x00+scan_radius; x < x11-scan_radius; x+=stepsize) {
+		for (float y = y00+scan_radius; y < y11-scan_radius; y+=stepsize) {
 
-			if (points->GetMinDistance(x,y) > Scanradius) {
-				int is_highest=1;
-				float z=heightmap->GetZ(x,y);
+			if (points->GetMinDistance(x,y) > scan_radius) {
+				int is_highest = 1;
+				float z = heightmap->GetZ(x,y);
 
 				//check for distance in pointlist
 
 				//is this point the highest point?
-				for (float x1 = 0; x1< Scanradius; x1 +=stepsize) {
-					for (float y1 = 0; y1< Scanradius; y1 +=stepsize) {
+				for (float x1 = 0; x1 < scan_radius; x1 +=stepsize) {
+					for (float y1 = 0; y1 < scan_radius; y1 +=stepsize) {
 						//is this point the highest point?
 						if (heightmap->GetZ(x+x1,y+y1)>z || heightmap->GetZ(x-x1,y+y1)>z ||
 							heightmap->GetZ(x+x1,y-y1)>z || heightmap->GetZ(x-x1,y-y1)>z) {
@@ -60,7 +73,7 @@ int llAlgPeakFinder::Init(void) {
 
 
 
-float llAlgPeakFinder::GetCeiling(float *_ceiling) {
+double llAlgPeakFinder::GetCeiling(double *_ceiling) {
 
 	if (_ceiling) {
 		if (add)
@@ -73,19 +86,21 @@ float llAlgPeakFinder::GetCeiling(float *_ceiling) {
 	}
 }
 
-float llAlgPeakFinder::GetValue(float _x, float _y, float *_value) {
+double llAlgPeakFinder::GetValue(float _x, float _y, double *_value) {
 
-	float loc_value = ValueAtLowest;
+	double loc_value = value_at_lowest;
 
-	float z = float(heightmap->GetZ(_x, _y));
+	double z = double(heightmap->GetZ(_x, _y));
 
-	if (points->GetMinDistance(_x, _y) < Radius && z > Lowest) {
-		loc_value=ValueAtHighest; 
+	if (points->GetMinDistance(_x, _y) < radius && z > lowest) {
+		loc_value = value_at_highest; 
 		if (linear) 
-			loc_value = ValueAtLowest + ((Radius-points->GetMinDistance(_x, _y))/Radius)*(ValueAtHighest-ValueAtLowest);
+			loc_value = value_at_lowest + 
+			((radius - points->GetMinDistance(_x, _y))/radius)*
+			(value_at_highest - value_at_lowest);
 	}
 
-	if (loc_value > loc_ceiling && loc_value < ValueAtLowest && loc_value < ValueAtHighest) 
+	if (loc_value > loc_ceiling && loc_value < value_at_lowest && loc_value < value_at_highest) 
 		loc_ceiling = loc_value;
 
 	if (_value) {

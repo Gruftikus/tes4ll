@@ -4,14 +4,14 @@
 
 
 //constructor
-llAlgSecond::llAlgSecond(llMap *_map, float _x00, float _y00, float _x11, float _y11) :
-llAlg( _map, _x00, _y00, _x11, _y11) {
-
-	_map->MakeDerivative();
+llAlgSecond::llAlgSecond(llAlgList *_alg_list, char *_map) : llAlg(_map) {
+	alg_list    = _alg_list;
 	loc_ceiling = 0;
+
+	SetCommandName("AlgSecondOrder");
 }
 
-float llAlgSecond::GetCeiling(float *_ceiling) {
+double llAlgSecond::GetCeiling(double *_ceiling) {
 
 	if (_ceiling) {
 		if (add)
@@ -24,16 +24,16 @@ float llAlgSecond::GetCeiling(float *_ceiling) {
 	}
 }
 
-float llAlgSecond::GetValue(float _x, float _y, float *_value) {
+double llAlgSecond::GetValue(float _x, float _y, double *_value) {
 
-	float loc_value=0;
-	int xx = heightmap->GetX(int(_x));
-	int yy = heightmap->GetY(int(_y));
+	double loc_value=0;
+	int xx = heightmap->GetX(_x);
+	int yy = heightmap->GetY(_y);
 
 	if (_x>=x00 && _x<=x11 && _y>=y00 && _y<=y11) {
 		loc_value=
-			(fabs(float(heightmap->GetX2Coord(xx,yy))) + 
-			fabs(float(heightmap->GetY2Coord(xx,yy))) );
+			(fabs(heightmap->GetX2Coord(xx,yy)) + 
+			fabs(heightmap->GetY2Coord(xx,yy)) );
 	}
 
 	if (loc_value>loc_ceiling && loc_value < 10.f) 
@@ -48,4 +48,11 @@ float llAlgSecond::GetValue(float _x, float _y, float *_value) {
 	} else {
 		return loc_value*multiply + add*loc_value;
 	}
+}
+
+int llAlgSecond::Init(void) {
+	if (!llAlg::Init()) return 0;
+	alg_list->AddAlg(this);
+	heightmap->MakeDerivative();
+	return 1;
 }

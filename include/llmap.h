@@ -198,28 +198,46 @@ public:
 		return yy;
 	}
 
+	int GetX(double _x) {
+		int xx = int((_x - double(x1)) * double(widthx)/((double)x2-(double)x1))-1;
+		if (xx<0) xx=0;
+		return xx;
+	}
+	int GetY(double _y) {
+		int yy = int((_y - double(y1)) * double(widthy)/((double)y2-(double)y1))-1;
+		if (yy<0) yy=0;
+		return yy;
+	}
+
 	float GetZCoord(unsigned int _x, unsigned int _y) {
 		if (_x<0 || _x>=widthx || _y<0 || _y>=widthy) return 8*default; 
 		return 8.0f*(*data)[_x + _y*widthx];
 	}
 
 	float GetZ(int _x, int _y) {
-		unsigned int x1=GetX(_x);
-		unsigned int y1=GetY(_y);
+		unsigned int x1 = GetX(_x);
+		unsigned int y1 = GetY(_y);
 		if (x1<0 || x1>=widthx || y1<0 || y1>=widthy) return 8*default;
 		return 8.0f*(*data)[_x + _y*widthx];
 	}
 
 	float GetZ(float _x, float _y) {
-		unsigned int x1=GetX(int(_x));
-		unsigned int y1=GetY(int(_y));
+		unsigned int x1 = GetX(double(_x));
+		unsigned int y1 = GetY(double(_y));
+		if (x1<0 || x1>=widthx || y1<0 || y1>=widthy) return 8*default; 
+		return (8.0f*(*data)[x1+y1*widthx]);
+	}
+
+	float GetZ(double _x, double _y) {
+		unsigned int x1 = GetX(_x);
+		unsigned int y1 = GetY(_y);
 		if (x1<0 || x1>=widthx || y1<0 || y1>=widthy) return 8*default; 
 		return (8.0f*(*data)[x1+y1*widthx]);
 	}
 
 	int IsInMap(float _x, float _y) {
-		unsigned int x1=GetX(int(_x));
-		unsigned int y1=GetY(int(_y));
+		unsigned int x1 = GetX(int(_x));
+		unsigned int y1 = GetY(int(_y));
 		if (x1<0 || x1>=widthx || y1<0 || y1>=widthy) return 0;
 		return 1;
 	}

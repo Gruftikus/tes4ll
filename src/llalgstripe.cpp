@@ -5,21 +5,28 @@
 
 
 //constructor
-llAlgStripe::llAlgStripe(llMap *_map, float _x00, float _y00, float _x11, float _y11) :
-llAlg( _map, _x00, _y00, _x11, _y11) {
+llAlgStripe::llAlgStripe(llAlgList *_alg_list, char *_map) : llAlg(_map) {
 
-	_map->MakeDerivative();
+	alg_list = _alg_list;
+
 	loc_ceiling = 0;
 
-	Lowest         = -8000;
-	Highest        =  8000;
-	ValueAtLowest  =  0.2f;
-	ValueAtHighest =  1.0f;
+	lowest           = -8000;
+	highest          =  8000;
+	value_at_lowest  =  0.2f;
+	value_at_highest =  1.0f;
+
+	SetCommandName("AlgLinear");
+
+	RegisterValue("-highest", &highest);
+	RegisterValue("-lowest",  &lowest);
+	RegisterValue("-minval",  &value_at_lowest);
+	RegisterValue("-maxval",  &value_at_highest);
 }
 
 
 
-float llAlgStripe::GetCeiling(float *_ceiling) {
+double llAlgStripe::GetCeiling(double *_ceiling) {
 
 	if (_ceiling) {
 		if (add)
@@ -32,17 +39,19 @@ float llAlgStripe::GetCeiling(float *_ceiling) {
 	}
 }
 
-float llAlgStripe::GetValue(float _x, float _y, float *_value) {
+double llAlgStripe::GetValue(float _x, float _y, double *_value) {
 
-	float loc_value=ValueAtHighest;
+	double loc_value=value_at_highest;
 
-	float z = float(heightmap->GetZ(_x, _y));
+	float z = heightmap->GetZ(_x, _y);
 
-	if (z<Lowest) loc_value=ValueAtLowest;
-	else if (z>Highest) loc_value=ValueAtLowest;
+	if (z < lowest) 
+		loc_value=value_at_lowest;
+	else if (z > highest) 
+		loc_value=value_at_lowest;
 
-	if (loc_value > loc_ceiling && loc_value < ValueAtLowest && loc_value < ValueAtHighest) 
-		loc_ceiling=loc_value;
+	if (loc_value > loc_ceiling && loc_value < value_at_lowest && loc_value < value_at_highest) 
+		loc_ceiling = loc_value;
 
 	if (_value) {
 		if (add)
@@ -53,4 +62,10 @@ float llAlgStripe::GetValue(float _x, float _y, float *_value) {
 	} else {
 		return loc_value*multiply + add*loc_value;
 	}
+}
+
+int llAlgStripe::Init(void) {
+	if (!llAlg::Init()) return 0;
+	alg_list->AddAlg(this);
+	return 1;
 }

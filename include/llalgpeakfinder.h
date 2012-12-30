@@ -3,25 +3,32 @@
 
 #include <iostream>
 #include "../include/llmap.h"
-#include "../include/llalg.h"
+#include "../include/llalglist.h"
 #include "../include/llpointlist.h"
 
 class llAlgPeakFinder : public llAlg {
 
- private:
+private:
 
-    llPointList * points;
+	llPointList * points;
 
- public:
-
-    float Radius, Scanradius, ValueAtLowest, ValueAtHighest, Lowest; 
+	float radius, scan_radius, value_at_lowest, value_at_highest, lowest; 
 	int linear;
-    //constructor
-    llAlgPeakFinder(llMap *_map, float _x00, float _y00, float _x11, float _y11);
 
-    float GetCeiling(float *_ceiling=NULL); 
-    float GetValue(float _x, float _y,float *_value=NULL); 
-    int   Init(void);
+	llAlgList *alg_list;
+
+public:
+
+	llAlgPeakFinder(llAlgList *_alg_list, char *_map);
+
+	double GetCeiling(double *_ceiling = NULL); 
+	double GetValue(float _x, float _y, double *_value = NULL); 
+
+	virtual llWorker * Clone() {
+		return new llAlgPeakFinder(*this);
+	}
+
+	int    Init(void);
 };
 
 #endif

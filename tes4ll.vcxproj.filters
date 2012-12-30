@@ -1758,6 +1758,15 @@
     <ClInclude Include="include\llutils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\llalglist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llworker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llmaplist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\niflib\src\kfm.cpp">
@@ -3474,6 +3483,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\llutils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llalglist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llworker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llmaplist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -3,19 +3,27 @@
 
 #include <iostream>
 #include "../include/llmap.h"
-#include "../include/llalg.h"
+#include "../include/llalglist.h"
 
 class llAlgSecond : public llAlg {
 
- private:
+private:
 
- public:
+	llAlgList *alg_list;
 
-    //constructor
-    llAlgSecond(llMap *_map, float _x00, float _y00, float _x11, float _y11);
+public:
 
-    float GetCeiling(float *_ceiling=NULL); 
-    float GetValue(float _x, float _y, float *_value=NULL); 
+	//constructor
+	llAlgSecond(llAlgList *_alg_list, char *_map);
+
+	double GetCeiling(double *_ceiling = NULL); 
+	double GetValue(float _x, float _y, double *_value = NULL); 
+
+	virtual llWorker * Clone() {
+		return new llAlgSecond(*this);
+	}
+
+	int    Init(void);
 };
 
 #endif

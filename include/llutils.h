@@ -22,11 +22,12 @@ class llUtils {
 
 	llLogger *mesg;
 	
-	char *flag_list[MAX_FLAGS];
+	//Flag handling:
+	char       *flag_list[MAX_FLAGS];
 	const char *flag_value[MAX_FLAGS];
-	char *flag_description[MAX_FLAGS]; //for dropdowns
-	int flag_enable[MAX_FLAGS];
-	int flag_hidden[MAX_FLAGS];
+	char       *flag_description[MAX_FLAGS]; //for dropdowns
+	int         flag_enable[MAX_FLAGS];
+	int         flag_hidden[MAX_FLAGS];
 	unsigned int num_flags;
 
 	char *crunch_string, *crunch_saveptr, *crunch_current;
@@ -69,6 +70,13 @@ class llUtils {
 		if (_c>= 0x20 && _c <=0x7E) return 1;
 		return 0;
 	}
+
+	//********************
+	//Global variables
+	//********************
+
+	float x00, y00, x11, y11; //focus
+
 
 };
 

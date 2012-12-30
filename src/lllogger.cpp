@@ -121,8 +121,10 @@ int llLogger::WriteNextLine(int _level, char *_format, ...) {
 	write_pointer++;
 
 
-	if (writeout)
+	if (writeout) {
 		Dump();
+		if (_level == LOG_FATAL) exit(-1);
+	}
 
 	return 1;
 }

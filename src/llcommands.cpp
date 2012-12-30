@@ -351,6 +351,10 @@ out:
 		x11 = (float)x2;
 		y00 = (float)y1;
 		y11 = (float)y2;
+		_llUtils()->x00 = (float)x1;
+		_llUtils()->x11 = (float)x2;
+		_llUtils()->y00 = (float)y1;
+		_llUtils()->y11 = (float)y2;
 	}
 	if (_stricmp(ptr, COM_FOCUSQUAD_CMD)==0) {
 		com = COM_FOCUSQUAD;
@@ -409,6 +413,7 @@ out:
 		CurrentCommand = COM_BREAKLINE_CMD;
 	}
 
+#if 0
 	if (_stricmp(ptr, COM_ALGCONST_CMD)==0) {
 		com = COM_ALGCONST;
 		CurrentCommand = COM_ALGCONST_CMD;
@@ -437,6 +442,7 @@ out:
 		com = COM_ALGRADIAL;
 		CurrentCommand = COM_ALGRADIAL_CMD;
 	}
+#endif
 	
 	if (_stricmp(ptr, COM_SETPOINTS_CMD)==0)  {
 		com = COM_SETPOINTS;
@@ -625,6 +631,16 @@ out:
 	if (_stricmp(ptr, COM_GUIREQUESTVERSION_CMD)==0) {
 		com = COM_GUIREQUESTVERSION;
 		CurrentCommand = COM_GUIREQUESTVERSION_CMD;
+	}
+
+	llWorker *worker = NULL;
+	for (unsigned int i=0; i<worker_list.size(); i++) {
+		if (_stricmp(ptr, worker_list[i]->GetCommandName() ) == 0) {
+			com            = COM_REGISTERED_COMMAND;
+			CurrentCommand = worker_list[i]->GetCommandName();
+			worker         = worker_list[i]->Clone();
+			worker->Prepare();
+		}
 	}
 
 	if (com==-1) {
@@ -2324,7 +2340,7 @@ out:
 		}
 
 
-
+#if 0
 		//alg generic
 		if (com == COM_ALGCONST || com == COM_ALG1ST || com == COM_ALG2ND || com == COM_ALGSLOPE 
 			|| com == COM_ALGSTRIPE || com == COM_ALGPEAKFINDER || com == COM_ALGRADIAL) {
@@ -2428,12 +2444,39 @@ out:
 						mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 					}
 				}
+
+		}
+		#endif
+
+		if (worker) {
+			if (!worker->CheckFlag(ptr)) {
+				ptr2 = strtok_int(ptr, '=',&saveptr2);
+				if (ptr2!=NULL && strlen(ptr2)>0) {
+					if (worker->CheckValue(ptr)) {
+						//std::cout << ptr << std::endl;
+						ptr2 = strtok_int(NULL, '=',&saveptr2);
+						if (ptr2)
+							worker->AddValue(ptr2);
+						else {
+							mesg->WriteNextLine(LOG_ERROR, CM_SYNTAX_ERROR, ptr, CurrentCommand);
+							return com;
+						}
+					}
+				}
+			}
 		}
 
 		ptr = strtok_int(NULL, ' ', &saveptr1);
 	}
 
 	//afterburner
+	if (worker) {
+		worker->Init();
+		worker->Print();
+		return com;
+	}
+
+
 	if (com == COM_FOCUSQUAD) {
 		if (quadx<-1110 || quady<-1110) {
 			mesg->WriteNextLine(LOG_ERROR,"%s: no quad specified (needs -x and -y)",COM_FOCUSQUAD_CMD);
@@ -2556,6 +2599,7 @@ out:
 		npoints=1;
 	}
 
+#if 0
 	if (com == COM_ALGCONST || com == COM_ALG1ST|| com == COM_ALG2ND || com == COM_ALGSLOPE 
 		|| com == COM_ALGSTRIPE || com == COM_ALGPEAKFINDER) {
 			if (add<0 && multiply<0) {
@@ -2564,8 +2608,11 @@ out:
 			}
 	}
 
+
 	if (add<0) add=0.;
 	if (multiply<0) multiply=0.;
+
+#endif
 
 	if (com == COM_GUIREQUESTVERSION) {
 		if (!myflagname) {

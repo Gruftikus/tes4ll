@@ -578,6 +578,7 @@
     <ClInclude Include="include\llalg.h" />
     <ClInclude Include="include\llalgconst.h" />
     <ClInclude Include="include\llalgfirst.h" />
+    <ClInclude Include="include\llalglist.h" />
     <ClInclude Include="include\llalgpeakfinder.h" />
     <ClInclude Include="include\llalgradial.h" />
     <ClInclude Include="include\llalgsecond.h" />
@@ -586,11 +587,13 @@
     <ClInclude Include="include\llcommands.h" />
     <ClInclude Include="include\lllogger.h" />
     <ClInclude Include="include\llmap.h" />
+    <ClInclude Include="include\llmaplist.h" />
     <ClInclude Include="include\llpointlist.h" />
     <ClInclude Include="include\llpolygonlist.h" />
     <ClInclude Include="include\llquadlist.h" />
     <ClInclude Include="include\lltrianglelist.h" />
     <ClInclude Include="include\llutils.h" />
+    <ClInclude Include="include\llworker.h" />
     <ClInclude Include="merged\strtok_r.h" />
   </ItemGroup>
   <ItemGroup>
@@ -1152,6 +1155,7 @@
     <ClCompile Include="src\llalg.cpp" />
     <ClCompile Include="src\llalgconst.cpp" />
     <ClCompile Include="src\llalgfirst.cpp" />
+    <ClCompile Include="src\llalglist.cpp" />
     <ClCompile Include="src\llalgpeakfinder.cpp" />
     <ClCompile Include="src\llalgradial.cpp" />
     <ClCompile Include="src\llalgsecond.cpp" />
@@ -1160,11 +1164,13 @@
     <ClCompile Include="src\llcommands.cpp" />
     <ClCompile Include="src\lllogger.cpp" />
     <ClCompile Include="src\llmap.cpp" />
+    <ClCompile Include="src\llmaplist.cpp" />
     <ClCompile Include="src\llpointlist.cpp" />
     <ClCompile Include="src\llpolygonlist.cpp" />
     <ClCompile Include="src\llquadlist.cpp" />
     <ClCompile Include="src\lltrianglelist.cpp" />
     <ClCompile Include="src\llutils.cpp" />
+    <ClCompile Include="src\llworker.cpp" />
     <ClCompile Include="src\tes4ll.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

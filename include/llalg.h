@@ -2,29 +2,36 @@
 #define _PLLALG_H_
 
 #include <iostream>
+#include "../include/llworker.h"
 #include "../include/llmap.h"
 
-class llAlg {
+class llAlg : public llWorker {
 
  protected:
 
-    llMap * heightmap;
+    llMap *heightmap;
+	char  *map;
 
-    float x00,y00,x11,y11; //focus
+    float x00, y00, x11, y11; //focus
 
-    float loc_ceiling;
+    double loc_ceiling;
 
  public:
 
-    float add,multiply;
+    float add, multiply;
 
     //constructor
-    llAlg(llMap * _map, float _x00, float _y00, float _x11, float _y11);
+    llAlg(char *_map);
 
-    virtual float GetCeiling(float *_ceiling=NULL); 
-    virtual float GetValue(float _x, float _y,float *_value=NULL); 
+    virtual double GetCeiling(double *_ceiling=NULL) = 0; 
+	virtual double GetValue(float _x, float _y, double *_value=NULL) = 0; 
 
-    virtual int Init(void);
+	virtual llWorker * Clone() {
+		std::cout << "I should never be here...." << std::endl;
+		return new llWorker(*this);
+	}
+
+	virtual int Init(void);
 
 };
 

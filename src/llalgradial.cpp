@@ -1,27 +1,35 @@
-#include "..\include\llAlgRadial.h"
+#include "..\include\llalgradial.h"
 #include <string.h>
 #include <stdio.h>
 
 
 
 //constructor
-llAlgRadial::llAlgRadial(llMap *_map, float _x00, float _y00, float _x11, float _y11) :
-llAlg( _map, _x00, _y00, _x11, _y11) {
+llAlgRadial::llAlgRadial(llAlgList *_alg_list, char *_map) : llAlg(_map) {
 
-	_map->MakeDerivative();
+	alg_list    = _alg_list;
 	loc_ceiling = 0;
 
-	Near=0;
-	Far=100000;
-	ValueAtNear  = 0.5f;
-	ValueAtFar   = 1.0f;
-	X = 0.f;
-	Y = 0.f;
+	my_near = 0;
+	my_far  = 100000;
+	value_at_near  = 0.5f;
+	value_at_far   = 1.0f;
+	x = 0.f;
+	y = 0.f;
+
+	SetCommandName("AlgRadial");
+
+	RegisterValue("-near",   &my_near);
+	RegisterValue("-far",    &my_far);
+	RegisterValue("-minval", &value_at_near);
+	RegisterValue("-maxval", &value_at_far);
+	RegisterValue("-x",      &x);
+	RegisterValue("-y",      &y);
 }
 
 
 
-float llAlgRadial::GetCeiling(float *_ceiling) {
+double llAlgRadial::GetCeiling(double *_ceiling) {
 
 	if (_ceiling) {
 		if (add)
@@ -34,20 +42,20 @@ float llAlgRadial::GetCeiling(float *_ceiling) {
 	}
 }
 
-float llAlgRadial::GetValue(float _x, float _y, float *_value) {
+double llAlgRadial::GetValue(float _x, float _y, double *_value) {
 
-	float loc_value=ValueAtFar;
+	float loc_value = value_at_far;
 
-	float z = sqrt((_x-X)*(_x-X) + (_y-Y)*(_y-Y));
+	float z = sqrt((_x-x)*(_x-x) + (_y-y)*(_y-y));
 
-	if (z<Near) 
-		loc_value=ValueAtNear;
-	else if (z>Far) 
-		loc_value=ValueAtFar;
+	if (z < my_near) 
+		loc_value = value_at_near;
+	else if (z > my_far) 
+		loc_value = value_at_near;
 	else 
-		loc_value =  ValueAtNear + (ValueAtFar - ValueAtNear) * ( (z - Far) / (Far / Near));
+		loc_value = value_at_near + (value_at_far - value_at_near) * ( (z - my_far) / (my_far / my_near));
 
-	if (loc_value > loc_ceiling  && loc_value < ValueAtFar && loc_value < ValueAtNear) 
+	if (loc_value > loc_ceiling  && loc_value < value_at_near && loc_value < value_at_near) 
 		loc_ceiling = loc_value;
 
 	if (_value) {
@@ -59,4 +67,10 @@ float llAlgRadial::GetValue(float _x, float _y, float *_value) {
 	} else {
 		return loc_value*multiply + add*loc_value;
 	}
+}
+
+int llAlgRadial::Init(void) {
+	if (!llAlg::Init()) return 0;
+	alg_list->AddAlg(this);
+	return 1;
 }
