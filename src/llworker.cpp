@@ -107,10 +107,13 @@ int llWorker::Used(char *_flag) {
 	for (unsigned int i=0; i<name.size(); i++) {
 		if (_stricmp(_flag, name[i]) == 0) {
 			return used[i];
-
 		}
 	}
 	return 0;
+}
+
+int llWorker::RegisterOptions(void) {
+	return 1;
 }
 
 int llWorker::Prepare(void) {

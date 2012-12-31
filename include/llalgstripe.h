@@ -26,7 +26,8 @@ public:
 		return new llAlgStripe(*this);
 	}
 
-	int    Init(void);
+	int RegisterOptions(void);
+	int Init(void);
 
 };
 

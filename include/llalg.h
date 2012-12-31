@@ -16,10 +16,11 @@ class llAlg : public llWorker {
 
     double loc_ceiling;
 
+	double add, multiply;
+
  public:
 
-    float add, multiply;
-
+    
     //constructor
     llAlg(char *_map);
 
@@ -31,6 +32,7 @@ class llAlg : public llWorker {
 		return new llWorker(*this);
 	}
 
+	virtual int RegisterOptions(void);
 	virtual int Init(void);
 
 };

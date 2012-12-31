@@ -639,7 +639,8 @@ out:
 			com            = COM_REGISTERED_COMMAND;
 			CurrentCommand = worker_list[i]->GetCommandName();
 			worker         = worker_list[i]->Clone();
-			worker->Prepare();
+			worker                         ->RegisterOptions();
+			worker                         ->Prepare();
 		}
 	}
 

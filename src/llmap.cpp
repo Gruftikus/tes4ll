@@ -2,9 +2,11 @@
 
 //constructor
 llMap::llMap(unsigned long _x, unsigned long _y, int _makeshort, float _default) {
-	widthx=_x;
-	widthy=_y;
-	mesg = _llLogger();
+	widthx   = _x;
+	widthy   = _y;
+	f_widthx = float(_x);
+	f_widthy = float(_y);
+	mesg     = _llLogger();
 
 	makeshort = _makeshort;
     data = new llShortarray(widthx*widthy,makeshort, _default); 
@@ -31,10 +33,6 @@ llMap::~llMap() {
     if (data2y)  delete data2y;
 }
 
-void llMap::SetPoint(unsigned int _x, unsigned int _y, int _val) {
-    data->SetElement(_x + _y*widthx, float(_val));
-}
-
 llMap * llMap::Filter(unsigned long _dist, int _overwrite, llCommands *_batch) {
 
 	llMap *tmp= new llMap(widthx, widthy, makeshort, default);
@@ -53,7 +51,7 @@ llMap * llMap::Filter(unsigned long _dist, int _overwrite, llCommands *_batch) {
 			float mean=0.,num=0.;
 			for (unsigned long  xx=x1;xx<=x2;xx++) {
 				for (unsigned long  yy=y1;yy<=y2;yy++) {
-					float height = (float)GetElement(xx,yy);
+					float height = (float)GetElementRaw(xx,yy);
 					if (height > minheight) {
 						mean +=  height;
 						num++;
@@ -61,9 +59,9 @@ llMap * llMap::Filter(unsigned long _dist, int _overwrite, llCommands *_batch) {
 				}
 			}
 			if (num)
-				tmp->SetElement(x,y,mean/num);
+				tmp->SetElementRaw(x,y,mean/num);
 			else
-				tmp->SetElement(x,y,default);
+				tmp->SetElementRaw(x,y,default);
 		}
 	}
 	tmp->SetCoordSystem(x1,y1,x2,y2);
@@ -71,7 +69,7 @@ llMap * llMap::Filter(unsigned long _dist, int _overwrite, llCommands *_batch) {
 	if (_overwrite) {
 		for (unsigned long y=0;y<widthy;y++) {
 			for (unsigned long x=0;x<widthx;x++) {
-				this->SetElement(x,y,tmp->GetElement(x,y));
+				this->SetElementRaw(x, y, tmp->GetElementRaw(x,y));
 			}
 		}
 		delete tmp;
@@ -124,49 +122,53 @@ repeat:
 
 
 	x1max=0;
-	for (unsigned long y=0;y<widthy;y++) {
-		data1x->SetElement(y*widthx,(GetZCoord(1,y)-GetZCoord(0,y)));
-		data1x->SetElement(y*widthx+widthx-1,(GetZCoord(widthx-1,y)-GetZCoord(widthx-2,y)));
-		for (unsigned long  x=1;x<widthx-1;x++) {
-			if ((GetZCoord(x-1,y) > minheight && GetZCoord(x+1,y) > minheight)) {
-				data1x->SetElement(x+y*widthx,(GetZCoord(x-1,y) - GetZCoord(x+1,y)));
-				if (fabs(((*data1x)[x+y*widthx]))>x1max) x1max=fabs(((*data1x)[x+y*widthx]));
+	for (unsigned int y=0; y<widthy; y++) {
+		data1x->SetElement(y*widthx, GetElementRaw(1,y) - GetElementRaw(0,y));
+		data1x->SetElement(y*widthx+widthx-1, GetElementRaw(widthx-1,y) - GetElementRaw(widthx-2,y));
+		for (unsigned int x=1; x<widthx-1; x++) {
+			if ((GetElementRaw(x-1,y) > minheight && GetElementRaw(x+1,y) > minheight)) {
+				data1x->SetElement(x+y*widthx, (GetElementRaw(x-1,y) - GetElementRaw(x+1,y)) / 2.0f);
+				if (fabs(((*data1x)[x+y*widthx])) > x1max) 
+					x1max = fabs(((*data1x)[x+y*widthx]));
 			}
 		}
 	}
 
 	y1max=0;
-	for (unsigned long  x=0;x<widthx;x++) {
-		data1y->SetElement(x,(GetZCoord(x,1)-GetZCoord(x,0)));
-		data1y->SetElement(widthx+(widthy-1)*widthx,(GetZCoord(x,widthy-1)-GetZCoord(x,widthy-2)));
-		for (unsigned long  y=1;y<widthy-1;y++) {
-			if ((GetZCoord(x,y-1) > minheight && GetZCoord(x,y+1) > minheight)) {
-				data1y->SetElement(x+y*widthx,(GetZCoord(x,y-1)-GetZCoord(x,y+1)));
-				if (fabs(((*data1y)[x+y*widthx]))>y1max) y1max=fabs(((*data1y)[x+y*widthx]));
+	for (unsigned int x=0; x<widthx; x++) {
+		data1y->SetElement(x, GetElementRaw(x,1) - GetElementRaw(x,0));
+		data1y->SetElement(widthx+(widthy-1)*widthx, GetElementRaw(x,widthy-1) - GetElementRaw(x,widthy-2));
+		for (unsigned int y=1; y<widthy-1; y++) {
+			if ((GetElementRaw(x,y-1) > minheight && GetElementRaw(x,y+1) > minheight)) {
+				data1y->SetElement(x+y*widthx, (GetElementRaw(x,y-1) - GetElementRaw(x,y+1)) / 2.0f);
+				if (fabs(((*data1y)[x+y*widthx])) > y1max) 
+					y1max = fabs(((*data1y)[x+y*widthx]));
 			}
 		}
 	}
 
 	x2max=0;
-	for (unsigned long  y=0;y<widthy;y++) {
-		data2x->SetElement(y*widthx,fabs((GetX1Coord(1,y)-GetX1Coord(0,y))) + fabs((GetY1Coord(1,y)-GetY1Coord(0,y))));
-		data2x->SetElement(y*widthx+widthx-1,fabs((GetX1Coord(widthx-1,y)-GetX1Coord(widthx-2,y))) + fabs((GetY1Coord(widthx-1,y)-GetY1Coord(widthx-2,y))));
-		for (unsigned long  x=1;x<widthx-1;x++) {
-			if ((GetZCoord(x-1,y) > minheight && GetZCoord(x+1,y) > minheight)) {
-				data2x->SetElement(x+y*widthx,fabs((GetX1Coord(x-1,y)-GetX1Coord(x+1,y)))  +  fabs((GetY1Coord(x-1,y)-GetY1Coord(x+1,y))));
-				if (fabs(((*data2x)[x+y*widthx]))>x2max) x2max=fabs(((*data2x)[x+y*widthx]));
+	for (unsigned int y=0; y<widthy; y++) {
+		data1x->SetElement(y*widthx, GetRawX1(1,y) - GetRawX1(0,y));
+		data1x->SetElement(y*widthx+widthx-1, GetRawX1(widthx-1,y) - GetRawX1(widthx-2,y));
+		for (unsigned int x=1; x<widthx-1; x++) {
+			if ((GetElementRaw(x-1,y) > minheight && GetElementRaw(x+1,y) > minheight)) {
+				data2x->SetElement(x+y*widthx, (GetRawX1(x-1,y) - GetRawX1(x+1,y)) / 2.0f);
+				if (fabs(((*data2x)[x+y*widthx])) > x2max) 
+					x1max = fabs(((*data2x)[x+y*widthx]));
 			}
 		}
 	}
 
 	y2max=0;
-	for (unsigned long  x=0;x<widthx;x++) {
-		data2y->SetElement(x,fabs((GetX1Coord(x,1)-GetX1Coord(x,0))) + fabs((GetY1Coord(x,1)-GetY1Coord(x,0))));
-		data2y->SetElement(widthx+(widthy-1)*widthx,fabs((GetX1Coord(x,widthy-1)-GetX1Coord(x,widthy-2)))  +  fabs((GetY1Coord(x,widthy-1)-GetY1Coord(x,widthy-2))));
-		for (unsigned long  y=1;y<widthy-1;y++) {
-			if ((GetZCoord(x,y-1) > minheight && GetZCoord(x,y+1) > minheight)) {
-				data2y->SetElement(x+y*widthx,fabs((GetX1Coord(x,y-1)-GetX1Coord(x,y+1))) +  fabs((GetY1Coord(x,y-1)-GetY1Coord(x,y+1))));
-				if (fabs(((*data2y)[x+y*widthx]))>y2max) y2max=fabs(((*data2y)[x+y*widthx]));
+	for (unsigned int x=0; x<widthx; x++) {
+		data1y->SetElement(x, GetRawY1(x,1) - GetRawY1(x,0));
+		data1y->SetElement(widthx+(widthy-1)*widthx, GetRawY1(x,widthy-1) - GetRawY1(x,widthy-2));
+		for (unsigned int y=1; y<widthy-1; y++) {
+			if ((GetElementRaw(x,y-1) > minheight && GetElementRaw(x,y+1) > minheight)) {
+				data2y->SetElement(x+y*widthx, (GetRawY1(x,y-1) - GetRawY1(x,y+1)) / 2.0f);
+				if (fabs(((*data2y)[x+y*widthx])) > y2max) 
+					y1max = fabs(((*data2y)[x+y*widthx]));
 			}
 		}
 	}

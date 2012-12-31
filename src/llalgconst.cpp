@@ -7,8 +7,10 @@
 
 //constructor
 llAlgConst::llAlgConst(llAlgList *_alg_list, char *_map) : llAlg(_map) {
+
 	alg_list = _alg_list;
 	SetCommandName("AlgConst");
+
 }
 
 double llAlgConst::GetCeiling(double *_ceiling) {

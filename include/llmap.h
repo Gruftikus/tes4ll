@@ -124,7 +124,8 @@ class llMap {
 
 protected:
 
-	unsigned long widthx, widthy;
+	unsigned long widthx,   widthy;
+	float         f_widthx, f_widthy;
 
 	float x1max;
 	float y1max;
@@ -136,7 +137,7 @@ protected:
 	llShortarray *data2x;
 	llShortarray *data2y;
 
-	int x1,y1,x2,y2,scaling;
+	float x1, y1, x2, y2, scaling;
 	bool der_done;
 
 	llShortarray *data;
@@ -146,47 +147,61 @@ protected:
 
 public:
 
-	void SetScaling(int _s){scaling=_s;};
-	int  GetScaling(){return scaling;};
-
-	void SetElement(unsigned int _x, unsigned int _y, float _val) {
-		if ( _x < 0 || _y < 0 || _x >= widthx || _y >= widthy) return;
-		data->SetElement(_x+_y*widthx,_val);
-	};
-	float GetElement(unsigned int _x, unsigned int _y) {
-		if ( _x < 0 || _y < 0 || _x >= widthx || _y >= widthy) return default;
-		return (*data)[_x+_y*widthx];
-	};
-	void ChangeElement(unsigned int _x, unsigned int _y, float _val) {
-		if ( _x<0 || _y<0 || _x>=widthx || _y>=widthy) return;
-		data->SetElement(_x + _y*widthx, (*data)[_x+_y*widthx] + _val);
-	};
-	//constructor
 	llMap(unsigned long _x = 0, unsigned long _y = 0, int _makeshort=0, float _default = 0);
-
 	~llMap();
+	llMap * Clone(int _expand, int _makeshort);
 
-	void SetPoint(unsigned int _x, unsigned int _y, int _val);
-
+	//Raw:
 	int GetWidthX(void) {return widthx;};
 	int GetWidthY(void) {return widthy;};
 
-	void SetCoordSystem(int _x1, int _y1,int _x2, int _y2) {
-		int offset=0;
-		x1=_x1-offset;
-		y1=_y1-offset;
-		x2=_x2-offset;
-		y2=_y2-offset;
+	void SetElementRaw(unsigned int _x, unsigned int _y, float _val) {
+		if ( _x < 0 || _y < 0 || _x >= widthx || _y >= widthy) return;
+		data->SetElement(_x+_y*widthx, _val);
+	};
+	void SetElementRaw(unsigned int _x, unsigned int _y, int _val) {
+		if ( _x < 0 || _y < 0 || _x >= widthx || _y >= widthy) return;
+		data->SetElement(_x+_y*widthx, float(_val));
+	};
+	float GetElementRaw(unsigned int _x, unsigned int _y) {
+		if ( _x < 0 || _y < 0 || _x >= widthx || _y >= widthy) return default;
+		return (*data)[_x+_y*widthx];
+	};
+	void ChangeElementRaw(unsigned int _x, unsigned int _y, float _val) {
+		if ( _x<0 || _y<0 || _x>=widthx || _y>=widthy) return;
+		data->SetElement(_x + _y*widthx, (*data)[_x+_y*widthx] + _val);
+	};
+	
+	//With coordinates:
+	void SetCoordSystem(float _x1, float _y1, float _x2, float _y2) {
+		x1 = _x1;
+		y1 = _y1;
+		x2 = _x2;
+		y2 = _y2;
 	}
 
-	int GetXCoord(int _x) {
-		return (int)((double)_x*((double)x2-(double)x1)/(double)widthx + (double)x1);
+	//Transformation:
+	unsigned int GetRawX(float _x) {
+		if (_x < x1) return 0;
+		unsigned int xx = unsigned int((_x - x1) * f_widthx/(x2-x1));
+		if (xx) return xx - 1; //correct small offset
+		return xx;
+	}
+	unsigned int GetRawY(float _y) {
+		if (_y < y1) return 0;
+		unsigned int yy = unsigned int((_y - y1) * f_widthy/(y2-y1));
+		if (yy) return yy - 1; //correct small offset
+		return yy;
+	}
+	float GetCoordX(unsigned int _x) {
+		return ((float)_x*(x2-x1)/f_widthx + x1);
 	}
 
-	int GetYCoord(int _y) {
-		return (int)((double)_y*((double)y2-(double)y1)/(double)widthy + (double)y1);
+	float GetCoordY(unsigned int _y) {
+		return ((float)_y*(y2-y1)/f_widthy + y1);
 	}
 
+#if 0
 	int GetX(int _x) {
 		int xx = int((double(_x) - double(x1)) * double(widthx)/((double)x2-(double)x1))-1;
 		if (xx<0) xx=0;
@@ -197,54 +212,47 @@ public:
 		if (yy<0) yy=0;
 		return yy;
 	}
+#endif
 
-	int GetX(double _x) {
-		int xx = int((_x - double(x1)) * double(widthx)/((double)x2-(double)x1))-1;
-		if (xx<0) xx=0;
-		return xx;
-	}
-	int GetY(double _y) {
-		int yy = int((_y - double(y1)) * double(widthy)/((double)y2-(double)y1))-1;
-		if (yy<0) yy=0;
-		return yy;
-	}
-
-	float GetZCoord(unsigned int _x, unsigned int _y) {
+	//float GetZCoord(unsigned int _x, unsigned int _y) {
+	float GetZ(unsigned int _x, unsigned int _y) {
 		if (_x<0 || _x>=widthx || _y<0 || _y>=widthy) return 8*default; 
 		return 8.0f*(*data)[_x + _y*widthx];
 	}
 
+#if 0
 	float GetZ(int _x, int _y) {
-		unsigned int x1 = GetX(_x);
-		unsigned int y1 = GetY(_y);
+		unsigned int x1 = GetRawX(_x);
+		unsigned int y1 = GetRawY(_y);
 		if (x1<0 || x1>=widthx || y1<0 || y1>=widthy) return 8*default;
 		return 8.0f*(*data)[_x + _y*widthx];
 	}
+#endif
 
 	float GetZ(float _x, float _y) {
-		unsigned int x1 = GetX(double(_x));
-		unsigned int y1 = GetY(double(_y));
+		unsigned int x1 = GetRawX(_x);
+		unsigned int y1 = GetRawY(_y);
 		if (x1<0 || x1>=widthx || y1<0 || y1>=widthy) return 8*default; 
 		return (8.0f*(*data)[x1+y1*widthx]);
 	}
 
 	float GetZ(double _x, double _y) {
-		unsigned int x1 = GetX(_x);
-		unsigned int y1 = GetY(_y);
+		unsigned int x1 = GetRawX(float(_x));
+		unsigned int y1 = GetRawY(float(_y));
 		if (x1<0 || x1>=widthx || y1<0 || y1>=widthy) return 8*default; 
 		return (8.0f*(*data)[x1+y1*widthx]);
 	}
 
 	int IsInMap(float _x, float _y) {
-		unsigned int x1 = GetX(int(_x));
-		unsigned int y1 = GetY(int(_y));
+		unsigned int x1 = GetRawX(_x);
+		unsigned int y1 = GetRawY(_y);
 		if (x1<0 || x1>=widthx || y1<0 || y1>=widthy) return 0;
 		return 1;
 	}
 
 	int IsDefault(float _x, float _y) {
-		unsigned int x1=GetX(int(_x));
-		unsigned int y1=GetY(int(_y));
+		unsigned int x1 = GetRawX(_x);
+		unsigned int y1 = GetRawY(_y);
 		if ((*data)[x1 + y1*widthx] - 0.5 < default)
 			return 1;
 		return 0;
@@ -254,33 +262,52 @@ public:
 
 	llMap* Filter(unsigned long _dist, int _overwrite, llCommands *_batch);
 
-	float GetX1max(void) {
-		return x1max;
+	float GetX1Max(void) {
+		return 8.f*x1max;
 	}
-	float GetY1max(void) {
-		return y1max;
+	float GetY1Max(void) {
+		return 8.f*y1max;
 	}
-	float GetX2max(void) {
-		return x2max;
+	float GetX2Max(void) {
+		return 8.f*x2max;
 	}
-	float GetY2max(void) {
-		return y2max;
+	float GetY2Max(void) {
+		return 8.f*y2max;
 	}
 
-	float GetX1Coord(int _x, int _y) {
+	float GetX1(unsigned int _x, unsigned int _y) {
+		//std::cout << "x1:" << _x << ":" << _y << ":" << (*data1x)[_x + _y*widthx] << std::endl;
 		return 8.f*(*data1x)[_x + _y*widthx];
 	}
-	float GetY1Coord(int _x, int _y) {
+	float GetY1(unsigned int _x, unsigned int _y) {
+		//std::cout << "y1:" << _x << ":" << _y << ":" << (*data1y)[_x + _y*widthx] << std::endl;
 		return 8.f*(*data1y)[_x + _y*widthx];
 	}
-	float GetX2Coord(int _x, int _y) {
+	float GetX2(unsigned int _x, unsigned int _y) {
+		//std::cout << "x2:" << _x << ":" << _y << ":" << (*data2x)[_x + _y*widthx] << std::endl;
 		return 8.f*(*data2x)[_x + _y*widthx];
 	}
-	float GetY2Coord(int _x, int _y) {
+	float GetY2(unsigned int _x, unsigned int _y) {
+		//std::cout << "y2:" << _x << ":" << _y << ":" << (*data2y)[_x + _y*widthx] << std::endl;
 		return 8.f*(*data2y)[_x + _y*widthx];
 	}
 
-	llMap * Clone(int _expand, int _makeshort);
+	float GetRawX1(unsigned int _x, unsigned int _y) {
+		return (*data1x)[_x + _y*widthx];
+	}
+	float GetRawY1(unsigned int _x, unsigned int _y) {
+		return (*data1y)[_x + _y*widthx];
+	}
+	float GetRawX2(unsigned int _x, unsigned int _y) {
+		return (*data2x)[_x + _y*widthx];
+	}
+	float GetRawY2(unsigned int _x, unsigned int _y) {
+		return (*data2y)[_x + _y*widthx];
+	}
+
+	void  SetScaling(float _s){scaling=_s;};
+	float GetScaling(){return scaling;};
+
 
 };
 

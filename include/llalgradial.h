@@ -24,7 +24,8 @@ public:
 		return new llAlgRadial(*this);
 	}
 
-	int    Init(void);
+	int RegisterOptions(void);
+	int Init(void);
 
 };
 

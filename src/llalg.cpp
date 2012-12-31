@@ -7,14 +7,17 @@
 
 //constructor
 llAlg::llAlg(char *_map) : llWorker() {
-
 	map = _map;
+}
+
+int llAlg::RegisterOptions(void) {
+	if (!llWorker::RegisterOptions()) return 0;
 
 	RegisterValue("-multiply", &multiply);
 	RegisterValue("-add",      &add);
 
+	return 1;
 }
-
 
 int llAlg::Init(void) {
 	llWorker::Init();
@@ -29,11 +32,15 @@ int llAlg::Init(void) {
 
 	if (!Used("-add") && !Used("-multiply")) {
 		_llLogger()->WriteNextLine(-LOG_WARNING,"%s: no add or multiply factor specified (assuming -multiply=1)", GetCommandName());
-		multiply = 1;
-	} else if (!Used("-add")) {
-		add = 0;
-	} else if (!Used("-multiply")) {
-		multiply = 0;
+		multiply = 1.;
+		add = 0.;
+	} else { 
+		if (!Used("-add")) {
+			add = 0.;
+		} 
+		if (!Used("-multiply")) {
+			multiply = 0.;
+		}
 	}
 
 	//get the focus from the global utility container

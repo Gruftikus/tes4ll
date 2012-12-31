@@ -24,7 +24,8 @@ public:
 		return new llAlgSlope(*this);
 	}
 
-	int    Init(void);
+	int RegisterOptions(void);
+	int Init(void);
 
 };
 

@@ -18,6 +18,10 @@ llAlgRadial::llAlgRadial(llAlgList *_alg_list, char *_map) : llAlg(_map) {
 	y = 0.f;
 
 	SetCommandName("AlgRadial");
+}
+
+int llAlgRadial::RegisterOptions(void) {
+	if (!llAlg::RegisterOptions()) return 0;
 
 	RegisterValue("-near",   &my_near);
 	RegisterValue("-far",    &my_far);
@@ -25,9 +29,9 @@ llAlgRadial::llAlgRadial(llAlgList *_alg_list, char *_map) : llAlg(_map) {
 	RegisterValue("-maxval", &value_at_far);
 	RegisterValue("-x",      &x);
 	RegisterValue("-y",      &y);
+
+	return 1;
 }
-
-
 
 double llAlgRadial::GetCeiling(double *_ceiling) {
 
@@ -51,11 +55,11 @@ double llAlgRadial::GetValue(float _x, float _y, double *_value) {
 	if (z < my_near) 
 		loc_value = value_at_near;
 	else if (z > my_far) 
-		loc_value = value_at_near;
+		loc_value = value_at_far;
 	else 
-		loc_value = value_at_near + (value_at_far - value_at_near) * ( (z - my_far) / (my_far / my_near));
+		loc_value = value_at_near + (value_at_far - value_at_near) * ( (z - my_near) / (my_far - my_near));
 
-	if (loc_value > loc_ceiling  && loc_value < value_at_near && loc_value < value_at_near) 
+	if (loc_value > loc_ceiling) 
 		loc_ceiling = loc_value;
 
 	if (_value) {

@@ -53,6 +53,8 @@ int npoints = 1;
 #include "..\merged\tes4qlod.c"
 #endif
 
+//#define USE_CATCH 
+
 int calltes4qlodwrapper(char *_command, llCommands *_batch, llUtils *_utils) {
 	char *mycommand = new char[strlen(_command)+1];
 	strcpy(mycommand,_command);
@@ -880,7 +882,9 @@ int main(int argc, char **argv) {
 
 		mesg->Dump();
 
+#ifdef USE_CATCH
 		try {
+#endif
 
 		if (com == COM_PARSEMODLIST) {
 
@@ -1134,7 +1138,7 @@ int main(int argc, char **argv) {
 			}
 			heightmap = new llMap(infoheader.width*batch->npoints, infoheader.height*batch->npoints);
 			_llMapList()->AddMap("_heightmap", heightmap);
-			heightmap->SetScaling(batch->npoints);
+			heightmap->SetScaling(float(batch->npoints));
 
 			//caluclate coord system
 			x1 = x_cell*int(batch->cellsize_x);
@@ -1164,7 +1168,7 @@ int main(int argc, char **argv) {
 			}
 			quads->SubQuadLevels(batch->quadtreelevels - 1);
 
-			heightmap->SetCoordSystem(x1,y1,x2,y2);
+			heightmap->SetCoordSystem(float(x1),float(y1),float(x2),float(y2));
 
 			batch->x00 = (float)batch->x1;
 			batch->x11 = (float)batch->x2;
@@ -1179,22 +1183,24 @@ int main(int argc, char **argv) {
 					int val;
 					ReadInt(fptr,&val,0);
 
-					heightmap->SetElement(bmp_x*batch->npoints,bmp_y*batch->npoints,float(val));				
+					heightmap->SetElementRaw(bmp_x*batch->npoints, bmp_y*batch->npoints, float(val));				
 
 					if (batch->npoints > 1) {
-						float x00=heightmap->GetElement(bmp_x*batch->npoints-batch->npoints,bmp_y*batch->npoints-batch->npoints);
-						float x10=heightmap->GetElement(bmp_x*batch->npoints,bmp_y*batch->npoints-batch->npoints);
-						float x01=heightmap->GetElement(bmp_x*batch->npoints-batch->npoints,bmp_y*batch->npoints);
-						//cout << "int" << endl;
+						float x00 = heightmap->GetElementRaw(bmp_x*batch->npoints-batch->npoints,
+							bmp_y*batch->npoints-batch->npoints);
+						float x10 = heightmap->GetElementRaw(bmp_x*batch->npoints,
+							bmp_y*batch->npoints-batch->npoints);
+						float x01 = heightmap->GetElementRaw(bmp_x*batch->npoints-batch->npoints,
+							bmp_y*batch->npoints);
 						for (int x1=bmp_x*batch->npoints-batch->npoints;x1<=bmp_x*batch->npoints;x1++) {
 							for (int y1=bmp_y*batch->npoints-batch->npoints;y1<=bmp_y*batch->npoints;y1++) {
 								float frac_x = float(x1-(bmp_x*batch->npoints-batch->npoints))/float(batch->npoints);
 								float frac_y = float(y1-(bmp_y*batch->npoints-batch->npoints))/float(batch->npoints);
 								
-								float myval1=(x00 + frac_x*(x10-x00));
-								float myval2=(x01 + frac_x*(val-x01));
-								float myval=myval1 + frac_y*(myval2-myval1);
-								heightmap->SetElement(x1,y1,myval);			
+								float myval1 = (x00 + frac_x*(x10-x00));
+								float myval2 = (x01 + frac_x*(val-x01));
+								float myval  = myval1 + frac_y*(myval2-myval1);
+								heightmap->SetElementRaw(x1, y1, myval);			
 							}
 						}
 					}
@@ -1259,7 +1265,7 @@ int main(int argc, char **argv) {
 				heightmap = new llMap((max_x - min_x + 1)*32*batch->npoints, (max_y - min_y + 1)*32*batch->npoints, 0, 0);
 			_llMapList()->AddMap("_heightmap", heightmap);
 			npoints = batch->npoints;
-			heightmap->SetScaling(batch->npoints);
+			heightmap->SetScaling(float(batch->npoints));
 			x_cell = min_x;
 			y_cell = min_y;
 			mesg->WriteNextLine(LOG_INFO,"x corner: %i",x_cell);
@@ -1297,8 +1303,7 @@ int main(int argc, char **argv) {
 			}
 			quads->SubQuadLevels(batch->quadtreelevels - 1);
 
-
-			heightmap->SetCoordSystem(x1,y1,x2,y2);
+			heightmap->SetCoordSystem(float(x1), float(y1), float(x2), float(y2));
 
 			batch->x00 = (float)batch->x1;
 			batch->x11 = (float)batch->x2;
@@ -1320,14 +1325,14 @@ int main(int argc, char **argv) {
 #if 1
 			for (int bmp_y=0;bmp_y<(max_y - min_y + 1)*32;bmp_y++) {
 				for (int bmp_x=0;bmp_x<(max_x - min_x + 1)*32;bmp_x++) {
-					int val = int(heightmap->GetElement(bmp_x*batch->npoints,bmp_y*batch->npoints));	
+					int val = int(heightmap->GetElementRaw(bmp_x*batch->npoints,bmp_y*batch->npoints));	
 					if (batch->minheight>-999999.f && val < int(batch->minheight)/8)
-						heightmap->SetElement(bmp_x*batch->npoints,bmp_y*batch->npoints,batch->minheight/8.f);
+						heightmap->SetElementRaw(bmp_x*batch->npoints,bmp_y*batch->npoints,batch->minheight/8.f);
 					
 					if (batch->npoints > 1) {
-						float x00=heightmap->GetElement(bmp_x*batch->npoints-batch->npoints,bmp_y*batch->npoints-batch->npoints);
-						float x10=heightmap->GetElement(bmp_x*batch->npoints,bmp_y*batch->npoints-batch->npoints);
-						float x01=heightmap->GetElement(bmp_x*batch->npoints-batch->npoints,bmp_y*batch->npoints);
+						float x00 = heightmap->GetElementRaw(bmp_x*batch->npoints-batch->npoints,bmp_y*batch->npoints-batch->npoints);
+						float x10 = heightmap->GetElementRaw(bmp_x*batch->npoints,bmp_y*batch->npoints-batch->npoints);
+						float x01 = heightmap->GetElementRaw(bmp_x*batch->npoints-batch->npoints,bmp_y*batch->npoints);
 
 						for (int x1=bmp_x*batch->npoints-batch->npoints;x1<=bmp_x*batch->npoints;x1++) {
 							for (int y1=bmp_y*batch->npoints-batch->npoints;y1<=bmp_y*batch->npoints;y1++) {
@@ -1337,7 +1342,7 @@ int main(int argc, char **argv) {
 								float myval1=(x00 + frac_x*(x10-x00));
 								float myval2=(x01 + frac_x*(val-x01));
 								float myval=myval1 + frac_y*(myval2-myval1);
-								heightmap->SetElement(x1,y1,myval);			
+								heightmap->SetElementRaw(x1,y1,myval);			
 							}
 						}
 					}
@@ -1457,7 +1462,7 @@ int main(int argc, char **argv) {
 				for (int y=y1;y<=y2;y+=1) {
 					for (int xx=0;xx<heightmap->GetScaling();xx+=1) {
 						for (int yy=0;yy<heightmap->GetScaling();yy+=1) {
-							heightmap->SetElement((x - x_cell *32 - 1)*heightmap->GetScaling()+xx, 
+							heightmap->SetElementRaw((x - x_cell *32 - 1)*heightmap->GetScaling()+xx, 
 								(y - y_cell *32 - 1)*heightmap->GetScaling()+yy, batch->zmin);
 						}
 					} 
@@ -2759,10 +2764,15 @@ loop:
 					double ceiling = alg_list->GetAlg(0)->GetCeiling();
 					double value   = alg_list->GetAlg(0)->GetValue(x,y);
 
+					//cout << "********" << endl;
+
 					for (int a=1; a<alg_list->GetSize(); a++) {
+						//cout << value << ":" << ceiling << endl;
 						alg_list->GetAlg(a)->GetValue(x, y, &value);
 						alg_list->GetAlg(a)->GetCeiling(&ceiling);
 					}
+
+					//cout << value << ":" << ceiling << endl;
 
 					if (empty>1000) {
 						mesg->WriteNextLine(LOG_WARNING,"This quad seems to be empty, skipped after %i vertices",num_point);
@@ -2778,12 +2788,12 @@ loop:
 
 					empty=0;
 					mean+=value;num++;
-					double idealdist=4096.f-(((4096.f-minab)/(mean/num))*value);
+					float idealdist = 4096.f- (((4096.f-minab)/float(mean/num)) * float(value));
 
-					if (idealdist<minab) idealdist=minab;
+					if (idealdist < minab) idealdist = minab;
 
 					if (ceiling>(10.f*mean/num)) ceiling=(10.f*mean/num);  //cutoff -> BUGBUG
-					float test = float(rand())/float(RAND_MAX) * ceiling;
+					double test = double(rand())/double(RAND_MAX) * ceiling;
 					if (test>value) { 
 						goto loop; 
 					}
@@ -2962,6 +2972,8 @@ end:
 			alg_list->AddAlg(alg2);
 		}
 #endif
+
+#ifdef USE_CATCH
 		} catch (char * str) {
 			if (batch->CurrentCommand)
 				mesg->WriteNextLine(LOG_FATAL,"Catched exception [%s] in [%s]", str, batch->CurrentCommand);
@@ -2981,6 +2993,7 @@ end:
 				mesg->WriteNextLine(LOG_FATAL,"Catched exception");
 			DumpExit();
 		}
+#endif
 
 		mesg->Dump();
 

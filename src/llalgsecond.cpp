@@ -26,17 +26,17 @@ double llAlgSecond::GetCeiling(double *_ceiling) {
 
 double llAlgSecond::GetValue(float _x, float _y, double *_value) {
 
-	double loc_value=0;
-	int xx = heightmap->GetX(_x);
-	int yy = heightmap->GetY(_y);
+	double loc_value = 0;
+	unsigned int xx = heightmap->GetRawX(_x);
+	unsigned int yy = heightmap->GetRawY(_y);
 
 	if (_x>=x00 && _x<=x11 && _y>=y00 && _y<=y11) {
-		loc_value=
-			(fabs(heightmap->GetX2Coord(xx,yy)) + 
-			fabs(heightmap->GetY2Coord(xx,yy)) );
+		loc_value =
+			( fabs(heightmap->GetX2(xx, yy)) 
+			+ fabs(heightmap->GetY2(xx, yy)) );
 	}
 
-	if (loc_value>loc_ceiling && loc_value < 10.f) 
+	if (loc_value > loc_ceiling && loc_value < 10.f) 
 		loc_ceiling = loc_value;
 
 	if (_value) {

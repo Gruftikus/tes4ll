@@ -28,7 +28,8 @@ public:
 		return new llAlgPeakFinder(*this);
 	}
 
-	int    Init(void);
+	int RegisterOptions(void);
+	int Init(void);
 };
 
 #endif

@@ -20,13 +20,20 @@ llAlgPeakFinder::llAlgPeakFinder(llAlgList *_alg_list, char *_map) : llAlg(_map)
 
 	SetCommandName("AlgPeakFinder");
 
+};
+
+int llAlgPeakFinder::RegisterOptions(void) {
+	if (!llAlg::RegisterOptions()) return 0;
+
 	RegisterFlag( "-linear",     &linear);
 	RegisterValue("-lowest",     &lowest);
 	RegisterValue("-minval",     &value_at_lowest);
 	RegisterValue("-maxval",     &value_at_highest);
 	RegisterValue("-radius",     &radius);
 	RegisterValue("-scanradius", &scan_radius);
-};
+
+	return 1;
+}
 
 int llAlgPeakFinder::Init(void) {
 	if (!llAlg::Init()) return 0;
@@ -100,7 +107,7 @@ double llAlgPeakFinder::GetValue(float _x, float _y, double *_value) {
 			(value_at_highest - value_at_lowest);
 	}
 
-	if (loc_value > loc_ceiling && loc_value < value_at_lowest && loc_value < value_at_highest) 
+	if (loc_value > loc_ceiling) 
 		loc_ceiling = loc_value;
 
 	if (_value) {

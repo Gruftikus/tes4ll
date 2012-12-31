@@ -1314,7 +1314,7 @@ int Process4LANDData(char *r, int size)
 				for (x = 1; x < 33; x++) {
 					running_height += decomp[pos+6+x+4+y*33];
 					if (heightmap) {
-						heightmap->SetElement((cell.current_x * 32 + x - x_cell *32 - 1) * npoints, 
+						heightmap->SetElementRaw((cell.current_x * 32 + x - x_cell *32 - 1) * npoints, 
 							(cell.current_y * 32 + y - y_cell *32 - 1) * npoints, running_height);
 					}
 				}
