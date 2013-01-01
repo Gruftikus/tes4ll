@@ -588,6 +588,7 @@
     <ClInclude Include="include\lllogger.h" />
     <ClInclude Include="include\llmap.h" />
     <ClInclude Include="include\llmaplist.h" />
+    <ClInclude Include="include\llparsemodlist.h" />
     <ClInclude Include="include\llpointlist.h" />
     <ClInclude Include="include\llpolygonlist.h" />
     <ClInclude Include="include\llquadlist.h" />
@@ -1165,6 +1166,7 @@
     <ClCompile Include="src\lllogger.cpp" />
     <ClCompile Include="src\llmap.cpp" />
     <ClCompile Include="src\llmaplist.cpp" />
+    <ClCompile Include="src\llparsemodlist.cpp" />
     <ClCompile Include="src\llpointlist.cpp" />
     <ClCompile Include="src\llpolygonlist.cpp" />
     <ClCompile Include="src\llquadlist.cpp" />

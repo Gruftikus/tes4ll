@@ -58,18 +58,18 @@ public:
 		sprintf_s(lines[write_pointer-1], len, "%s%c", delme, _add);
 		delete delme;
 	}
-	void AddToLine(char * _add, double _f) {
+	void AddToLine(char * _add, double _f, int _width = 1) {
 		char *delme = lines[write_pointer-1];
 		unsigned int len = strlen(delme) + 100 + strlen(_add);
 		lines[write_pointer-1] = new char[len];
-		sprintf_s(lines[write_pointer-1], len, "%s%s%f", delme, _add, _f);
+		sprintf_s(lines[write_pointer-1], len, "%s%s%*f", delme, _add, _width, _f);
 		delete delme;
 	}
-	void AddToLine(char * _add, float _f) {
+	void AddToLine(char * _add, float _f, int _width = 1) {
 		char *delme = lines[write_pointer-1];
 		unsigned int len = strlen(delme) + 100 + strlen(_add);
 		lines[write_pointer-1] = new char[len];
-		sprintf_s(lines[write_pointer-1], len, "%s%s%f", delme, _add, _f);
+		sprintf_s(lines[write_pointer-1], len, "%s%s%*f", delme, _add, _width, _f);
 		delete delme;
 	}
 	void AddToLine(char * _add, int _f) {

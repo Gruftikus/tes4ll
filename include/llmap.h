@@ -15,8 +15,8 @@ private:
 
 	short *my_shortarray;
 	float *my_longarray;
-	int mysize;
-	int out_of_bounds, num_total;
+	int    mysize;
+	int    out_of_bounds, num_total;
 
 public:
 
@@ -126,6 +126,7 @@ protected:
 
 	unsigned long widthx,   widthy;
 	float         f_widthx, f_widthy;
+	float         widthx_per_raw, widthy_per_raw;
 
 	float x1max;
 	float y1max;
@@ -178,6 +179,8 @@ public:
 		y1 = _y1;
 		x2 = _x2;
 		y2 = _y2;
+		widthx_per_raw = (x2 - x1) / f_widthx;
+		widthy_per_raw = (y2 - y1) / f_widthy;
 	}
 
 	//Transformation:

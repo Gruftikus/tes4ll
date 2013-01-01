@@ -40,6 +40,7 @@
 #include "..\include\llalgstripe.h"
 #include "..\include\llalgradial.h"
 #include "..\include\llalgpeakfinder.h"
+#include "..\include\llparsemodlist.h"
 #include "..\include\llquadlist.h"
 
 llMap * heightmap = NULL;
@@ -715,16 +716,7 @@ int main(int argc, char **argv) {
     DWORD size1;
     DWORD Type;
 
-	char *esp_list[257]; //list of unsorted esp's
-	int num_esp=0;
-	FILE *fesplist=NULL;    
-	
-	esp_list[num_esp] = new char[1000];
-
-	char *esp_list_sorted[256]; //list of sorted esp's
 	char *list_string = NULL;
-	FILETIME time_list_sorted[256];
-	int num_esp_sorted=0;
 
     //******************
     //read the arguments
@@ -828,12 +820,15 @@ int main(int argc, char **argv) {
 	batch->RegisterWorker(new llAlgStripe    (alg_list, "_heightmap"));
 	batch->RegisterWorker(new llAlgPeakFinder(alg_list, "_heightmap"));
 
-
 	int triangulation=0;
 
 	llMap *der = NULL; //dervatives
 	_llMapList()->AddMap("_heightmap",   NULL);
 	_llMapList()->AddMap("_derivatives", NULL);
+
+	if (list_string) _llUtils()->SetValue("_modlist", list_string);
+	batch->RegisterWorker(new llParseModList());
+
 
 	batch->install_dir="";
 
@@ -886,186 +881,16 @@ int main(int argc, char **argv) {
 		try {
 #endif
 
-		if (com == COM_PARSEMODLIST) {
-
-
-			if (!list_string) {
-				char oblivion_app_path[1024];
-				if( RegOpenKeyEx(    HKEY_CURRENT_USER, 
-					"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",0, 
-					KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
-						size1=1023;
-						strcpy_s(rgValue,1024,"\0");
-						RegQueryValueEx( keyHandle, "Local Appdata", NULL, &Type, 
-							(LPBYTE)rgValue,&size1); //win7
-						if (strlen(rgValue) == 0) {
-							strcpy_s(rgValue,1024,"\0");
-							RegQueryValueEx( keyHandle, "Appdata", NULL, &Type, 
-								(LPBYTE)rgValue,&size1); //win XP
-						}
-						if (strlen(rgValue) == 0) {
-							mesg->WriteNextLine(LOG_FATAL,"Could not get Appdata path!");
-							DumpExit();
-						}
-						strcpy_s(oblivion_app_path,1024,rgValue);
-						mesg->WriteNextLine(LOG_INFO,"Appdata path is: %s",oblivion_app_path);
-				}     
-				else {
-					mesg->WriteNextLine(LOG_FATAL,"Could not get Appdata path!");
-					DumpExit();
-				}
-				RegCloseKey(keyHandle);
-				char listname[2000];
-				sprintf_s(listname,2000,"%s\\Oblivion\\plugins.txt\0",oblivion_app_path);
-
-				if (fopen_s(&fesplist,listname,"r")) {
-					mesg->WriteNextLine(LOG_FATAL,"Unable to open plugin file \"%s\"\n",listname);
-					DumpExit();
-				}
-				while (fgets(esp_list[num_esp],1000,fesplist)) {
-					if (esp_list[num_esp][0] != '#' && strlen(esp_list[num_esp])>5) {
-						//remove the trailing \n
-						if (num_esp==256) {
-							mesg->WriteNextLine(LOG_FATAL,"Too many plugins\n");
-							DumpExit();
-						}
-						esp_list[num_esp][strlen(esp_list[num_esp])-1] = '\0';
-
-						if (strstr(esp_list[num_esp],",") > 0) {
-							mesg->WriteNextLine(LOG_WARNING,"The esp '%s' contains an illegal character - skipped",
-								esp_list[num_esp]);
-						} else {
-							//cout << esp_list[num_esp];
-							if (num_esp<256) num_esp++;
-							esp_list[num_esp] = new char[1000];
-						}
-					}
-				}
-
-				mesg->WriteNextLine(LOG_INFO,"%i plugins will be used",num_esp);
-
-				for (int i=0; i<num_esp;i++) {
-					//open the esp
-					WIN32_FILE_ATTRIBUTE_DATA fAt = {0};
-					char tmpName2[2000];
-					sprintf_s(tmpName2,2000, "%s", esp_list[i]); 
-					wchar_t tmpName[2000]; 
-					swprintf(tmpName, 2000,L"%s", tmpName2); 
-					if (!GetFileAttributesEx(tmpName2,GetFileExInfoStandard,&fAt)) {
-						mesg->WriteNextLine(LOG_FATAL,"The esp '%s' was not found",esp_list[i]);
-						//cout << GetLastError() << endl;
-						DumpExit();
-					}
-					FILETIME time = fAt.ftLastWriteTime;
-
-					esp_list_sorted[num_esp_sorted]=esp_list[i];
-					time_list_sorted[num_esp_sorted]=time;
-					num_esp_sorted++;
-
-					for (int j=num_esp_sorted-1;j>0;j--) {  //quicksort
-						if (CompareFileTime(&time_list_sorted[j-1],&time_list_sorted[j])>0) {
-							FILETIME ttmp = time_list_sorted[j-1];
-							char * tmp = esp_list_sorted[j-1];
-							time_list_sorted[j-1]=time_list_sorted[j];
-							esp_list_sorted[j-1]=esp_list_sorted[j];
-							time_list_sorted[j]=ttmp;
-							esp_list_sorted[j]=tmp;
-						}
-					}
-				}
-
-				for (int j=0;j<num_esp_sorted;j++) {
-					char * my_flag_list=new char[strlen(esp_list_sorted[j])+2];
-					strcpy_s(my_flag_list,strlen(esp_list_sorted[j])+1,esp_list_sorted[j]);
-					for (unsigned int jj=0;jj<strlen(my_flag_list);jj++) {
-						if (*(my_flag_list+jj) == ' ') *(my_flag_list+jj)='_';
-					}
-					mesg->WriteNextLine(LOG_INFO,"Flag: %s",my_flag_list);
-					utils->AddFlag(my_flag_list);
-				}
-			} else { //list mod option -l provided
-				char *ptr;          
-				char *saveptr1 = NULL;
-				char *list_string2 = new char[strlen(list_string)+2];
-				strcpy_s(list_string2,strlen(list_string)+1,list_string);
-				ptr = strtok_int(list_string2, ',', &saveptr1);
-				while(ptr != NULL) {
-					char *flag_list=new char[strlen(ptr)+2];
-					strcpy_s(flag_list,strlen(ptr)+1,ptr);
-					for (unsigned int j=0;j<strlen(flag_list);j++) {
-						if (*(flag_list+j) == ' ') *(flag_list+j)='_';
-					}
-					ptr = strtok_int(NULL, ',', &saveptr1);
-					mesg->WriteNextLine(LOG_INFO,"Flag: %s",flag_list);
-					utils->AddFlag(flag_list);
-				}
-			}
-		}
-
-		if (com == COM_CALLTESANNWYN) {
-			char all[256*1000];
-			if (!list_string) {
-				sprintf_s(all,256*1000,"TESAnnwyn.exe -c -p 2 -b 32 -w %s \"%s",utils->GetValue("_worldspace"),esp_list_sorted[0]);
-				for (int i=1;i<num_esp_sorted;i++) sprintf_s(all,256*1000,"%s,%s",all,esp_list_sorted[i]);
-				sprintf_s(all,256*1000,"%s\"\n",all);
-			} else {
-				sprintf_s(all,256*1000,"TESAnnwyn.exe -c -p 2 -b 32 -w \"%s\" \"%s\"",utils->GetValue("_worldspace"),list_string);				
-			}
-
-			mesg->WriteNextLine(LOG_INFO,"Call Tesannwyn with the following command:\n%s",all);
-			mesg->Dump();
-
-			//FILE *tes = _popen("TESAnnwyn.exe -c -p 2 -b 32 -w Tamriel Oblivion.esm","rt");
-			FILE *tes = _popen(all,"rt");
-			bmpfilename = "tesannwyn.bmp";
-			char c; 
-			int seekmode=0;
-			char testst[1000], testst2[1000];
-
-			if (tes==NULL) {
-				mesg->WriteNextLine(LOG_FATAL,"Error calling Tesannwyn");
-				DumpExit();
-			} else {
-				do {
-					//cout << seekmode;
-					c = fgetc (tes);
-					cout << c;
-					testst[19]=c;
-					if (seekmode>0) {
-						testst2[seekmode-1]=c;
-						seekmode++;
-						if (c == ')') {
-							testst2[seekmode-1]='\0';
-							seekmode=-1;
-
-						}
-					}
-					for (int j=0;j<19;j++) testst[j]=testst[j+1];
-					if (strncmp (testst,"corresponds to cell",19) ==0) {
-						//cout << "Found" << endl;
-						seekmode=1;
-					}
-				} while (c != EOF);
-				fclose (tes);
-				if (seekmode!=-1) {
-					mesg->WriteNextLine(LOG_FATAL,"Tesannwyn failed");
-					DumpExit();
-				} else {
-					sscanf_s(testst2," (%i, %i)",&x_cell,&y_cell);
-					mesg->WriteNextLine(LOG_INFO,"****** Tesannwyn finished ******");
-					mesg->WriteNextLine(LOG_INFO,"x corner: %i",x_cell);
-					mesg->WriteNextLine(LOG_INFO,"y corner: %i",y_cell);
-				}
-			}
-			tesannwyn_called = 1;
-		} //end COM_CALLTESANNWYN
 
 		if (com == COM_CALLTES4QLOD) {
 			char all[256*1000];
 			char int_list_string[256*1000];
 			if (!list_string) {
-				sprintf_s(int_list_string,256*1000,"%s",esp_list_sorted[0]);
-				for (int i=1;i<num_esp_sorted;i++) sprintf_s(int_list_string,256*1000,"%s,%s",int_list_string,esp_list_sorted[i]);
+				if (!_llUtils()->GetNumMods())
+					mesg->WriteNextLine(-LOG_FATAL,"No mods found");
+				sprintf_s(int_list_string,256*1000,"%s", _llUtils()->GetMod(0));
+				for (int i=1; i<_llUtils()->GetNumMods(); i++) 
+					sprintf_s(int_list_string, 256*1000, "%s,%s", int_list_string, _llUtils()->GetMod(i));
 			} else {
 				sprintf_s(int_list_string,256*1000,"%s",list_string);				
 			}
@@ -1244,8 +1069,11 @@ int main(int argc, char **argv) {
 
 			char int_list_string[256*1000];
 			if (!list_string) {
-				sprintf_s(int_list_string,256*1000,"%s",esp_list_sorted[0]);
-				for (int i=1;i<num_esp_sorted;i++) sprintf_s(int_list_string,256*1000,"%s,%s",int_list_string,esp_list_sorted[i]);
+				if (!_llUtils()->GetNumMods())
+					mesg->WriteNextLine(-LOG_FATAL,"No mods found");
+				sprintf_s(int_list_string,256*1000,"%s", _llUtils()->GetMod(0));
+				for (int i=1; i<_llUtils()->GetNumMods(); i++) 
+					sprintf_s(int_list_string, 256*1000, "%s,%s", int_list_string, _llUtils()->GetMod(i));
 			} else {
 				sprintf_s(int_list_string,256*1000,"%s",list_string);				
 			}
@@ -2839,139 +2667,6 @@ end:
 				if (com == COM_SETPOINTSPERQUAD || com == COM_SETMAXPOINTSPERQUAD) if (quads->GetNextQuad()) goto setquadsloop;
 		}
 
-#if 0
-		if (com == COM_ALGCONST) {
-			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALGCONST_CMD, batch->add, batch->multiply);
-			mesg->Dump();
-
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			
-			alg = new llAlgConst(heightmap, batch->x00, batch->y00,
-				batch->x11, batch->y11);
-			alg->add=batch->add;alg->multiply=batch->multiply;
-			alg_list->AddAlg(alg);
-		}
-
-		if (com == COM_ALG1ST) {
-			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALG1ST_CMD, batch->add, batch->multiply);
-			mesg->Dump();
-
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			
-			alg = new llAlgFirst(der, batch->x00, batch->y00,
-				batch->x11, batch->y11);
-			alg->add=batch->add;alg->multiply=batch->multiply;
-			alg_list->AddAlg(alg);
-		}
-
-		if (com == COM_ALG2ND) {
-			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f ", COM_ALG2ND_CMD, batch->add, batch->multiply);
-			mesg->Dump();
-
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			
-			alg = new llAlgSecond(der, batch->x00, batch->y00,
-				batch->x11, batch->y11);
-			alg->add=batch->add;alg->multiply=batch->multiply;
-			alg_list->AddAlg(alg);
-		}
-
-		if (com == COM_ALGSLOPE ) {
-			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f -highest=%.0f -minval=%.0f -maxval=%.0f",
-				COM_ALGSLOPE_CMD, batch->add, batch->multiply, batch->Lowest, batch->Highest, batch->ValueAtLowest, batch->ValueAtHighest);
-			mesg->Dump();
-
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			
-			llAlgSlope *alg2 = new llAlgSlope(der, batch->x00, batch->y00,
-				batch->x11, batch->y11);
-			alg2->add=batch->add;alg2->multiply=batch->multiply;
-			alg2->Lowest=batch->Lowest;
-			alg2->Highest=batch->Highest;
-			alg2->ValueAtLowest=batch->ValueAtLowest;
-			alg2->ValueAtHighest=batch->ValueAtHighest;
-			alg_list->AddAlg(alg2);
-		}
-
-		if (com == COM_ALGRADIAL ) {
-			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f -near=%.0f -far=%.0f -minval=%.0f -maxval=%.0f -x=%.0f -y=%.0f",
-				COM_ALGRADIAL_CMD, batch->add, batch->multiply, batch->Lowest, batch->Highest, batch->ValueAtLowest,
-				batch->ValueAtHighest, batch->xx1,batch->yy1);
-			mesg->Dump();
-
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			
-			llAlgRadial *alg2 = new llAlgRadial(der, batch->x00, batch->y00,
-				batch->x11, batch->y11);
-			alg2->add=batch->add;alg2->multiply=batch->multiply;
-			alg2->Near=batch->Lowest;
-			alg2->Far=batch->Highest;
-			alg2->ValueAtNear=batch->ValueAtLowest;
-			alg2->ValueAtFar=batch->ValueAtHighest;
-			alg2->X=batch->xx1;
-			alg2->Y=batch->yy1;
-			alg_list->AddAlg(alg2);
-		}
-
-		if ( com == COM_ALGSTRIPE) {
-			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f -highest=%.0f -minval=%.0f -maxval=%.0f",
-				COM_ALGSTRIPE_CMD, batch->add, batch->multiply, batch->Lowest, batch->Highest, batch->ValueAtLowest, batch->ValueAtHighest);
-			mesg->Dump();
-
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			
-			llAlgStripe *alg2 = new llAlgStripe(der, batch->x00, batch->y00,
-				batch->x11, batch->y11);
-			alg2->add=batch->add;alg2->multiply=batch->multiply;
-			alg2->Lowest=batch->Lowest;
-			alg2->Highest=batch->Highest;
-			alg2->ValueAtLowest=batch->ValueAtLowest;
-			alg2->ValueAtHighest=batch->ValueAtHighest;
-			alg_list->AddAlg(alg2);
-		}
-
-
-		if ( com == COM_ALGPEAKFINDER) {
-			mesg->WriteNextLine(LOG_ALGORITHM,"%s: -add=%f -multiply=%f -lowest=%.0f radius=%.0f -scanradius=%.0f -minval=%.0f -maxval=%.0f",
-				COM_ALGPEAKFINDER_CMD, batch->add, batch->multiply, batch->Lowest, batch->Radius, batch->Scanradius, batch->ValueAtLowest, batch->ValueAtHighest);
-			mesg->Dump();
-
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			
-			llAlgPeakFinder *alg2 = new llAlgPeakFinder(der, batch->x00, batch->y00,
-				batch->x11, batch->y11);
-			alg2->add=batch->add;alg2->multiply=batch->multiply;
-			alg2->Lowest=batch->Lowest;
-			alg2->linear=batch->linear;
-			alg2->Radius=batch->Radius;
-			alg2->Scanradius=batch->Scanradius;
-			alg2->ValueAtLowest=batch->ValueAtLowest;
-			alg2->ValueAtHighest=batch->ValueAtHighest;
-			alg2->Init();
-			alg_list->AddAlg(alg2);
-		}
-#endif
 
 #ifdef USE_CATCH
 		} catch (char * str) {

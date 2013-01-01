@@ -136,6 +136,7 @@ llUtils * _llUtils()
 //constructor
 llUtils::llUtils() {
 	num_flags = 0;
+	mod_list.resize(0);
 }
 
 
@@ -302,11 +303,11 @@ const char* llUtils::GetValue(const char *_name) {
 	for (unsigned int i=0;i<num_flags;i++) {
 		if (_stricmp(_name,flag_list[i])==0) {
 			if (flag_value[i]) return flag_value[i];
-			if (flag_enable[i]) return "<true>";
-			return "<false>";
+			if (flag_enable[i]) return "1";
+			return "0";
 		}
 	}
-	return "<FlagNotFound>";
+	return NULL;
 }
 
 int llUtils::SetDescription(const char *_name, char *_value) {

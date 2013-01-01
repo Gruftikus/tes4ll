@@ -144,11 +144,11 @@ void llWorker::Print(void) {
 		} else if (f_value[i]) {
 			_llLogger()->AddToLine(' ');
 			_llLogger()->AddToLine(name[i]);
-			_llLogger()->AddToLine("=", *(f_value[i]));
+			_llLogger()->AddToLine("=", *(f_value[i]), 0);
 		} else if (d_value[i]) {
 			_llLogger()->AddToLine(' ');
 			_llLogger()->AddToLine(name[i]);
-			_llLogger()->AddToLine("=", *(d_value[i]));
+			_llLogger()->AddToLine("=", *(d_value[i]), 0);
 		} else if (flag[i]) {
 			_llLogger()->AddToLine(' ');
 			_llLogger()->AddToLine(name[i]);

@@ -37,7 +37,7 @@ double llAlgFirst::GetValue(float _x, float _y, double *_value) {
 			+ fabs(heightmap->GetY1(xx, yy)) );
 	}
 
-	if (loc_value > loc_ceiling && loc_value < 10.0f) 
+	if (loc_value > loc_ceiling && loc_value < 2.0f) //maxslope is 200%
 		loc_ceiling = loc_value;
 
 	if (_value) {

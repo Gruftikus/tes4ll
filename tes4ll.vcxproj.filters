@@ -1767,6 +1767,9 @@
     <ClInclude Include="include\llmaplist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\llparsemodlist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\niflib\src\kfm.cpp">
@@ -3492,6 +3495,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\llmaplist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llparsemodlist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

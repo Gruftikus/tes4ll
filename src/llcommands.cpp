@@ -280,10 +280,12 @@ check_again:
 						linex[j]='\0';
 						sprintf_s(linenew,100000,"%s",linex);
 						char *val=(char *)utils->GetValue(linex+i+1);
-						if (strlen(val)>90000) val="<String too long>";
-						sprintf_s(linenew,100000-strlen(linex),"%s%s",linenew,val);
-						if (tmp != '$') sprintf_s(linenew,100000-strlen(linex)-strlen(val),"%s%c%s",linenew,tmp,linex+j+1);
-						else sprintf_s(linenew,100000-strlen(linex)-strlen(val),"%s%s",linenew,linex+j+1);
+						if (val) {
+							if (strlen(val)>90000) val="<String too long>";
+							sprintf_s(linenew,100000-strlen(linex),"%s%s",linenew,val);
+							if (tmp != '$') sprintf_s(linenew,100000-strlen(linex)-strlen(val),"%s%c%s",linenew,tmp,linex+j+1);
+							else sprintf_s(linenew,100000-strlen(linex)-strlen(val),"%s%s",linenew,linex+j+1);
+						}
 						char *bla= new char[strlen(linenew)+1];
 						strcpy_s(bla,strlen(linenew)+1,linenew);
 						linex=bla;
@@ -293,8 +295,10 @@ check_again:
 				linex[i]='\0';
 				sprintf_s(linenew,100000,"%s",linex);
 				char *val=(char *)utils->GetValue(linex+i+1);
-				if (strlen(val)>90000) val="<String too long>";
-				sprintf_s(linenew,100000-strlen(linex),"%s%s",linenew,val);
+				if (val) {
+					if (strlen(val)>90000) val="<String too long>";
+					sprintf_s(linenew,100000-strlen(linex),"%s%s",linenew,val);
+				} 
 				char *bla= new char[strlen(linenew)+i+1];
 				strcpy_s(bla,strlen(linenew)+1,linenew);
 				linex=bla;
@@ -575,10 +579,12 @@ out:
 		com = COM_GENERATEHEIGHTMAP;
 		CurrentCommand = COM_GENERATEHEIGHTMAP_CMD;
 	}
+#if 0
 	if (_stricmp(ptr, COM_PARSEMODLIST_CMD)==0) {
 		CurrentCommand = COM_PARSEMODLIST_CMD;
 		return COM_PARSEMODLIST;
 	}
+#endif
 
 	if (_stricmp(ptr, COM_GUIAPPLICATION_CMD)==0) {
 		com = COM_GUIAPPLICATION;

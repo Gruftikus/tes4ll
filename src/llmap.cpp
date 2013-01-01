@@ -83,9 +83,9 @@ llMap * llMap::Filter(unsigned long _dist, int _overwrite, llCommands *_batch) {
 void llMap::MakeDerivative(int _use16bit) {
 
 	if (der_done) return;
-	der_done=true;
+	der_done = true;
 
-	float minheight = (default*8.0f) + 1.0f;
+	float minheight = default + 1.0f;
 	int redone = 0;
 
 repeat:
@@ -123,11 +123,11 @@ repeat:
 
 	x1max=0;
 	for (unsigned int y=0; y<widthy; y++) {
-		data1x->SetElement(y*widthx, GetElementRaw(1,y) - GetElementRaw(0,y));
-		data1x->SetElement(y*widthx+widthx-1, GetElementRaw(widthx-1,y) - GetElementRaw(widthx-2,y));
+		data1x->SetElement(y*widthx, (GetElementRaw(1,y) - GetElementRaw(0,y)) / widthx_per_raw);
+		data1x->SetElement(y*widthx+widthx-1, (GetElementRaw(widthx-1,y) - GetElementRaw(widthx-2,y)) / widthx_per_raw);
 		for (unsigned int x=1; x<widthx-1; x++) {
 			if ((GetElementRaw(x-1,y) > minheight && GetElementRaw(x+1,y) > minheight)) {
-				data1x->SetElement(x+y*widthx, (GetElementRaw(x-1,y) - GetElementRaw(x+1,y)) / 2.0f);
+				data1x->SetElement(x+y*widthx, (GetElementRaw(x-1,y) - GetElementRaw(x+1,y)) / (2.0f * widthx_per_raw));
 				if (fabs(((*data1x)[x+y*widthx])) > x1max) 
 					x1max = fabs(((*data1x)[x+y*widthx]));
 			}
@@ -136,11 +136,11 @@ repeat:
 
 	y1max=0;
 	for (unsigned int x=0; x<widthx; x++) {
-		data1y->SetElement(x, GetElementRaw(x,1) - GetElementRaw(x,0));
-		data1y->SetElement(widthx+(widthy-1)*widthx, GetElementRaw(x,widthy-1) - GetElementRaw(x,widthy-2));
+		data1y->SetElement(x, (GetElementRaw(x,1) - GetElementRaw(x,0)) / widthy_per_raw);
+		data1y->SetElement(widthx+(widthy-1)*widthx, (GetElementRaw(x,widthy-1) - GetElementRaw(x,widthy-2)) / widthy_per_raw);
 		for (unsigned int y=1; y<widthy-1; y++) {
 			if ((GetElementRaw(x,y-1) > minheight && GetElementRaw(x,y+1) > minheight)) {
-				data1y->SetElement(x+y*widthx, (GetElementRaw(x,y-1) - GetElementRaw(x,y+1)) / 2.0f);
+				data1y->SetElement(x+y*widthx, (GetElementRaw(x,y-1) - GetElementRaw(x,y+1)) / (2.0f * widthy_per_raw));
 				if (fabs(((*data1y)[x+y*widthx])) > y1max) 
 					y1max = fabs(((*data1y)[x+y*widthx]));
 			}

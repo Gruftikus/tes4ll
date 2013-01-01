@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <stdarg.h>
+#include <vector>
 
 #include "../include/lllogger.h"
 
@@ -31,6 +32,8 @@ class llUtils {
 	unsigned int num_flags;
 
 	char *crunch_string, *crunch_saveptr, *crunch_current;
+
+	std::vector<char*> mod_list;
 
  public:
 
@@ -76,6 +79,18 @@ class llUtils {
 	//********************
 
 	float x00, y00, x11, y11; //focus
+
+	void  AddMod(char *_mod) {
+		mod_list.resize(mod_list.size()+1);
+		mod_list[mod_list.size()-1] = _mod;
+	};
+	char* GetMod(int   _num) {
+		return mod_list[_num];
+	};
+	int   GetNumMods() {
+		return mod_list.size();
+	};
+
 
 
 };

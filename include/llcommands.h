@@ -95,8 +95,8 @@
 #define COM_SETOPTION_CMD			"SetOption"
 #define COM_SETFLAG					61
 #define COM_SETFLAG_CMD				"SetFlag"
-#define COM_PARSEMODLIST			62
-#define COM_PARSEMODLIST_CMD		"ParseModList"
+//#define COM_PARSEMODLIST			62
+//#define COM_PARSEMODLIST_CMD		"ParseModList"
 #define COM_EXIT					63
 #define COM_EXIT_CMD				"Exit"
 #define COM_ADDGAME					64
