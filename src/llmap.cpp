@@ -149,11 +149,11 @@ repeat:
 
 	x2max=0;
 	for (unsigned int y=0; y<widthy; y++) {
-		data1x->SetElement(y*widthx, GetRawX1(1,y) - GetRawX1(0,y));
-		data1x->SetElement(y*widthx+widthx-1, GetRawX1(widthx-1,y) - GetRawX1(widthx-2,y));
+		data1x->SetElement(y*widthx, GetRawDer1X(1,y) - GetRawDer1X(0,y));
+		data1x->SetElement(y*widthx+widthx-1, GetRawDer1X(widthx-1,y) - GetRawDer1X(widthx-2,y));
 		for (unsigned int x=1; x<widthx-1; x++) {
 			if ((GetElementRaw(x-1,y) > minheight && GetElementRaw(x+1,y) > minheight)) {
-				data2x->SetElement(x+y*widthx, (GetRawX1(x-1,y) - GetRawX1(x+1,y)) / 2.0f);
+				data2x->SetElement(x+y*widthx, (GetRawDer1X(x-1,y) - GetRawDer1X(x+1,y)) / 2.0f);
 				if (fabs(((*data2x)[x+y*widthx])) > x2max) 
 					x1max = fabs(((*data2x)[x+y*widthx]));
 			}
@@ -162,11 +162,11 @@ repeat:
 
 	y2max=0;
 	for (unsigned int x=0; x<widthx; x++) {
-		data1y->SetElement(x, GetRawY1(x,1) - GetRawY1(x,0));
-		data1y->SetElement(widthx+(widthy-1)*widthx, GetRawY1(x,widthy-1) - GetRawY1(x,widthy-2));
+		data1y->SetElement(x, GetRawDer1Y(x,1) - GetRawDer1Y(x,0));
+		data1y->SetElement(widthx+(widthy-1)*widthx, GetRawDer1Y(x,widthy-1) - GetRawDer1Y(x,widthy-2));
 		for (unsigned int y=1; y<widthy-1; y++) {
 			if ((GetElementRaw(x,y-1) > minheight && GetElementRaw(x,y+1) > minheight)) {
-				data2y->SetElement(x+y*widthx, (GetRawY1(x,y-1) - GetRawY1(x,y+1)) / 2.0f);
+				data2y->SetElement(x+y*widthx, (GetRawDer1Y(x,y-1) - GetRawDer1Y(x,y+1)) / 2.0f);
 				if (fabs(((*data2y)[x+y*widthx])) > y2max) 
 					y1max = fabs(((*data2y)[x+y*widthx]));
 			}

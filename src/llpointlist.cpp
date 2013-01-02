@@ -5,7 +5,7 @@
 //constructor
 llPointList::llPointList(int n, llQuadList * _quads) {
 
-	Resize(n);
+	Resize(n + 1);
 	counter=0;
 	quads = _quads;
 

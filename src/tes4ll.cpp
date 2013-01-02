@@ -41,6 +41,11 @@
 #include "..\include\llalgradial.h"
 #include "..\include\llalgpeakfinder.h"
 #include "..\include\llparsemodlist.h"
+#include "..\include\llcreatemap.h"
+#include "..\include\llexportmap.h"
+
+#include "..\include\lldiamondsquare.h"
+
 #include "..\include\llquadlist.h"
 
 llMap * heightmap = NULL;
@@ -82,148 +87,6 @@ int calltes4qlodwrapper(char *_command, llCommands *_batch, llUtils *_utils) {
 	return 0;
 }
 
-
-//The bmp reader was taken from Paul Bourkes examples:
-//http://paulbourke.net/dataformats/bmp/parse.c
-typedef struct {
-   unsigned short int type;                 /* Magic identifier            */
-   unsigned int size;                       /* File size in bytes          */
-   unsigned short int reserved1, reserved2;
-   unsigned int offset;                     /* Offset to image data, bytes */
-} HEADER;
-typedef struct {
-   unsigned int size;               /* Header size in bytes      */
-   int width,height;                /* Width and height of image */
-   unsigned short int planes;       /* Number of colour planes   */
-   unsigned short int bits;         /* Bits per pixel            */
-   unsigned int compression;        /* Compression type          */
-   unsigned int imagesize;          /* Image size in bytes       */
-   int xresolution,yresolution;     /* Pixels per meter          */
-   unsigned int ncolours;           /* Number of colours         */
-   unsigned int importantcolours;   /* Important colours         */
-} INFOHEADER;
-typedef struct {
-   unsigned char r,g,b,junk;
-} COLOURINDEX;
-
-int ReadUShort(FILE *fptr,short unsigned *n,int swap)
-{
-   unsigned char *cptr,tmp;
-
-   if (fread(n,2,1,fptr) != 1)
-       return(0);
-   if (swap) {
-       cptr = (unsigned char *)n;
-       tmp = cptr[0];
-       cptr[0] = cptr[1];
-       cptr[1] =tmp;
-   }
-   return(1);
-}
-
-/*
-   Write a possibly byte swapped unsigned short integer
-*/
-int WriteUShort(FILE *fptr,short unsigned n,int swap)
-{
-   unsigned char *cptr,tmp;
-
-	if (!swap) {
-   	if (fwrite(&n,2,1,fptr) != 1)
-      	return(FALSE);
-   } else {
-      cptr = (unsigned char *)(&n);
-      tmp = cptr[0];
-      cptr[0] = cptr[1];
-      cptr[1] =tmp;
-      if (fwrite(&n,2,1,fptr) != 1)
-         return(FALSE);
-   }
-   return(TRUE);
-}
-
-
-int ReadUInt(FILE *fptr,unsigned int *n,int swap)
-{
-   unsigned char *cptr,tmp;
-
-   if (fread(n,4,1,fptr) != 1)
-       return(0);
-   if (swap) {
-       cptr = (unsigned char *)n;
-       tmp = cptr[0];
-       cptr[0] = cptr[3];
-       cptr[3] = tmp;
-       tmp = cptr[1];
-       cptr[1] = cptr[2];
-       cptr[2] = tmp;
-   }
-   return(1);
-}
-
-int ReadInt(FILE *fptr, int *n,int swap)
-{
-   unsigned char *cptr,tmp;
-
-   if (fread(n,4,1,fptr) != 1)
-       return(0);
-   if (swap) {
-       cptr = (unsigned char *)n;
-       tmp = cptr[0];
-       cptr[0] = cptr[3];
-       cptr[3] = tmp;
-       tmp = cptr[1];
-       cptr[1] = cptr[2];
-       cptr[2] = tmp;
-   }
-
-   return(1);
-}
-
-int WriteInt(FILE *fptr,int n,int swap)
-{
-   unsigned char *cptr,tmp;
-
-	if (!swap) {
-   	if (fwrite(&n,4,1,fptr) != 1)
-      	return(FALSE);
-   } else {
-      cptr = (unsigned char *)(&n);
-      tmp = cptr[0];
-      cptr[0] = cptr[3];
-      cptr[3] = tmp;
-      tmp = cptr[1];
-      cptr[1] = cptr[2];
-      cptr[2] = tmp;
-      if (fwrite(&n,4,1,fptr) != 1)
-         return(FALSE);
-   }
-   return(TRUE);
-}
-
-/*
-   Write a possibly byte swapped unsigned integer
-*/
-int WriteUInt(FILE *fptr,unsigned int n,int swap)
-{
-   unsigned char *cptr,tmp;
-
-   if (!swap) {
-      if (fwrite(&n,4,1,fptr) != 1)
-         return(FALSE);
-   } else {
-      cptr = (unsigned char *)(&n);
-      tmp = cptr[0];
-      cptr[0] = cptr[3];
-      cptr[3] = tmp;
-      tmp = cptr[1];
-      cptr[1] = cptr[2];
-      cptr[2] = tmp;
-      if (fwrite(&n,4,1,fptr) != 1)
-         return(FALSE);
-   }
-   return(TRUE);
-}
 
 void usage(void) {
 
@@ -268,8 +131,8 @@ int WriteBMP(llMap *_heightmap,
 		}
 
 		INFOHEADER infoheader;
-		infoheader.width = int(_batch->bmpscaling * heightmap->GetScaling() * (_x11-_x00)/128.f);
-		infoheader.height= int(_batch->bmpscaling * heightmap->GetScaling() * (_y11-_y00)/128.f);
+		infoheader.width = int(_batch->bmpscaling * heightmap->GetScaling() * (_x11-_x00) / _llMapList()->GetWidthXPerRaw());
+		infoheader.height= int(_batch->bmpscaling * heightmap->GetScaling() * (_y11-_y00) / _llMapList()->GetWidthYPerRaw());
 		infoheader.compression=0;
 		infoheader.size=40;  
 		infoheader.planes=1;       /* Number of colour planes   */
@@ -314,9 +177,12 @@ int WriteBMP(llMap *_heightmap,
 
 		if (_batch->lodshadows) overdrawing=1.;
 
-		for (float y=_y11; y>_y00; y-=(128.f/float(heightmap->GetScaling()))/_batch->bmpscaling) {
-			for (float x=_x00; x<_x11; x+=(128.f/float(heightmap->GetScaling()))/_batch->bmpscaling) {
+		float widthx = _llMapList()->GetWidthXPerRaw();
+		float widthy = _llMapList()->GetWidthYPerRaw();
 
+		for (float y=_y11; y>_y00; y-=(widthy / _batch->bmpscaling)) {
+			for (float x=_x00; x<_x11; x+=(widthx /_batch->bmpscaling)) {
+				cout << "x:" << x << " y: " << y << endl;
 				float height = float(heightmap->GetZ(x,y));
 				
 #if 1
@@ -784,14 +650,15 @@ int main(int argc, char **argv) {
 
 	//add NULL objects
 	llQuadList    *quads    = NULL;
-	llPolygonList *polygons = NULL;
-
+	
 	int x1=0,y1=0,x2=0,y2=0;
 	//Quadlist
     int quadx1,quady1,quadx2,quady2;
 	int tesannwyn_called = 0;
 	int nquads=0;
 	int quadtreelevels = 1;
+
+	llPolygonList *polygons = NULL;
 	llPointList    *points = NULL;
 	llTriangleList *triangles = NULL;
 
@@ -823,12 +690,15 @@ int main(int argc, char **argv) {
 	int triangulation=0;
 
 	llMap *der = NULL; //dervatives
-	_llMapList()->AddMap("_heightmap",   NULL);
-	_llMapList()->AddMap("_derivatives", NULL);
+	//_llMapList()->AddMap("_heightmap",   NULL);
+	//_llMapList()->AddMap("_derivatives", NULL);
 
 	if (list_string) _llUtils()->SetValue("_modlist", list_string);
 	batch->RegisterWorker(new llParseModList());
 
+	batch->RegisterWorker(new llCreateMap());
+	batch->RegisterWorker(new llExportMap());
+	batch->RegisterWorker(new llDiamondSquare());
 
 	batch->install_dir="";
 
@@ -881,11 +751,15 @@ int main(int argc, char **argv) {
 		try {
 #endif
 
+			heightmap = _llMapList()->GetMap("_heightmap");
+			polygons  = _llMapList()->GetPolygonList("_heightmap");
+			points    = _llMapList()->GetPointList("_heightmap");
+			triangles = _llMapList()->GetTriangleList("_heightmap");
 
-		if (com == COM_CALLTES4QLOD) {
-			char all[256*1000];
-			char int_list_string[256*1000];
-			if (!list_string) {
+			if (com == COM_CALLTES4QLOD) {
+				char all[256*1000];
+				char int_list_string[256*1000];
+				if (!list_string) {
 				if (!_llUtils()->GetNumMods())
 					mesg->WriteNextLine(-LOG_FATAL,"No mods found");
 				sprintf_s(int_list_string,256*1000,"%s", _llUtils()->GetMod(0));
@@ -962,7 +836,6 @@ int main(int argc, char **argv) {
 				
 			}
 			heightmap = new llMap(infoheader.width*batch->npoints, infoheader.height*batch->npoints);
-			_llMapList()->AddMap("_heightmap", heightmap);
 			heightmap->SetScaling(float(batch->npoints));
 
 			//caluclate coord system
@@ -970,15 +843,15 @@ int main(int argc, char **argv) {
 			y1 = y_cell*int(batch->cellsize_y);
 			x2 = x1 + infoheader.width * 128;
 			y2 = y1 + infoheader.height * 128;
-			batch->x1 = x_cell*int(batch->cellsize_x);
-			batch->y1 = y_cell*int(batch->cellsize_y);
-			batch->x2 = batch->x1 + infoheader.width * 128;
-			batch->y2 = batch->y1 + infoheader.height * 128;
+//			batch->x1 = x_cell*int(batch->cellsize_x);
+//			batch->y1 = y_cell*int(batch->cellsize_y);
+//			batch->x2 = batch->x1 + infoheader.width * 128;
+//			batch->y2 = batch->y1 + infoheader.height * 128;
 			//Quadlist
-			quadx1=int(floor((float(batch->x1)/batch->quadsize_x)/batch->cellsize_x));
-			quady1=int(floor((float(batch->y1)/batch->quadsize_y)/batch->cellsize_y));
-			quadx2=int(floor((float(batch->x2)/batch->quadsize_x)/batch->cellsize_x));
-			quady2=int(floor((float(batch->y2)/batch->quadsize_y)/batch->cellsize_y));
+			quadx1=int(floor((float(x1)/batch->quadsize_x)/batch->cellsize_x));
+			quady1=int(floor((float(y1)/batch->quadsize_y)/batch->cellsize_y));
+			quadx2=int(floor((float(x2)/batch->quadsize_x)/batch->cellsize_x));
+			quady2=int(floor((float(y2)/batch->quadsize_y)/batch->cellsize_y));
 
 			nquads=(quadx2-quadx1+1)*(quady2-quady1+1);
 			mesg->WriteNextLine(LOG_INFO,"The map covers %i quads",nquads);
@@ -995,10 +868,10 @@ int main(int argc, char **argv) {
 
 			heightmap->SetCoordSystem(float(x1),float(y1),float(x2),float(y2));
 
-			batch->x00 = (float)batch->x1;
-			batch->x11 = (float)batch->x2;
-			batch->y00 = (float)batch->y1;
-			batch->y11 = (float)batch->y2;
+//			batch->x00 = (float)batch->x1;
+//			batch->x11 = (float)batch->x2;
+//			batch->y00 = (float)batch->y1;
+//			batch->y11 = (float)batch->y2;
 			batch->gridx = batch->cellsize_x;
 			batch->gridy = batch->cellsize_y;
 
@@ -1036,11 +909,11 @@ int main(int argc, char **argv) {
 			}
 			mesg->WriteNextLine(LOG_INFO,"Lowest point: %i, highest point: %i",min*8,max*8);
 
-			points    = new llPointList(npoints+4,quads);
-			polygons  = new llPolygonList(mesg,points,heightmap);
+			points    = new llPointList(npoints+4,  quads);
+			polygons  = new llPolygonList(points,   heightmap);
 			triangles = new llTriangleList(npoints, points);
 			der = heightmap;
-			_llMapList()->AddMap("_derivatives", heightmap);
+			_llMapList()->AddMap("_derivatives", heightmap, points, triangles, polygons);
 		} //end readbmp
 
 
@@ -1091,7 +964,6 @@ int main(int argc, char **argv) {
 				heightmap = new llMap((max_x - min_x + 1)*32*batch->npoints, (max_y - min_y + 1)*32*batch->npoints, 0, (batch->minheight)/8.f);
 			else
 				heightmap = new llMap((max_x - min_x + 1)*32*batch->npoints, (max_y - min_y + 1)*32*batch->npoints, 0, 0);
-			_llMapList()->AddMap("_heightmap", heightmap);
 			npoints = batch->npoints;
 			heightmap->SetScaling(float(batch->npoints));
 			x_cell = min_x;
@@ -1104,15 +976,15 @@ int main(int argc, char **argv) {
 			y1 = y_cell*int(batch->cellsize_y);
 			x2 = x1 + (max_x - min_x + 1) * 32 * 128;
 			y2 = y1 + (max_y - min_y + 1) * 32 * 128;
-			batch->x1 = x_cell*int(batch->cellsize_x);
-			batch->y1 = y_cell*int(batch->cellsize_y);
-			batch->x2 = batch->x1 + (max_x - min_x + 1) * 32 * 128;
-			batch->y2 = batch->y1 + (max_y - min_y + 1) * 32 * 128;
+//			batch->x1 = x_cell*int(batch->cellsize_x);
+//			batch->y1 = y_cell*int(batch->cellsize_y);
+//			batch->x2 = batch->x1 + (max_x - min_x + 1) * 32 * 128;
+//			batch->y2 = batch->y1 + (max_y - min_y + 1) * 32 * 128;
 			//Quadlist
-			quadx1=int(floor((float(batch->x1)/batch->quadsize_x)/batch->cellsize_x));
-			quady1=int(floor((float(batch->y1)/batch->quadsize_y)/batch->cellsize_y));
-			quadx2=int(floor((float(batch->x2)/batch->quadsize_x)/batch->cellsize_x));
-			quady2=int(floor((float(batch->y2)/batch->quadsize_y)/batch->cellsize_y));
+			quadx1=int(floor((float(x1)/batch->quadsize_x)/batch->cellsize_x));
+			quady1=int(floor((float(y1)/batch->quadsize_y)/batch->cellsize_y));
+			quadx2=int(floor((float(x2)/batch->quadsize_x)/batch->cellsize_x));
+			quady2=int(floor((float(y2)/batch->quadsize_y)/batch->cellsize_y));
 
 
 			nquads=(quadx2-quadx1+1)*(quady2-quady1+1);
@@ -1133,10 +1005,10 @@ int main(int argc, char **argv) {
 
 			heightmap->SetCoordSystem(float(x1), float(y1), float(x2), float(y2));
 
-			batch->x00 = (float)batch->x1;
-			batch->x11 = (float)batch->x2;
-			batch->y00 = (float)batch->y1;
-			batch->y11 = (float)batch->y2;
+//			batch->x00 = (float)batch->x1;
+//			batch->x11 = (float)batch->x2;
+//			batch->y00 = (float)batch->y1;
+//			batch->y11 = (float)batch->y2;
 			batch->gridx = batch->cellsize_x;
 			batch->gridy = batch->cellsize_y;
 
@@ -1183,10 +1055,10 @@ int main(int argc, char **argv) {
 			mesg->WriteNextLine(LOG_INFO,"Lowest point: %i, highest point: %i",min*8,max*8);
 
 			points    = new llPointList(npoints+4, quads);
-			polygons  = new llPolygonList(mesg, points, heightmap);
+			polygons  = new llPolygonList(points, heightmap);
 			triangles = new llTriangleList(npoints, points);
 			der = heightmap;
-			_llMapList()->AddMap("_derivatives", heightmap);
+			_llMapList()->AddMap("_derivatives", heightmap, points, triangles, polygons);
 #endif
 		} //end readbmp
 
@@ -1274,24 +1146,30 @@ int main(int argc, char **argv) {
 
 			if (batch->usegameunits) batch->zmin /= 8.0f; //convert to heightmap units
 
-			mesg->WriteNextLine(LOG_COMMAND,"%s: -x1=%.0f -y1=%.0f -x1=%.0f -y1=%.0f -z=%.0f", COM_SETHEIGHT_CMD,
-				batch->x00, batch->x11, batch->y00, batch->y11, batch->zmin);
+			mesg->WriteNextLine(LOG_COMMAND,"%s: -x1=%.0f -y1=%.0f -x2=%.0f -y2=%.0f -z=%.0f", COM_SETHEIGHT_CMD,
+				batch->x00, batch->y00, batch->x11, batch->y11, batch->zmin);
 			if (!heightmap) {
 				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
 				DumpExit();
 			}
 
-			int x1 = (int) (batch->x00 / 128.f);
-			int x2 = (int) (batch->x11 / 128.f);
-			int y1 = (int) (batch->y00 / 128.f);
-			int y2 = (int) (batch->y11 / 128.f);
+			int x1 = (int) ((batch->x00 - _llMapList()->GetX1() ) / _llMapList()->GetWidthXPerRaw() );
+			int x2 = (int) ((batch->x11 - _llMapList()->GetX1() ) / _llMapList()->GetWidthXPerRaw() );
+			int y1 = (int) ((batch->y00 - _llMapList()->GetY1() ) / _llMapList()->GetWidthYPerRaw() );
+			int y2 = (int) ((batch->y11 - _llMapList()->GetY1() ) / _llMapList()->GetWidthYPerRaw() );
+
+			cout << x1 << ":" << y1 << ":" << endl;
+			cout << x2 << ":" << y2 << ":" << endl;
+			cout << _llMapList()->GetX1() << ":" << _llMapList()->GetY1() << ":" << endl;
 
 			for (int x=x1;x<=x2;x+=1) {
 				for (int y=y1;y<=y2;y+=1) {
 					for (int xx=0;xx<heightmap->GetScaling();xx+=1) {
 						for (int yy=0;yy<heightmap->GetScaling();yy+=1) {
-							heightmap->SetElementRaw((x - x_cell *32 - 1)*heightmap->GetScaling()+xx, 
-								(y - y_cell *32 - 1)*heightmap->GetScaling()+yy, batch->zmin);
+//							heightmap->SetElementRaw((x - x_cell *32 - 1)*heightmap->GetScaling()+xx, 
+//								(y - y_cell *32 - 1)*heightmap->GetScaling()+yy, batch->zmin);
+//							cout << x << ":" << y << ":" << batch->zmin << endl;
+							heightmap->SetElementRaw(x, y, batch->zmin);
 						}
 					} 
 				}
@@ -1632,7 +1510,7 @@ panorama_end: ;
 			}
 			
 			der = heightmap->Filter(batch->npoints, int(batch->overwrite), batch);
-			_llMapList()->AddMap("_derivatives", der);
+			_llMapList()->AddMap("_derivatives", der, "_heightmap");
 			der->MakeDerivative(batch->use16bit);
 			mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_FILTER_CMD);
 		}
@@ -2477,7 +2355,7 @@ writequadsloop:
 				}
 
 				WriteNif(points, triangles, heightmap,
-					float(batch->x1),  float(batch->x2),  float(batch->y1),  float(batch->y2),filename, batch,
+					_llMapList()->GetX1(),  _llMapList()->GetX2(),  _llMapList()->GetY1(),  _llMapList()->GetY2() ,filename, batch,
 					texname,batch->ps,batch->createpedestals,batch->useshapes);
 				mesg->Dump();
 
@@ -2490,7 +2368,7 @@ writequadsloop:
 					else
 						sprintf_s(filename,1000,"world.bmp");
 				}
-				WriteBMP(heightmap, float(batch->x1),  float(batch->x2),  float(batch->y1),  float(batch->y2), filename, batch, 0);			
+				WriteBMP(heightmap, _llMapList()->GetX1(),  _llMapList()->GetX2(),  _llMapList()->GetY1(),  _llMapList()->GetY2(), filename, batch, 0);			
 			} else if (batch->writenormalmap) {
 				char filename[1000];
 				char filename1[1000];
@@ -2561,10 +2439,10 @@ setquadsloop:
 						mesg->WriteNextLine(LOG_INFO,"Vertices left to be placed: %i",mynum);
 					}
 
-					if (batch->x00<float(batch->x1)) batch->x00=float(batch->x1);
-					if (batch->y00<float(batch->y1)) batch->y00=float(batch->y1);
-					if (batch->x11>float(batch->x2)) batch->x11=float(batch->x2);
-					if (batch->y11>float(batch->y2)) batch->y11=float(batch->y2);
+					if (batch->x00 < _llMapList()->GetX1()) batch->x00 = _llMapList()->GetX1();
+					if (batch->y00 < _llMapList()->GetY1()) batch->y00 = _llMapList()->GetY1();
+					if (batch->x11 > _llMapList()->GetX2()) batch->x11 = _llMapList()->GetX2();
+					if (batch->y11 > _llMapList()->GetY2()) batch->y11 = _llMapList()->GetY2();
 					int mynum2 = int(float(mynum)*((batch->x11-batch->x00)*(batch->y11-batch->y00))/(batch->cellsize_x*batch->quadsize_x*batch->cellsize_y*batch->quadsize_y));
 					if (mynum2<mynum)
 						mesg->WriteNextLine(LOG_INFO,"Partly filled quad: vertices reduced to: %i",mynum2);

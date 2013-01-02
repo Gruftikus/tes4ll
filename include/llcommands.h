@@ -235,7 +235,7 @@ class llCommands {
     int GetCommand(void);
 	void Init(void);
 
-	int x1,y1,x2,y2; //coordinate system
+	//int x1,y1,x2,y2; //coordinate system
     float x00,y00,x11,y11; //focus
     float gridx,gridy,z,offsetx, offsety;
 	float xx1,xx2,yy1,yy2, zz1, zz2; //tool variables

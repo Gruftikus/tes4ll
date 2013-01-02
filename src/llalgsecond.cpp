@@ -32,8 +32,8 @@ double llAlgSecond::GetValue(float _x, float _y, double *_value) {
 
 	if (_x>=x00 && _x<=x11 && _y>=y00 && _y<=y11) {
 		loc_value =
-			( fabs(heightmap->GetX2(xx, yy)) 
-			+ fabs(heightmap->GetY2(xx, yy)) );
+			( fabs(heightmap->GetDer2X(xx, yy)) 
+			+ fabs(heightmap->GetDer2Y(xx, yy)) );
 	}
 
 	if (loc_value > loc_ceiling && loc_value < 4.f)  //max turn about 400%

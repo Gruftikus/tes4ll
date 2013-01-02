@@ -122,6 +122,128 @@ char * strtok_int(char *ptr, const char delim, char **saveptr1) {
 	return ptr1;
 }
 
+
+
+int ReadUShort(FILE *fptr,short unsigned *n,int swap)
+{
+   unsigned char *cptr,tmp;
+
+   if (fread(n,2,1,fptr) != 1)
+       return(0);
+   if (swap) {
+       cptr = (unsigned char *)n;
+       tmp = cptr[0];
+       cptr[0] = cptr[1];
+       cptr[1] =tmp;
+   }
+   return(1);
+}
+
+/*
+   Write a possibly byte swapped unsigned short integer
+*/
+int WriteUShort(FILE *fptr,short unsigned n,int swap)
+{
+   unsigned char *cptr,tmp;
+
+	if (!swap) {
+   	if (fwrite(&n,2,1,fptr) != 1)
+      	return(0);
+   } else {
+      cptr = (unsigned char *)(&n);
+      tmp = cptr[0];
+      cptr[0] = cptr[1];
+      cptr[1] =tmp;
+      if (fwrite(&n,2,1,fptr) != 1)
+         return(0);
+   }
+   return(1);
+}
+
+
+int ReadUInt(FILE *fptr,unsigned int *n,int swap)
+{
+   unsigned char *cptr,tmp;
+
+   if (fread(n,4,1,fptr) != 1)
+       return(0);
+   if (swap) {
+       cptr = (unsigned char *)n;
+       tmp = cptr[0];
+       cptr[0] = cptr[3];
+       cptr[3] = tmp;
+       tmp = cptr[1];
+       cptr[1] = cptr[2];
+       cptr[2] = tmp;
+   }
+   return(1);
+}
+
+int ReadInt(FILE *fptr, int *n,int swap)
+{
+   unsigned char *cptr,tmp;
+
+   if (fread(n,4,1,fptr) != 1)
+       return(0);
+   if (swap) {
+       cptr = (unsigned char *)n;
+       tmp = cptr[0];
+       cptr[0] = cptr[3];
+       cptr[3] = tmp;
+       tmp = cptr[1];
+       cptr[1] = cptr[2];
+       cptr[2] = tmp;
+   }
+
+   return(1);
+}
+
+int WriteInt(FILE *fptr,int n,int swap)
+{
+   unsigned char *cptr,tmp;
+
+	if (!swap) {
+   	if (fwrite(&n,4,1,fptr) != 1)
+      	return(0);
+   } else {
+      cptr = (unsigned char *)(&n);
+      tmp = cptr[0];
+      cptr[0] = cptr[3];
+      cptr[3] = tmp;
+      tmp = cptr[1];
+      cptr[1] = cptr[2];
+      cptr[2] = tmp;
+      if (fwrite(&n,4,1,fptr) != 1)
+         return(0);
+   }
+   return(1);
+}
+
+/*
+   Write a possibly byte swapped unsigned integer
+*/
+int WriteUInt(FILE *fptr,unsigned int n,int swap)
+{
+   unsigned char *cptr,tmp;
+
+   if (!swap) {
+      if (fwrite(&n,4,1,fptr) != 1)
+         return(0);
+   } else {
+      cptr = (unsigned char *)(&n);
+      tmp = cptr[0];
+      cptr[0] = cptr[3];
+      cptr[3] = tmp;
+      tmp = cptr[1];
+      cptr[1] = cptr[2];
+      cptr[2] = tmp;
+      if (fwrite(&n,4,1,fptr) != 1)
+         return(0);
+   }
+   return(1);
+}
+
+
 llUtils& _fllUtils()
 {
     static llUtils* ans = new llUtils();

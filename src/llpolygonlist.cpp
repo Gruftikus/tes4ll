@@ -48,10 +48,10 @@ int llPolygon::IsPointInsidePolygon(float _x, float _y) {
 
 
 
-llPolygonList::llPolygonList(llLogger *_mesg, llPointList *_points, llMap *_map) {
+llPolygonList::llPolygonList(llPointList *_points, llMap *_map) {
 	points = _points;
 	map    = _map;
-	mesg   = _mesg;
+	mesg   = _llLogger();
 	p.resize(0);
 }
 

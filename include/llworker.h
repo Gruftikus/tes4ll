@@ -17,6 +17,7 @@ class llWorker {
 	 std::vector<int*>    i_value;
 	 std::vector<float*>  f_value;
 	 std::vector<double*> d_value;
+	 std::vector<char**>  s_value;
 	 std::vector<int>     opt;
 	 std::vector<int>     used;
 
@@ -32,6 +33,8 @@ class llWorker {
 		 f_value[size] = NULL;
 		 d_value.resize(size + 1);
 		 d_value[size] = NULL;
+		 s_value.resize(size + 1);
+		 s_value[size] = NULL;
 		 opt.resize(size + 1);
 		 opt[size] = 0;
 		 used.resize(size + 1);
@@ -53,6 +56,7 @@ class llWorker {
 	int RegisterValue(char *_name, int    *_value, int _opt = 0);
 	int RegisterValue(char *_name, float  *_value, int _opt = 0);
 	int RegisterValue(char *_name, double *_value, int _opt = 0);
+	int RegisterValue(char *_name, char   **_value, int _opt = 0);
 
 	int GetSize(void) {
 		return name.size();

@@ -3,6 +3,8 @@
 //#include "StdAfx.h"
 
 #include "..\include\llcommands.h"
+#include "..\include\llmaplist.h"
+
 //#include <string.h>
 #include <stdio.h>
 #include <time.h>
@@ -351,14 +353,14 @@ out:
 
 	if (_stricmp(ptr, COM_FOCUSALL_CMD)==0) {
 		com = COM_FOCUSALL;
-		x00 = (float)x1;
-		x11 = (float)x2;
-		y00 = (float)y1;
-		y11 = (float)y2;
-		_llUtils()->x00 = (float)x1;
-		_llUtils()->x11 = (float)x2;
-		_llUtils()->y00 = (float)y1;
-		_llUtils()->y11 = (float)y2;
+		x00 = _llMapList()->GetX1();
+		x11 = _llMapList()->GetX2();
+		y00 = _llMapList()->GetY1();
+		y11 = _llMapList()->GetY2();
+		_llUtils()->x00 = x00;
+		_llUtils()->x11 = x11;
+		_llUtils()->y00 = y00;
+		_llUtils()->y11 = y11;
 	}
 	if (_stricmp(ptr, COM_FOCUSQUAD_CMD)==0) {
 		com = COM_FOCUSQUAD;
@@ -2478,8 +2480,8 @@ out:
 
 	//afterburner
 	if (worker) {
-		worker->Init();
 		worker->Print();
+		worker->Init();
 		return com;
 	}
 

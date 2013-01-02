@@ -144,7 +144,7 @@ void llTriangle::FlipEdge(int _nei) {
 //constructor
 llTriangleList::llTriangleList(int _n, llPointList *_x) {
 
-	v.resize(_n);
+	v.resize(_n + 1);
 	counter = 0;
 	points  = _x;
 	next_strip_id = 1;

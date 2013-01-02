@@ -169,5 +169,6 @@ pip-log.txt
 #############
 
 externals/
+sandbox/
 *.log
 

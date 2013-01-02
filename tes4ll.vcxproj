@@ -585,6 +585,9 @@
     <ClInclude Include="include\llalgslope.h" />
     <ClInclude Include="include\llalgstripe.h" />
     <ClInclude Include="include\llcommands.h" />
+    <ClInclude Include="include\llcreatemap.h" />
+    <ClInclude Include="include\lldiamondsquare.h" />
+    <ClInclude Include="include\llexportmap.h" />
     <ClInclude Include="include\lllogger.h" />
     <ClInclude Include="include\llmap.h" />
     <ClInclude Include="include\llmaplist.h" />
@@ -1163,6 +1166,9 @@
     <ClCompile Include="src\llalgslope.cpp" />
     <ClCompile Include="src\llalgstripe.cpp" />
     <ClCompile Include="src\llcommands.cpp" />
+    <ClCompile Include="src\llcreatemap.cpp" />
+    <ClCompile Include="src\lldiamondsquare.cpp" />
+    <ClCompile Include="src\llexportmap.cpp" />
     <ClCompile Include="src\lllogger.cpp" />
     <ClCompile Include="src\llmap.cpp" />
     <ClCompile Include="src\llmaplist.cpp" />

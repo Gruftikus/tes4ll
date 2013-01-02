@@ -11,6 +11,39 @@
 
 #include "../include/lllogger.h"
 
+
+//The bmp reader was taken from Paul Bourkes examples:
+//http://paulbourke.net/dataformats/bmp/parse.c
+typedef struct {
+   unsigned short int type;                 /* Magic identifier            */
+   unsigned int size;                       /* File size in bytes          */
+   unsigned short int reserved1, reserved2;
+   unsigned int offset;                     /* Offset to image data, bytes */
+} HEADER;
+typedef struct {
+   unsigned int size;               /* Header size in bytes      */
+   int width,height;                /* Width and height of image */
+   unsigned short int planes;       /* Number of colour planes   */
+   unsigned short int bits;         /* Bits per pixel            */
+   unsigned int compression;        /* Compression type          */
+   unsigned int imagesize;          /* Image size in bytes       */
+   int xresolution,yresolution;     /* Pixels per meter          */
+   unsigned int ncolours;           /* Number of colours         */
+   unsigned int importantcolours;   /* Important colours         */
+} INFOHEADER;
+typedef struct {
+   unsigned char r,g,b,junk;
+} COLOURINDEX;
+
+
+int ReadUShort(FILE *fptr,short unsigned *n,int swap);
+int WriteUShort(FILE *fptr,short unsigned n,int swap);
+int ReadUInt(FILE *fptr,unsigned int *n,int swap);
+int ReadInt(FILE *fptr, int *n,int swap);
+int WriteInt(FILE *fptr,int n,int swap);
+int WriteUInt(FILE *fptr,unsigned int n,int swap);
+
+
 char *strtok_int(char *_ptr, const char _delim, char **_saveptr1);
 
 class     llUtils;
