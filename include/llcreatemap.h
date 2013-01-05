@@ -10,7 +10,7 @@ class llCreateMap : public llWorker {
 protected:
 
 	int widthx, widthy;
-	float x1,y1,x2,y2;
+	float x1, y1, x2, y2, z;
 	char *mapname;
 
 public:

@@ -27,6 +27,7 @@ int llAlg::Init(void) {
 		heightmap = _llMapList()->GetMap(map);
 		if (!heightmap) {
 			_llLogger()->WriteNextLine(-LOG_FATAL, "%s: map [%s] not found", command_name, map);
+			return 0;
 		}
 	}
 

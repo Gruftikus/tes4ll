@@ -6,11 +6,8 @@
 
 
 //constructor
-llAlgConst::llAlgConst(llAlgList *_alg_list, char *_map) : llAlg(_map) {
-
-	alg_list = _alg_list;
+llAlgConst::llAlgConst(char*_alg_list, char *_map) : llAlg(_map) {
 	SetCommandName("AlgConst");
-
 }
 
 double llAlgConst::GetCeiling(double *_ceiling) {
@@ -44,7 +41,17 @@ double llAlgConst::GetValue(float _x, float _y, double *_value) {
 }
 
 int llAlgConst::Init(void) {
+
 	if (!llAlg::Init()) return 0;
-	alg_list->AddAlg(this);
+
+	if (alg_list) {
+		llAlgCollection *algs = _llAlgList()->GetAlgCollection(alg_list);
+		if (!algs) {
+			_llLogger()->WriteNextLine(-LOG_FATAL, "%s: alg collection [%s] not found", command_name, alg_list);
+			return 0;
+		}
+		algs->AddAlg(this);
+	}
+
 	return 1;
 }

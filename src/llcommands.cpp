@@ -499,10 +499,10 @@ out:
 		com = COM_SETOPTION;
 		CurrentCommand = COM_SETOPTION_CMD;
 	}
-	if (_stricmp(ptr, COM_FILTER_CMD)==0) {
-		com = COM_FILTER;
-		CurrentCommand = COM_FILTER_CMD;
-	}
+//	if (_stricmp(ptr, COM_FILTER_CMD)==0) {
+//		com = COM_FILTER;
+//		CurrentCommand = COM_FILTER_CMD;
+//	}
 	if (_stricmp(ptr, COM_BREAKFLATTRIANGLES_CMD)==0) {
 		com = COM_BREAKFLATTRIANGLES;
 		CurrentCommand = COM_BREAKFLATTRIANGLES_CMD;
@@ -2156,6 +2156,7 @@ out:
 			}
 		}
 
+#if 0
 		if (com == COM_FILTER) {
 			CurrentCommand = COM_FILTER_CMD;
 			if (_stricmp(ptr,"-overwrite")==0) {
@@ -2178,6 +2179,7 @@ out:
 				}
 			}
 		}
+#endif
 
 		if (com == COM_CALLTES4QLOD) {
 			CurrentCommand = COM_CALLTES4QLOD_CMD;
@@ -2470,6 +2472,8 @@ out:
 							mesg->WriteNextLine(LOG_ERROR, CM_SYNTAX_ERROR, ptr, CurrentCommand);
 							return com;
 						}
+					} else {
+						mesg->WriteNextLine(LOG_ERROR,CM_UNKNOWN_OPTION,ptr,CurrentCommand);
 					}
 				}
 			}
@@ -2596,12 +2600,14 @@ out:
 			}
 	}
 
+#if 0
 	if (com == COM_FILTER) {
 		if (npoints<0) {
 			mesg->WriteNextLine(LOG_ERROR,"%s: number of points not specified (needs -n)",CurrentCommand);
 			return -1;
 		}
 	}
+#endif
 
 	if (com == COM_READBMP) {
 		if (npoints<0) 

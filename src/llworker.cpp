@@ -72,6 +72,7 @@ int llWorker::CheckFlag (char *_flag) {
 
 int llWorker::CheckValue(char *_value) {
 	for (unsigned int i=0; i<name.size(); i++) {
+		//std::cout << "checked: " << name[i] << std::endl;
 		if (_stricmp(_value, name[i]) == 0) {
 			used[i] = 1;
 			if (i_value[i]) {

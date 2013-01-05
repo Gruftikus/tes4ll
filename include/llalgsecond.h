@@ -9,12 +9,14 @@ class llAlgSecond : public llAlg {
 
 private:
 
-	llAlgList *alg_list;
+	char *alg_list;
+	char *sourcename;
+	llMap *mapx2, *mapy2;
 
 public:
 
 	//constructor
-	llAlgSecond(llAlgList *_alg_list, char *_map);
+	llAlgSecond(char *_alg_list, char *_map);
 
 	double GetCeiling(double *_ceiling = NULL); 
 	double GetValue(float _x, float _y, double *_value = NULL); 
@@ -23,7 +25,8 @@ public:
 		return new llAlgSecond(*this);
 	}
 
-	int    Init(void);
+	int RegisterOptions(void);
+	int Init(void);
 };
 
 #endif

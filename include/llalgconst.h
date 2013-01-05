@@ -7,17 +7,17 @@
 
 class llAlgConst : public llAlg {
 
- private:
+private:
 
-	llAlgList *alg_list;
+	char *alg_list;
 
- public:
+public:
 
-    //constructor
-    llAlgConst(llAlgList *_alg_list, char *_map);
+	//constructor
+	llAlgConst(char *_alg_list, char *_map);
 
-    double GetCeiling(double *ceiling = NULL); 
-    double GetValue(float x, float y, double *value = NULL); 
+	double GetCeiling(double *ceiling = NULL); 
+	double GetValue(float x, float y, double *value = NULL); 
 
 	virtual llWorker * Clone() {
 		return new llAlgConst(*this);

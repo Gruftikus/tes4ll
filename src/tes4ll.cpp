@@ -45,6 +45,9 @@
 #include "..\include\llexportmap.h"
 
 #include "..\include\lldiamondsquare.h"
+#include "..\include\llfilter.h"
+#include "..\include\llmakederivatives.h"
+
 
 #include "..\include\llquadlist.h"
 
@@ -678,27 +681,29 @@ int main(int argc, char **argv) {
 	int gen_npoints=0;    
 	int com = 0;
 
-	llAlgList *alg_list = new llAlgList();
-	batch->RegisterWorker(new llAlgConst     (alg_list, NULL));
-	batch->RegisterWorker(new llAlgFirst     (alg_list, "_derivatives"));
-	batch->RegisterWorker(new llAlgSecond    (alg_list, "_derivatives"));
-	batch->RegisterWorker(new llAlgRadial    (alg_list, NULL));
-	batch->RegisterWorker(new llAlgSlope     (alg_list, "_derivatives"));
-	batch->RegisterWorker(new llAlgStripe    (alg_list, "_heightmap"));
-	batch->RegisterWorker(new llAlgPeakFinder(alg_list, "_heightmap"));
+	_llAlgList()->AddAlgCollection("_heightmap_alg", new llAlgCollection());
+	batch->RegisterWorker(new llCreateAlgCollection());
+
+	batch->RegisterWorker(new llAlgConst     ("_heightmap_alg", NULL));
+	batch->RegisterWorker(new llAlgFirst     ("_heightmap_alg", "_heightmap_filtered"));
+	batch->RegisterWorker(new llAlgSecond    ("_heightmap_alg", "_heightmap_filtered"));
+	batch->RegisterWorker(new llAlgRadial    ("_heightmap_alg", NULL));
+	batch->RegisterWorker(new llAlgSlope     ("_heightmap_alg", "_heightmap"));
+	batch->RegisterWorker(new llAlgStripe    ("_heightmap_alg", "_heightmap"));
+	batch->RegisterWorker(new llAlgPeakFinder("_heightmap_alg", "_heightmap"));
 
 	int triangulation=0;
-
-	llMap *der = NULL; //dervatives
-	//_llMapList()->AddMap("_heightmap",   NULL);
-	//_llMapList()->AddMap("_derivatives", NULL);
 
 	if (list_string) _llUtils()->SetValue("_modlist", list_string);
 	batch->RegisterWorker(new llParseModList());
 
 	batch->RegisterWorker(new llCreateMap());
 	batch->RegisterWorker(new llExportMap());
+
 	batch->RegisterWorker(new llDiamondSquare());
+	batch->RegisterWorker(new llFilter());
+	batch->RegisterWorker(new llMakeDerivatives());
+
 
 	batch->install_dir="";
 
@@ -755,6 +760,8 @@ int main(int argc, char **argv) {
 			polygons  = _llMapList()->GetPolygonList("_heightmap");
 			points    = _llMapList()->GetPointList("_heightmap");
 			triangles = _llMapList()->GetTriangleList("_heightmap");
+			llAlgCollection *alg_list = _llAlgList()->GetAlgCollection("_heightmap_alg");
+
 
 			if (com == COM_CALLTES4QLOD) {
 				char all[256*1000];
@@ -827,7 +834,7 @@ int main(int argc, char **argv) {
 				//fprintf(stderr,"[Fatal] Called ReadHeightMap 2 times\n");
 				//exit(-1);
 				mesg->WriteNextLine(LOG_INFO,"Delete old heightmap");
-				if (der && der!=heightmap) delete der;
+//				if (der && der!=heightmap) delete der;
 				delete heightmap;
 				heightmap=NULL;
 				delete quads;
@@ -866,7 +873,7 @@ int main(int argc, char **argv) {
 			}
 			quads->SubQuadLevels(batch->quadtreelevels - 1);
 
-			heightmap->SetCoordSystem(float(x1),float(y1),float(x2),float(y2));
+			heightmap->SetCoordSystem(float(x1), float(y1), float(x2), float(y2), 8.0f);
 
 //			batch->x00 = (float)batch->x1;
 //			batch->x11 = (float)batch->x2;
@@ -912,7 +919,7 @@ int main(int argc, char **argv) {
 			points    = new llPointList(npoints+4,  quads);
 			polygons  = new llPolygonList(points,   heightmap);
 			triangles = new llTriangleList(npoints, points);
-			der = heightmap;
+//			der = heightmap;
 			_llMapList()->AddMap("_derivatives", heightmap, points, triangles, polygons);
 		} //end readbmp
 
@@ -931,8 +938,8 @@ int main(int argc, char **argv) {
 			int max = 0, min=0;
 			if (heightmap) {
 				mesg->WriteNextLine(LOG_INFO,"Delete old heightmap");
-				if (der && der!=heightmap) delete der;
-				der=NULL;
+//				if (der && der!=heightmap) delete der;
+//				der=NULL;
 				delete heightmap;
 				heightmap=NULL;
 				delete quads;
@@ -1003,7 +1010,7 @@ int main(int argc, char **argv) {
 			}
 			quads->SubQuadLevels(batch->quadtreelevels - 1);
 
-			heightmap->SetCoordSystem(float(x1), float(y1), float(x2), float(y2));
+			heightmap->SetCoordSystem(float(x1), float(y1), float(x2), float(y2), 8.0);
 
 //			batch->x00 = (float)batch->x1;
 //			batch->x11 = (float)batch->x2;
@@ -1057,7 +1064,7 @@ int main(int argc, char **argv) {
 			points    = new llPointList(npoints+4, quads);
 			polygons  = new llPolygonList(points, heightmap);
 			triangles = new llTriangleList(npoints, points);
-			der = heightmap;
+//			der = heightmap;
 			_llMapList()->AddMap("_derivatives", heightmap, points, triangles, polygons);
 #endif
 		} //end readbmp
@@ -1500,6 +1507,7 @@ panorama_end: ;
 			opt_center = batch->center;
 		}
 
+#if 0
 		if (com == COM_FILTER) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s: -n=%i", COM_FILTER_CMD, batch->npoints);
 			mesg->Dump();
@@ -1509,11 +1517,12 @@ panorama_end: ;
 				DumpExit();
 			}
 			
-			der = heightmap->Filter(batch->npoints, int(batch->overwrite), batch);
-			_llMapList()->AddMap("_derivatives", der, "_heightmap");
-			der->MakeDerivative(batch->use16bit);
+//			der = heightmap->Filter(batch->npoints, int(batch->overwrite), batch);
+//			_llMapList()->AddMap("_derivatives", der, "_heightmap");
+//			der->MakeDerivative(batch->use16bit);
 			mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_FILTER_CMD);
 		}
+#endif
 
 		if (com == COM_BREAKLINE) {
 			if (triangulation) {
@@ -2239,10 +2248,10 @@ panorama_end: ;
 			}
 			if (com == COM_WRITEALLQUADS) quads->Reset();
 			//if (heightmap) {delete heightmap;heightmap=NULL;}
-			if (der && heightmap != der)       {
-				delete der;
-				der=heightmap;
-			}
+//			if (der && heightmap != der)       {
+//				delete der;
+//				der=heightmap;
+//			}
 			//BUGBUG: habe to make sure that nothing else is called
 
 writequadsloop:
@@ -2454,6 +2463,9 @@ setquadsloop:
 					goto end;
 				}
 
+				heightmap->InitRnd(heightmap->GetRawX(batch->x00), heightmap->GetRawY(batch->y00),
+					heightmap->GetRawX(batch->x11), heightmap->GetRawY(batch->y11));
+
 				for (int num_point=0;num_point<mynum;num_point++) {	    
 					int maxtry=0,maxtry_total=0;
 					mesg->Dump();
@@ -2461,24 +2473,18 @@ setquadsloop:
 						mesg->WriteNextLine(LOG_INFO,"[%i]",num_point);
 			
 loop:	    
-					float x=float((batch->x11 - batch->x00) * float(rand())/float(RAND_MAX)) + batch->x00;
-					float y=float((batch->y11 - batch->y00) * float(rand())/float(RAND_MAX)) + batch->y00;
+					//float x = float((batch->x11 - batch->x00) * float(rand())/float(RAND_MAX)) + batch->x00;
+					float x = heightmap->GetCoordRndX();
+					//float y = float((batch->y11 - batch->y00) * float(rand())/float(RAND_MAX)) + batch->y00;
+					float y = heightmap->GetCoordRndY();
 
 					
 					float z=heightmap->GetZ(x,y);
-					
-					double ceiling = alg_list->GetAlg(0)->GetCeiling();
-					double value   = alg_list->GetAlg(0)->GetValue(x,y);
 
-					//cout << "********" << endl;
+					double ceiling;
+					double value;
 
-					for (int a=1; a<alg_list->GetSize(); a++) {
-						//cout << value << ":" << ceiling << endl;
-						alg_list->GetAlg(a)->GetValue(x, y, &value);
-						alg_list->GetAlg(a)->GetCeiling(&ceiling);
-					}
-
-					//cout << value << ":" << ceiling << endl;
+					alg_list->GetValue(x,y,&value,&ceiling);
 
 					if (empty>1000) {
 						mesg->WriteNextLine(LOG_WARNING,"This quad seems to be empty, skipped after %i vertices",num_point);
@@ -2488,8 +2494,8 @@ loop:
 						goto loop; 
 					}
 
-					if (heightmap->IsDefault(x,y)) //NaN
-						goto loop;
+//					if (heightmap->IsDefault(x,y)) //NaN
+//						goto loop;
 
 
 					empty=0;

@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 //constructor
-llAlgSlope::llAlgSlope(llAlgList *_alg_list, char *_map) : llAlg(_map) {
+llAlgSlope::llAlgSlope(char *_alg_list, char *_map) : llAlg(_map) {
 
 	alg_list = _alg_list;
 	
@@ -72,7 +72,15 @@ double llAlgSlope::GetValue(float _x, float _y, double *_value) {
 
 int llAlgSlope::Init(void) {
 	if (!llAlg::Init()) return 0;
-	alg_list->AddAlg(this);
-	heightmap->MakeDerivative();
+
+	if (alg_list) {
+		llAlgCollection *algs = _llAlgList()->GetAlgCollection(alg_list);
+		if (!algs) {
+			_llLogger()->WriteNextLine(-LOG_FATAL, "%s: alg collection [%s] not found", command_name, alg_list);
+			return 0;
+		}
+		algs->AddAlg(this);
+	}
+
 	return 1;
 }

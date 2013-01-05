@@ -1779,6 +1779,12 @@
     <ClInclude Include="include\llexportmap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\llfilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llmakederivatives.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\niflib\src\kfm.cpp">
@@ -3516,6 +3522,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\llexportmap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llfilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llmakederivatives.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

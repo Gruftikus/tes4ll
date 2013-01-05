@@ -6,6 +6,7 @@ llCreateMap::llCreateMap() : llWorker() {
 
 	SetCommandName("CreateMap");
 	mapname = NULL;
+	z       = 1.0;
 
 }
 
@@ -18,6 +19,7 @@ int llCreateMap::RegisterOptions(void) {
 	RegisterValue("-y1",      &y1,     LLWORKER_OBL_OPTION);
 	RegisterValue("-x2",      &x2,     LLWORKER_OBL_OPTION);
 	RegisterValue("-y2",      &y2,     LLWORKER_OBL_OPTION);
+	RegisterValue("-zscale",  &z);
 	RegisterValue("-mapname", &mapname);
 
 	return 1;
@@ -27,7 +29,7 @@ int llCreateMap::Init(void) {
 	if (!llWorker::Init()) return 0;
 
 	llMap * heightmap = new llMap(widthx, widthy);
-	heightmap->SetCoordSystem(x1, y1, x2, y2);
+	heightmap->SetCoordSystem(x1, y1, x2, y2, z);
 
 	_llUtils()->x00 = x1;
 	_llUtils()->y00 = y1;

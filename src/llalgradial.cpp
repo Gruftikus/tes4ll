@@ -2,10 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 
-
-
 //constructor
-llAlgRadial::llAlgRadial(llAlgList *_alg_list, char *_map) : llAlg(_map) {
+llAlgRadial::llAlgRadial(char *_alg_list, char *_map) : llAlg(_map) {
 
 	alg_list    = _alg_list;
 	loc_ceiling = 0;
@@ -25,10 +23,11 @@ int llAlgRadial::RegisterOptions(void) {
 
 	RegisterValue("-near",   &my_near);
 	RegisterValue("-far",    &my_far);
-	RegisterValue("-minval", &value_at_near);
-	RegisterValue("-maxval", &value_at_far);
+	RegisterValue("-nearval", &value_at_near);
+	RegisterValue("-farval", &value_at_far);
 	RegisterValue("-x",      &x);
 	RegisterValue("-y",      &y);
+	RegisterValue("-alg",    &alg_list);
 
 	return 1;
 }
@@ -59,6 +58,8 @@ double llAlgRadial::GetValue(float _x, float _y, double *_value) {
 	else 
 		loc_value = value_at_near + (value_at_far - value_at_near) * ( (z - my_near) / (my_far - my_near));
 
+	//std::cout << _x << " : " << _y << " : " << loc_value << std::endl;
+
 	if (loc_value > loc_ceiling) 
 		loc_ceiling = loc_value;
 
@@ -75,6 +76,15 @@ double llAlgRadial::GetValue(float _x, float _y, double *_value) {
 
 int llAlgRadial::Init(void) {
 	if (!llAlg::Init()) return 0;
-	alg_list->AddAlg(this);
+
+	if (alg_list) {
+		llAlgCollection *algs = _llAlgList()->GetAlgCollection(alg_list);
+		if (!algs) {
+			_llLogger()->WriteNextLine(-LOG_FATAL, "%s: alg collection [%s] not found", command_name, alg_list);
+			return 0;
+		}
+		algs->AddAlg(this);
+	}
+
 	return 1;
 }

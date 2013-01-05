@@ -41,8 +41,8 @@
 #define COM_FOCUSREC_CMD		"FocusRec"
 
 //Heightmap
-#define COM_FILTER					30
-#define COM_FILTER_CMD				"Filter"
+//#define COM_FILTER					30
+//#define COM_FILTER_CMD				"Filter"
 #define COM_READBMP					31
 #define COM_READBMP_CMD				"ReadHeightmap"
 #define COM_GENERATEHEIGHTMAP		32

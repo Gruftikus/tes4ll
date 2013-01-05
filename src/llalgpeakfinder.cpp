@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 //constructor
-llAlgPeakFinder::llAlgPeakFinder(llAlgList *_alg_list, char *_map) : llAlg(_map) {
+llAlgPeakFinder::llAlgPeakFinder(char *_alg_list, char *_map) : llAlg(_map) {
 
 	alg_list = _alg_list;
 
@@ -37,7 +37,15 @@ int llAlgPeakFinder::RegisterOptions(void) {
 
 int llAlgPeakFinder::Init(void) {
 	if (!llAlg::Init()) return 0;
-	alg_list->AddAlg(this);
+
+	if (alg_list) {
+		llAlgCollection *algs = _llAlgList()->GetAlgCollection(alg_list);
+		if (!algs) {
+			_llLogger()->WriteNextLine(-LOG_FATAL, "%s: alg collection [%s] not found", command_name, alg_list);
+			return 0;
+		}
+		algs->AddAlg(this);
+	}
 
 	int stepsize = 1024;
 	int numfound = 0;

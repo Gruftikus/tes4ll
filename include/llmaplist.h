@@ -32,6 +32,8 @@ public:
 	int AddMap(char *_name, llMap *_map, llPointList *_points, llTriangleList *_triangles, llPolygonList *_polygons);
 	int AddMap(char *_name, llMap *_map, char *_oldmap);
 
+	int DeleteMap(char *_name);
+
 	void ExchangeMap(char *_name, llMap *_map);
 	llMap *GetMap(char* _name);
 

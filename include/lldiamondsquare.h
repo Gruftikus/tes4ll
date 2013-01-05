@@ -9,9 +9,10 @@ class llDiamondSquare : public llWorker {
 
 protected:
 
-	int steps;
+	int   steps;
 	char *mapname;
-	float range;
+	float range, offset;
+	char *alg_list;
 
 public:
 
