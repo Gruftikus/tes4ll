@@ -8,11 +8,17 @@ llMap::llMap(unsigned int _x, unsigned int _y, int _makeshort, float _default) {
 	f_widthx = float(_x);
 	f_widthy = float(_y);
 	mesg     = _llLogger();
+	sdata    = NULL;
+	idata    = NULL;
 
 	makeshort = _makeshort;
-	data = new llShortarray(widthx*widthy, makeshort, _default); 
+	if (makeshort == 0 || makeshort == 1)
+		sdata = new llShortarray(widthx*widthy, makeshort, _default); 
+	else
+		idata = new unsigned int[widthx*widthy];
 
 	scaling=1;
+	uneven=1;
 	defaultheight = _default;
 
 	InitRnd(0, 0, widthx-1, widthy-1);
@@ -27,9 +33,11 @@ llMap::llMap(unsigned int _x, unsigned int _y, llShortarray *_data, float _defau
 	mesg     = _llLogger();
 
 	makeshort = 0;
-	data = _data;
+	sdata = _data;
+	idata    = NULL;
 
 	scaling=1;
+	uneven=1;
 	defaultheight = _default;
 
 	InitRnd(0, 0, widthx-1, widthy-1);
@@ -43,7 +51,8 @@ llMap * llMap::Clone(int _expand, int _makeshort) {
 }
 
 llMap::~llMap() {
-    delete data; 
+    if (sdata) delete sdata; 
+	if (idata) delete idata; 
 }
 
 void llMap::InitRnd(unsigned int _x1, unsigned int _y1, unsigned int _x2, unsigned int _y2) {

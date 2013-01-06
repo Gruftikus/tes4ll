@@ -133,8 +133,10 @@ protected:
 	float         widthx_per_raw2, widthy_per_raw2;
 
 	float x1, y1, x2, y2, z, scaling;
+	int   uneven;
 
-	llShortarray *data;
+	llShortarray *sdata;
+	unsigned int *idata;
 	float defaultheight;
 	int makeshort;
 	llLogger *mesg;
@@ -154,21 +156,27 @@ public:
 
 	void SetElementRaw(unsigned int _x, unsigned int _y, float _val) {
 		if (_x >= widthx || _y >= widthy) return;
-		data->SetElement(_x+_y*widthx, _val);
+		if (sdata) sdata->SetElement(_x+_y*widthx, _val);
+		else       idata[_x+_y*widthx] = (unsigned int) _val;
 	};
 	void SetElementRaw(unsigned int _x, unsigned int _y, int _val) {
 		if (_x >= widthx || _y >= widthy) return;
-		data->SetElement(_x+_y*widthx, float(_val));
+		if (sdata) sdata->SetElement(_x+_y*widthx, float(_val));
+		else       idata[_x+_y*widthx] = (unsigned int) _val;
 	};
 	float GetElementRaw(unsigned int _x, unsigned int _y) {
 		if (_x >= widthx || _y >= widthy) return defaultheight;
-		return (*data)[_x+_y*widthx];
+		if (sdata) return (*sdata)[_x+_y*widthx];
+		return (float) idata[_x+_y*widthx];
 	};
 	void ChangeElementRaw(unsigned int _x, unsigned int _y, float _val) {
 		if (_x >= widthx || _y >= widthy) return;
-		data->SetElement(_x + _y*widthx, (*data)[_x+_y*widthx] + _val);
+		if (sdata) sdata->SetElement(_x + _y*widthx, (*sdata)[_x+_y*widthx] + _val);
+		else       idata[_x + _y*widthx] = unsigned int(float(idata[_x+_y*widthx]) + _val);
 	};
 	
+	void SetEven() {uneven=0;};
+
 	//With coordinates:
 	void SetCoordSystem(float _x1, float _y1, float _x2, float _y2, float _z) {
 		x1 = _x1;
@@ -177,15 +185,20 @@ public:
 		y2 = _y2;
 		z  = _z;
 		if (widthx > 1)
-			widthx_per_raw = (x2 - x1) / (f_widthx - 1.0f);
+			widthx_per_raw = (x2 - x1) / (f_widthx - float(uneven));
 		else
 			widthx_per_raw = 0.f;
 		if (widthy > 1)
-			widthy_per_raw = (y2 - y1) / (f_widthy - 1.0f);
+			widthy_per_raw = (y2 - y1) / (f_widthy - float(uneven));
 		else
 			widthy_per_raw = 0.f;
-		widthx_per_raw2 =  widthx_per_raw / 2.0f;
-		widthy_per_raw2 =  widthy_per_raw / 2.0f;
+		if (uneven) {
+			widthx_per_raw2 =  widthx_per_raw / 2.0f;
+			widthy_per_raw2 =  widthy_per_raw / 2.0f;
+		} else {
+			widthx_per_raw2 =  0.0f;
+			widthy_per_raw2 =  0.0f;
+		}
 	}
 	float GetX1() {return x1;};
 	float GetY1() {return y1;};
@@ -222,22 +235,22 @@ public:
 
 	//float GetZCoord(unsigned int _x, unsigned int _y) {
 	float GetZ(unsigned int _x, unsigned int _y) {
-		if (_x<0 || _x>=widthx || _y<0 || _y>=widthy) return z*defaultheight; 
-		return z*(*data)[_x + _y*widthx];
+		if (_x>=widthx || _y>=widthy) return z*defaultheight; 
+		return z * GetElementRaw(_x, _y);
 	}
 
 	float GetZ(float _x, float _y) {
 		unsigned int x1 = GetRawX(_x);
 		unsigned int y1 = GetRawY(_y);
 		if (x1>=widthx || y1>=widthy) return z*defaultheight; 
-		return (z*(*data)[x1+y1*widthx]);
+		return z * GetElementRaw(x1, y1);
 	}
 
 	float GetZ(double _x, double _y) {
 		unsigned int x1 = GetRawX(float(_x));
 		unsigned int y1 = GetRawY(float(_y));
 		if (x1>=widthx || y1>=widthy) return z*defaultheight; 
-		return (z*(*data)[x1+y1*widthx]);
+		return z * GetElementRaw(x1, y1);
 	}
 
 	int IsInMap(float _x, float _y) {
@@ -251,7 +264,7 @@ public:
 	int IsDefault(float _x, float _y) {
 		unsigned int x1 = GetRawX(_x);
 		unsigned int y1 = GetRawY(_y);
-		if ((*data)[x1 + y1*widthx] - 0.5 < defaultheight)
+		if (GetElementRaw(x1, y1) - 0.5 < defaultheight)
 			return 1;
 		return 0;
 	}
@@ -274,6 +287,62 @@ public:
 	}
 	float GetCoordRndY() {
 		return GetCoordY(GetRndY());
+	}
+
+	int GetTupel(unsigned int _x, unsigned int _y, char *_x1, char *_x2, char *_x3, char *_x4) {
+		if (_x>=widthx || _y>=widthy) return 0;
+		if (idata) {
+			*_x1 = char(idata[_x+_y*widthx] & 0xff);
+			*_x2 = char(idata[_x+_y*widthx] & 0xff00     >> 8);
+			*_x3 = char(idata[_x+_y*widthx] & 0xff0000   >> 16);
+			*_x4 = char(idata[_x+_y*widthx] & 0xff000000 >> 24);
+			return 1;
+		}
+		*_x1 = char( int(GetElementRaw(_x, _y)) & 0xff);
+		*_x2 = char((int(GetElementRaw(_x, _y)) & 0xff00)     >> 8);
+		*_x3 = char((int(GetElementRaw(_x, _y)) & 0xff0000)   >> 16);
+		*_x4 = char((int(GetElementRaw(_x, _y)) & 0xff000000) >> 24);
+		return 1;
+	}
+
+	int SetBlue(unsigned int _x, unsigned int _y, char _val) {
+		if (_x>=widthx || _y>=widthy) return 0;
+		if (idata) {
+			idata[_x+_y*widthx] = (idata[_x+_y*widthx] & 0xffffff00) | _val;
+			return 1;
+		}
+		SetElementRaw(_x, _y, float((int(GetElementRaw(_x, _y)) & 0xffffff00) | _val));
+		return 1;
+	}
+
+	int SetGreen(unsigned int _x, unsigned int _y, char _val) {
+		if (_x>=widthx || _y>=widthy) return 0;
+		if (idata) {
+			idata[_x+_y*widthx] = (idata[_x+_y*widthx] & 0xffff00ff) | (_val << 8);
+			return 1;
+		}
+		SetElementRaw(_x, _y, float((int(GetElementRaw(_x, _y)) & 0xffff00ff) | (_val << 8)));
+		return 1;
+	}
+
+	int SetRed(unsigned int _x, unsigned int _y, char _val) {
+		if (_x>=widthx || _y>=widthy) return 0;
+		if (idata) {
+			idata[_x+_y*widthx] = (idata[_x+_y*widthx] & 0xff00ffff) | (_val << 16);
+			return 1;
+		}
+		SetElementRaw(_x, _y, float((int(GetElementRaw(_x, _y)) & 0xff00ffff) | (_val << 16)));
+		return 1;
+	}
+
+	int SetAlpha(unsigned int _x, unsigned int _y, char _val) {
+		if (_x>=widthx || _y>=widthy) return 0;
+		if (idata) {
+			idata[_x+_y*widthx] = (idata[_x+_y*widthx] & 0x00ffffff) | (_val << 24);
+			return 1;
+		}
+		SetElementRaw(_x, _y, float((int(GetElementRaw(_x, _y)) & 0x00ffffff) | (_val << 24)));
+		return 1;
 	}
 
 };

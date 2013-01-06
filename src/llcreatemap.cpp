@@ -7,6 +7,7 @@ llCreateMap::llCreateMap() : llWorker() {
 	SetCommandName("CreateMap");
 	mapname = NULL;
 	z       = 1.0;
+	even    = 0;
 
 }
 
@@ -22,6 +23,8 @@ int llCreateMap::RegisterOptions(void) {
 	RegisterValue("-zscale",  &z);
 	RegisterValue("-mapname", &mapname);
 
+	RegisterFlag("-even",     &even);
+
 	return 1;
 }
 
@@ -29,6 +32,7 @@ int llCreateMap::Init(void) {
 	if (!llWorker::Init()) return 0;
 
 	llMap * heightmap = new llMap(widthx, widthy);
+	if (even) heightmap->SetEven();
 	heightmap->SetCoordSystem(x1, y1, x2, y2, z);
 
 	_llUtils()->x00 = x1;

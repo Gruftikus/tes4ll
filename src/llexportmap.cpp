@@ -97,6 +97,28 @@ int llExportMap::Init(void) {
 	for (int y=y2; y>=y1; y--) {
 		int my_bytesPerLine = bytesPerLine;
 		for (int x=x2; x>=x1; x--) {
+			
+			char byte1;
+			char byte2;
+			char byte3;
+			char byte4;
+
+			if (map->GetTupel(x, y, &byte1, &byte2, &byte3, &byte4)) {
+				if (bits == 24) {
+					my_bytesPerLine -= 3;
+					fwrite(&byte1, 1, 1, fptr); //blue
+					fwrite(&byte2, 1, 1, fptr); //green
+					fwrite(&byte3, 1, 1, fptr); //red
+				} else {
+					fwrite(&byte1, 1, 1, fptr); //blue
+					fwrite(&byte2, 1, 1, fptr); //green
+					fwrite(&byte3, 1, 1, fptr); //red
+					fwrite(&byte4, 1, 1, fptr); //alpha
+					my_bytesPerLine -= 4;
+				}
+			}
+
+#if 0
 			float val = map->GetElementRaw(x,y);
 			if (bits == 24) {
 				my_bytesPerLine -= 3;
@@ -110,6 +132,7 @@ int llExportMap::Init(void) {
 				WriteUInt(fptr,unsigned int(val), 0);
 				my_bytesPerLine -= 4;
 			}
+#endif
 		}
 		while(my_bytesPerLine) {
 			my_bytesPerLine--;

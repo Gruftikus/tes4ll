@@ -100,8 +100,16 @@ int llDiamondSquare::Init(void) {
 				+ oldmap->GetElementRaw(x+1,y)
 				+ oldmap->GetElementRaw(x,y+1)
 				+ oldmap->GetElementRaw(x+1,y+1)) / 4.0;
-			
+
+t:
 			mean += range*alg*(float(rand())/float(RAND_MAX) - offset);
+			if (0 && oldmap->GetElementRaw(x,y) > mean &&
+				oldmap->GetElementRaw(x+1,y) > mean &&
+				oldmap->GetElementRaw(x,y+1) > mean &&
+				oldmap->GetElementRaw(x+1,y+1) > mean) {
+					offset -=0.1;
+					goto t;
+			}
 			//cout << 2*x+1 << ":" << 2*y+1 << ":" << alg  << ":" << mean << endl;
 			heightmap->SetElementRaw(2*x+1, 2*y+1, mean);
 		}
@@ -181,7 +189,16 @@ int llDiamondSquare::Init(void) {
 					+ heightmap->GetElementRaw(2*x-1,2*y+1)
 					+ heightmap->GetElementRaw(2*x-1,2*y-1))/(4.0);
 				//cout << 2*x << ":" << 2*y+1 << ":" << alg << endl;
+u:
 				mean += range*alg*(float(rand())/float(RAND_MAX)-offset);
+				if (0 && heightmap->GetElementRaw(2*x,2*y) > mean &&
+					heightmap->GetElementRaw(2*x,2*y+2) > mean &&
+					heightmap->GetElementRaw(2*x-1,2*y+1) > mean &&
+					heightmap->GetElementRaw(2*x-1,2*y-1)) {
+						offset -=0.1;
+						goto u;
+				}
+
 				heightmap->SetElementRaw(2*x, 2*y+1, mean);
 			} 
 		}
@@ -258,7 +275,15 @@ int llDiamondSquare::Init(void) {
 					+ heightmap->GetElementRaw(2*x+1,2*y-1)
 					+ heightmap->GetElementRaw(2*x+1,2*y+1))/(4.0);
 				//cout << 2*x+1 << ":" << 2*y << ":" << alg << endl;
+v:
 				mean += range*alg*(float(rand())/float(RAND_MAX)-offset);
+				if (0 && heightmap->GetElementRaw(2*x,2*y) > mean &&
+					+ heightmap->GetElementRaw(2*x+2,2*y) > mean &&
+					+ heightmap->GetElementRaw(2*x+1,2*y-1) > mean &&
+					+ heightmap->GetElementRaw(2*x+1,2*y+1) > mean) {
+						offset -=0.1;
+						goto v;
+				}
 				heightmap->SetElementRaw(2*x+1, 2*y, mean);
 			} 
 		}
