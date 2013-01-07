@@ -20,10 +20,11 @@ llAlgSlope::llAlgSlope(char *_alg_list, char *_map) : llAlg(_map) {
 int llAlgSlope::RegisterOptions(void) {
 	if (!llAlg::RegisterOptions()) return 0;
 
-	RegisterValue("-highest", &highest);
-	RegisterValue("-lowest",  &lowest);
-	RegisterValue("-minval",  &value_at_lowest);
-	RegisterValue("-maxval",  &value_at_highest);	
+	RegisterValue("-zmax",     &highest);
+	RegisterValue("-zmin",     &lowest);
+	RegisterValue("-zminval",  &value_at_lowest);
+	RegisterValue("-zmaxval",  &value_at_highest);	
+	RegisterValue("-alg",      &alg_list);
 
 	return 1;
 }
@@ -43,14 +44,15 @@ double llAlgSlope::GetCeiling(double *_ceiling) {
 
 double llAlgSlope::GetValue(float _x, float _y, double *_value) {
 
-	double loc_value=0;
+	double loc_value = 0;
 
 	float z = heightmap->GetZ(_x, _y);
 
 	if (z < lowest) 
 		loc_value = value_at_lowest;
-	else if (z > highest) 
+	else if (z > highest) {
 		loc_value = value_at_highest;
+	}
 	else {
 		loc_value= value_at_lowest + 
 			((z - lowest)/(highest - lowest)) * (value_at_highest - value_at_lowest);

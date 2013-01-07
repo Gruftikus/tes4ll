@@ -44,6 +44,9 @@
 #include "..\include\llcreatemap.h"
 #include "..\include\llexportmap.h"
 
+#include "..\include\llfillcolormap.h"
+
+
 #include "..\include\lldiamondsquare.h"
 #include "..\include\llfilter.h"
 #include "..\include\llmakederivatives.h"
@@ -699,6 +702,8 @@ int main(int argc, char **argv) {
 
 	batch->RegisterWorker(new llCreateMap());
 	batch->RegisterWorker(new llExportMap());
+
+	batch->RegisterWorker(new llFillColorMap());
 
 	batch->RegisterWorker(new llDiamondSquare());
 	batch->RegisterWorker(new llFilter());

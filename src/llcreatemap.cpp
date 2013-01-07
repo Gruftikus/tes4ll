@@ -21,7 +21,7 @@ int llCreateMap::RegisterOptions(void) {
 	RegisterValue("-x2",      &x2,     LLWORKER_OBL_OPTION);
 	RegisterValue("-y2",      &y2,     LLWORKER_OBL_OPTION);
 	RegisterValue("-zscale",  &z);
-	RegisterValue("-mapname", &mapname);
+	RegisterValue("-name",    &mapname);
 
 	RegisterFlag("-even",     &even);
 
@@ -44,7 +44,7 @@ int llCreateMap::Init(void) {
 	llPolygonList  *polygons   = new llPolygonList(points, heightmap);
 	llTriangleList *triangles  = new llTriangleList(0, points);
 		
-	if (!Used("-mapname"))
+	if (!Used("-name"))
 		_llMapList()->AddMap("_heightmap", heightmap, points, triangles, polygons);
 	else
 		_llMapList()->AddMap(mapname, heightmap, points, triangles, polygons);

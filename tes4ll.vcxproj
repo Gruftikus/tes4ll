@@ -588,6 +588,7 @@
     <ClInclude Include="include\llcreatemap.h" />
     <ClInclude Include="include\lldiamondsquare.h" />
     <ClInclude Include="include\llexportmap.h" />
+    <ClInclude Include="include\llfillcolormap.h" />
     <ClInclude Include="include\llfilter.h" />
     <ClInclude Include="include\lllogger.h" />
     <ClInclude Include="include\llmakederivatives.h" />
@@ -1171,6 +1172,7 @@
     <ClCompile Include="src\llcreatemap.cpp" />
     <ClCompile Include="src\lldiamondsquare.cpp" />
     <ClCompile Include="src\llexportmap.cpp" />
+    <ClCompile Include="src\llfillcolormap.cpp" />
     <ClCompile Include="src\llfilter.cpp" />
     <ClCompile Include="src\lllogger.cpp" />
     <ClCompile Include="src\llmakederivatives.cpp" />

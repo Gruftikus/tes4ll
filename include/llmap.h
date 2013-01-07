@@ -289,7 +289,7 @@ public:
 		return GetCoordY(GetRndY());
 	}
 
-	int GetTupel(unsigned int _x, unsigned int _y, char *_x1, char *_x2, char *_x3, char *_x4) {
+	int GetTupel(unsigned int _x, unsigned int _y, unsigned char *_x1, unsigned char *_x2, unsigned char *_x3, unsigned char *_x4) {
 		if (_x>=widthx || _y>=widthy) return 0;
 		if (idata) {
 			*_x1 = char(idata[_x+_y*widthx] & 0xff);
@@ -305,7 +305,7 @@ public:
 		return 1;
 	}
 
-	int SetBlue(unsigned int _x, unsigned int _y, char _val) {
+	int SetBlue(unsigned int _x, unsigned int _y, unsigned char _val) {
 		if (_x>=widthx || _y>=widthy) return 0;
 		if (idata) {
 			idata[_x+_y*widthx] = (idata[_x+_y*widthx] & 0xffffff00) | _val;
@@ -315,7 +315,7 @@ public:
 		return 1;
 	}
 
-	int SetGreen(unsigned int _x, unsigned int _y, char _val) {
+	int SetGreen(unsigned int _x, unsigned int _y, unsigned char _val) {
 		if (_x>=widthx || _y>=widthy) return 0;
 		if (idata) {
 			idata[_x+_y*widthx] = (idata[_x+_y*widthx] & 0xffff00ff) | (_val << 8);
@@ -325,7 +325,7 @@ public:
 		return 1;
 	}
 
-	int SetRed(unsigned int _x, unsigned int _y, char _val) {
+	int SetRed(unsigned int _x, unsigned int _y, unsigned char _val) {
 		if (_x>=widthx || _y>=widthy) return 0;
 		if (idata) {
 			idata[_x+_y*widthx] = (idata[_x+_y*widthx] & 0xff00ffff) | (_val << 16);
@@ -335,7 +335,7 @@ public:
 		return 1;
 	}
 
-	int SetAlpha(unsigned int _x, unsigned int _y, char _val) {
+	int SetAlpha(unsigned int _x, unsigned int _y, unsigned char _val) {
 		if (_x>=widthx || _y>=widthy) return 0;
 		if (idata) {
 			idata[_x+_y*widthx] = (idata[_x+_y*widthx] & 0x00ffffff) | (_val << 24);

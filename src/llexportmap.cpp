@@ -16,7 +16,8 @@ int llExportMap::RegisterOptions(void) {
 	RegisterValue("-mapname",  &mapname);
 	RegisterValue("-filename", &filename);
 	RegisterValue("-depth",    &bits);
-
+	RegisterFlag("-compress",    &compress);
+	
 	return 1;
 }
 
@@ -98,10 +99,10 @@ int llExportMap::Init(void) {
 		int my_bytesPerLine = bytesPerLine;
 		for (int x=x2; x>=x1; x--) {
 			
-			char byte1;
-			char byte2;
-			char byte3;
-			char byte4;
+			unsigned char byte1;
+			unsigned char byte2;
+			unsigned char byte3;
+			unsigned char byte4;
 
 			if (map->GetTupel(x, y, &byte1, &byte2, &byte3, &byte4)) {
 				if (bits == 24) {
@@ -141,6 +142,29 @@ int llExportMap::Init(void) {
 		}
 	}
 	fclose(fptr);
+
+	if (strlen(_llUtils()->GetValue("_dds_tool")) > 1 && compress) {
+		char command[1000];
+		sprintf_s(command,1000,"%s %s \n", _llUtils()->GetValue("_dds_tool"), filename);
+		_llLogger()->WriteNextLine(LOG_INFO,"Executing '%s %s'", _llUtils()->GetValue("_dds_tool"), filename);
+		_llLogger()->Dump();
+		FILE *tes = _popen(command,"rt");
+		char c; 
+		if (tes==NULL) {
+			_llLogger()->WriteNextLine(LOG_ERROR,"Error calling '%s'", _llUtils()->GetValue("_dds_tool"));
+		} else {
+			int nn=0;
+			do {
+				c = fgetc (tes);
+				if ((isprint(c) || isspace(c)) && nn==0)
+					cout << c;
+				else if (isprint(c) || isspace(c)) nn++;
+				else nn--;
+
+			} while (c != EOF);
+			fclose (tes);
+		}
+	}
 
 	return 1;
 }

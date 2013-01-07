@@ -44,6 +44,7 @@ int llAlgList::AddAlgCollection(char *_name, llAlgCollection *_col) {
 
 llAlgCollection *llAlgList::GetAlgCollection(char* _name) {
 	for (int i=0; i<GetSize(); i++) {
+		//std::cout << col_name[i] << std::endl;
 		if (_stricmp(_name, col_name[i]) == 0)
 			return collections[i];
 	}

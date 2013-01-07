@@ -18,6 +18,7 @@ int llAlgSecond::RegisterOptions(void) {
 	if (!llAlg::RegisterOptions()) return 0;
 
 	RegisterValue("-map", &sourcename);
+	RegisterValue("-alg", &alg_list);
 
 	return 1;
 }
@@ -64,6 +65,9 @@ double llAlgSecond::GetValue(float _x, float _y, double *_value) {
 }
 
 int llAlgSecond::Init(void) {
+	if (Used("-map"))
+		map = sourcename;
+
 	if (!llAlg::Init()) return 0;
 
 	if (alg_list) {

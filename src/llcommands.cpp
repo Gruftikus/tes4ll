@@ -28,6 +28,7 @@ void llCommands::Init() {
 	useshapes=0;
 	worldname="60";
 	dds_tool="s3tc.exe";
+	_llUtils()->SetValue("_dds_tool", "s3tc.exe");
 	use16bit=0;
 	quadsize_x = quadsize_y = 32; //quadsize in cells!
 	cellsize_x = cellsize_y = 4096;
@@ -2312,6 +2313,7 @@ out:
 						if (ptr2) {
 							mesg->WriteNextLine(LOG_INFO,"SetOption -ddstool=%s", ptr2);
 							dds_tool=new char[strlen(ptr2)+1];strcpy_s(dds_tool,strlen(ptr2)+1,ptr2);utils->StripQuot(&dds_tool);
+							_llUtils()->SetValue("_dds_tool", dds_tool);
 						} else {
 							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
