@@ -1788,6 +1788,18 @@
     <ClInclude Include="include\llfillcolormap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\llset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llsetgrid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llsetgridborder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llsplitatgrid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\niflib\src\kfm.cpp">
@@ -3534,6 +3546,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\llfillcolormap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llset.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llsetgrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llsetgridborder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llsplitatgrid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

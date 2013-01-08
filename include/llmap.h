@@ -219,7 +219,6 @@ public:
 		return yy;
 	}
 	float GetCoordX(unsigned int _x) {
-		//std::cout << "x: " << ((float)_x * widthx_per_raw + x1) << std::endl;
 		return ((float)_x * widthx_per_raw + x1);
 	}
 

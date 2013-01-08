@@ -51,6 +51,9 @@
 #include "..\include\llfilter.h"
 #include "..\include\llmakederivatives.h"
 
+#include "..\include\llsetgrid.h"
+#include "..\include\llsetgridborder.h"
+#include "..\include\llsplitatgrid.h"
 
 #include "..\include\llquadlist.h"
 
@@ -601,10 +604,12 @@ int main(int argc, char **argv) {
 
     char * bmpfilename = argv[argc-1];
     char * batchname = NULL;
+#if 0
 	llMap *water = NULL;
 	llMap *flow  = NULL;
 	llMap *negative_flow = NULL;
 	llMap *garbage= NULL;
+#endif
 
 	for (int i=1; i<(argc-1); i++) {
 
@@ -709,6 +714,9 @@ int main(int argc, char **argv) {
 	batch->RegisterWorker(new llFilter());
 	batch->RegisterWorker(new llMakeDerivatives());
 
+	batch->RegisterWorker(new llSetGrid());
+	batch->RegisterWorker(new llSetGridBorder());
+	batch->RegisterWorker(new llSplitAtGrid());
 
 	batch->install_dir="";
 
@@ -1080,11 +1088,15 @@ int main(int argc, char **argv) {
 			DumpExit();
 		}
 
+
+		//**********************************************************************************************************
+
 		if (com == COM_SETPATH) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s: change directory path to %s", COM_SETPATH_CMD, batch->myflagname);
 			_chdir(batch->myflagname);
 		}
 
+#if 0
 		if (com == COM_SETGRID) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f",COM_SETGRID_CMD, batch->gridx, batch->gridy);
 			mesg->Dump();
@@ -1111,6 +1123,7 @@ int main(int argc, char **argv) {
 				}
 			}
 		}
+
 
 		if (com == COM_SETGRIDBORDER) {
 			if (batch->zz1 > -999999.f)
@@ -1153,7 +1166,8 @@ int main(int argc, char **argv) {
 				}
 			}
 		}
-		
+#endif	
+
 		if (com == COM_SETHEIGHT) {
 
 			if (batch->usegameunits) batch->zmin /= 8.0f; //convert to heightmap units
@@ -1188,6 +1202,7 @@ int main(int argc, char **argv) {
 			}
 		}
 
+#if 0
 		if (com == COM_BREAKATGRID) {
 			mesg->WriteNextLine(LOG_INFO,"%s: -x=%.0f -y=%.0f -max=%.0f -zmin=%.0f", COM_BREAKATGRID_CMD,
 				batch->gridx, batch->gridy, batch->max, batch->zmin);
@@ -1308,6 +1323,7 @@ int main(int argc, char **argv) {
 			}
 			mesg->WriteNextLine(LOG_INFO,"%i break vertices set",gb_points);
 		}
+#endif
 
 		if (com == COM_PANORAMA) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f", COM_PANORAMA_CMD, batch->gridx, batch->gridy);

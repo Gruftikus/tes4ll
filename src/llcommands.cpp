@@ -371,6 +371,7 @@ out:
 		com = COM_FOCUSREC;
 		CurrentCommand = COM_FOCUSREC_CMD;
 	}
+#if 0
 	if (_stricmp(ptr, COM_SETGRID_CMD)==0) {
 		com = COM_SETGRID;
 		CurrentCommand = COM_SETGRID_CMD;
@@ -379,6 +380,7 @@ out:
 		com = COM_SETGRIDBORDER;
 		CurrentCommand = COM_SETGRIDBORDER_CMD;
 	}
+#endif
 	if (_stricmp(ptr, COM_SETHEIGHT_CMD)==0) {
 		com = COM_SETHEIGHT;
 		CurrentCommand = COM_SETHEIGHT_CMD;
@@ -1652,6 +1654,7 @@ out:
 			}
 		}
 
+#if 0
 		if (com == COM_SETGRID) {
 			CurrentCommand = COM_SETGRID_CMD;
 			ptr2 = strtok_int(ptr, '=',&saveptr2);
@@ -1709,6 +1712,7 @@ out:
 			}
 		}
 
+
 		if (com == COM_BREAKATGRID) {
 			CurrentCommand = COM_BREAKATGRID_CMD;
 			ptr2 = strtok_int(ptr, '=',&saveptr2);
@@ -1748,6 +1752,8 @@ out:
 				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
+
+#endif
 
 		if (com == COM_BREAKFLATTRIANGLES) {
 			CurrentCommand = COM_BREAKFLATTRIANGLES_CMD;

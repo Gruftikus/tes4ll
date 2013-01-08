@@ -16,7 +16,7 @@ int llExportMap::RegisterOptions(void) {
 	RegisterValue("-mapname",  &mapname);
 	RegisterValue("-filename", &filename);
 	RegisterValue("-depth",    &bits);
-	RegisterFlag("-compress",    &compress);
+	RegisterFlag("-compress",  &compress);
 	
 	return 1;
 }

@@ -598,6 +598,10 @@
     <ClInclude Include="include\llpointlist.h" />
     <ClInclude Include="include\llpolygonlist.h" />
     <ClInclude Include="include\llquadlist.h" />
+    <ClInclude Include="include\llset.h" />
+    <ClInclude Include="include\llsetgrid.h" />
+    <ClInclude Include="include\llsetgridborder.h" />
+    <ClInclude Include="include\llsplitatgrid.h" />
     <ClInclude Include="include\lltrianglelist.h" />
     <ClInclude Include="include\llutils.h" />
     <ClInclude Include="include\llworker.h" />
@@ -1182,6 +1186,10 @@
     <ClCompile Include="src\llpointlist.cpp" />
     <ClCompile Include="src\llpolygonlist.cpp" />
     <ClCompile Include="src\llquadlist.cpp" />
+    <ClCompile Include="src\llset.cpp" />
+    <ClCompile Include="src\llsetgrid.cpp" />
+    <ClCompile Include="src\llsetgridborder.cpp" />
+    <ClCompile Include="src\llsplitatgrid.cpp" />
     <ClCompile Include="src\lltrianglelist.cpp" />
     <ClCompile Include="src\llutils.cpp" />
     <ClCompile Include="src\llworker.cpp" />
