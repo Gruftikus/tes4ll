@@ -51,9 +51,16 @@
 #include "..\include\llfilter.h"
 #include "..\include\llmakederivatives.h"
 
+#include "..\include\llsetvertex.h"
 #include "..\include\llsetgrid.h"
 #include "..\include\llsetgridborder.h"
 #include "..\include\llsplitatgrid.h"
+#include "..\include\lladdvertextopolygon.h"
+#include "..\include\llcreatepolygon.h"
+#include "..\include\llreadpolygondatafile.h"
+#include "..\include\llreaddatafile.h"
+#include "..\include\llsetcontour.h"
+#include "..\include\llpanorama.h"
 
 #include "..\include\llquadlist.h"
 
@@ -714,9 +721,18 @@ int main(int argc, char **argv) {
 	batch->RegisterWorker(new llFilter());
 	batch->RegisterWorker(new llMakeDerivatives());
 
+	batch->RegisterWorker(new llSetVertex());
+	batch->RegisterWorker(new llReadDataFile());
+	batch->RegisterWorker(new llReadPolygonDataFile());
 	batch->RegisterWorker(new llSetGrid());
 	batch->RegisterWorker(new llSetGridBorder());
 	batch->RegisterWorker(new llSplitAtGrid());
+	batch->RegisterWorker(new llSetContour());
+	batch->RegisterWorker(new llPanorama());
+	batch->RegisterWorker(new llCreatePolygon());
+	batch->RegisterWorker(new llAddVertexToPolygon());
+
+
 
 	batch->install_dir="";
 
@@ -746,6 +762,9 @@ int main(int argc, char **argv) {
 	mesg->WriteNextLine(LOG_INFO,"****** Go into batch mode ******");
 
 	float minab=256;
+	_llUtils()->SetValue("_mindistance", "256");
+	_llUtils()->SetValue("_cellsize_x", "4096");
+	_llUtils()->SetValue("_cellsize_y", "4096");
 
 	__int64 time_statistics[COM_MAX_CMD];
 	int time_statistics_cmd[COM_MAX_CMD];
@@ -1096,77 +1115,7 @@ int main(int argc, char **argv) {
 			_chdir(batch->myflagname);
 		}
 
-#if 0
-		if (com == COM_SETGRID) {
-			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f",COM_SETGRID_CMD, batch->gridx, batch->gridy);
-			mesg->Dump();
 
-			if (triangulation) {
-				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.",COM_SETGRID_CMD);
-				DumpExit();
-			}
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-
-			for (float x=floor(batch->x00/batch->gridx)*batch->gridx;x<=(batch->x11+1);x+=batch->gridx) {
-				for (float y=floor(batch->y00/batch->gridy)*batch->gridy;y<=(batch->y11+1);y+=batch->gridy) {
-					float x1=x,y1=y;
-					if (x>=batch->x11) x1=batch->x11-1;
-					if (y>=batch->y11) y1=batch->y11-1;
-
-					if (points->GetMinDistance(x1,y1) > minab) {
-						points->AddPoint(x1,y1,heightmap->GetZ(x1,y1));	
-						gen_npoints++;
-					}
-				}
-			}
-		}
-
-
-		if (com == COM_SETGRIDBORDER) {
-			if (batch->zz1 > -999999.f)
-				mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f -min=%.0f", COM_SETGRIDBORDER_CMD, batch->gridx, batch->gridy, batch->zz1);
-			else
-				mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f", COM_SETGRIDBORDER_CMD, batch->gridx, batch->gridy);
-			mesg->Dump();
-
-			if (triangulation) {
-				mesg->WriteNextLine(LOG_FATAL,"%s called after triangulation.", COM_SETGRIDBORDER_CMD);
-				DumpExit();
-			}
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			
-			for (float x=floor(batch->x00/batch->gridx)*batch->gridx;x<=(batch->x11+1);x+=batch->gridx) {
-				float x1=x;
-				if (x>=batch->x11) x1=batch->x11-1;
-				if (points->GetMinDistance(x1,batch->y00) > minab && heightmap->GetZ(x1,batch->y00) > batch->zz1) {
-					points->AddPoint(x1,batch->y00,heightmap->GetZ(x1,batch->y00));	
-					gen_npoints++;
-				}
-				if (points->GetMinDistance(x1,batch->y11) > minab && heightmap->GetZ(x1,batch->y11) > batch->zz1) {
-					points->AddPoint(x1,batch->y11,heightmap->GetZ(x1,batch->y11));	
-					gen_npoints++;
-				}
-			}
-			for (float y=floor(batch->y00/batch->gridy)*batch->gridy;y<=(batch->y11+1);y+=batch->gridy) {
-				float y1=y;
-				if (y>=batch->y11) y1=batch->y11-1;
-				if (points->GetMinDistance(batch->x00,y1) > minab && heightmap->GetZ(batch->x00,y1) > batch->zz1) {
-					points->AddPoint(batch->x00,y1,heightmap->GetZ(batch->x00,y1));	
-					gen_npoints++;
-				}
-				if (points->GetMinDistance(batch->x11,y1) > minab && heightmap->GetZ(batch->x11,y1) > batch->zz1) {
-					points->AddPoint(batch->x11,y1,heightmap->GetZ(batch->y11,y1));	
-					gen_npoints++;
-				}
-			}
-		}
-#endif	
 
 		if (com == COM_SETHEIGHT) {
 
@@ -1203,128 +1152,6 @@ int main(int argc, char **argv) {
 		}
 
 #if 0
-		if (com == COM_BREAKATGRID) {
-			mesg->WriteNextLine(LOG_INFO,"%s: -x=%.0f -y=%.0f -max=%.0f -zmin=%.0f", COM_BREAKATGRID_CMD,
-				batch->gridx, batch->gridy, batch->max, batch->zmin);
-			mesg->Dump();
-
-			if (triangulation) {
-				mesg->WriteNextLine(LOG_FATAL,"BreakAtGrid called after triangulation.");
-				DumpExit();				
-			}
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			int gb_points=0;
-			
-			for (float x=floor(batch->x00/batch->gridx)*batch->gridx;x<=(batch->x11+1)-batch->gridx;x+=batch->gridx) {
-				for (float y=floor(batch->y00/batch->gridy)*batch->gridy;y<=(batch->y11+1)-batch->gridy;y+=batch->gridy) {
-					
-					//List of segments
-					float segstart[1000];
-					float segend[1000];
-					int segaktive[1000];
-					int segpointer=0;
-
-					//fill the first segment
-					segstart[segpointer]=x;
-					segend[segpointer]=x+batch->gridx;
-					segaktive[segpointer]=1;
-					segpointer++;
-
-					for (int i=0;i<segpointer;i++) {
-
-						//is segment large enough?
-						if (segend[i]-segstart[i]>2*minab && segaktive[i]) {
-							float mymax=-1;
-							float myx=segstart[i]+minab;
-							float z=heightmap->GetZ(segstart[i]+minab,y);
-							float slope=(heightmap->GetZ(segend[i]-minab,y) -z ) / (segend[i] - segstart[i] - 2*minab);
-
-							for (float x1 = segstart[i]+minab ;x1 < segend[i]-minab; x1++) {
-								float walldiff = (z + slope * (x1 - (segstart[i]+minab))) - heightmap->GetZ(x1,y);
-								if (walldiff > batch->max && walldiff>mymax && heightmap->GetZ(x1,y)>batch->zmin) {
-									mymax=walldiff;
-									myx = x1;
-								}
-							}
-
-							if (mymax>0) {
-								//Split segment
-								points->AddPoint(myx,y,heightmap->GetZ(myx,y));	
-								gen_npoints++;
-								gb_points++;
-								segaktive[i]=0;
-								segstart[segpointer]=segstart[i];
-								segend[segpointer]=myx;
-								segaktive[segpointer]=1;
-								segpointer++;
-								segstart[segpointer]=myx;
-								segend[segpointer]=segend[i];
-								segaktive[segpointer]=1;
-								segpointer++;
-								i=0;
-							} else segaktive[i]=0;
-
-						} else segaktive[i]=0;
-					}
-
-					segpointer=0;
-					//fill the first segment
-					segstart[segpointer]=y;
-					segend[segpointer]=y+batch->gridy;
-					segaktive[segpointer]=1;
-					segpointer++;
-
-					for (int i=0;i<segpointer;i++) {
-
-						//is segment large enough?
-						if (segend[i]-segstart[i]>2*minab && segaktive[i]) {
-							float mymax=-1;
-							float myy=segstart[i]+minab;
-							float z=heightmap->GetZ(x,segstart[i]+minab);
-							float slope=(heightmap->GetZ(x,segend[i]-minab) -z ) / (segend[i] - segstart[i] - 2*minab);
-
-							for (float y1 = segstart[i]+minab ;y1 < segend[i]-minab; y1++) {
-								float walldiff = (z + slope * (y1 - (segstart[i]+minab))) - heightmap->GetZ(x,y1);
-								if (walldiff > batch->max && walldiff>mymax && heightmap->GetZ(x,y1)>batch->zmin) {
-									mymax=walldiff;
-									myy = y1;
-								}
-							}
-
-							if (mymax>0) {
-								//Split segment
-								points->AddPoint(x,myy,heightmap->GetZ(x,myy));	
-								gen_npoints++;
-								gb_points++;
-								segaktive[i]=0;
-								segstart[segpointer]=segstart[i];
-								segend[segpointer]=myy;
-								segaktive[segpointer]=1;
-								segpointer++;
-								segstart[segpointer]=myy;
-								segend[segpointer]=segend[i];
-								segaktive[segpointer]=1;
-								segpointer++;
-								i=0;
-							} else segaktive[i]=0;
-
-						} else segaktive[i]=0;
-					}
-#if 0
-					if (points->GetMinDistance(x1,y1) > minab) {
-						points->AddPoint(x1,y1,heightmap->GetZ(x1,y1));	
-						gen_npoints++;
-					}
-#endif
-				}
-			}
-			mesg->WriteNextLine(LOG_INFO,"%i break vertices set",gb_points);
-		}
-#endif
-
 		if (com == COM_PANORAMA) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f", COM_PANORAMA_CMD, batch->gridx, batch->gridy);
 			mesg->Dump();
@@ -1447,6 +1274,7 @@ panorama_end: ;
 
 		}
 
+
 		if (com == COM_SETSINGLEPOINT) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f", COM_SETSINGLEPOINT_CMD, batch->gridx, batch->gridy);
 			mesg->Dump();
@@ -1466,6 +1294,7 @@ panorama_end: ;
 				points->AddPoint(batch->gridx, batch->gridy, heightmap->GetZ(batch->gridx,batch->gridy));	
 			}
 		}
+
 
 		if (com == COM_READFILE) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s: %s", COM_READFILE_CMD, batch->datafile);
@@ -1508,6 +1337,9 @@ panorama_end: ;
 			mesg->WriteNextLine(LOG_INFO,"%s: %i vertex points added from data file %s", COM_READFILE_CMD, lp, batch->datafile);
 		}
 
+#endif
+
+
 		if (com == COM_SETOPTION) {
 			if (batch->quadtreelevels > 1) {
 				quadtreelevels = batch->quadtreelevels;
@@ -1529,22 +1361,6 @@ panorama_end: ;
 		}
 
 #if 0
-		if (com == COM_FILTER) {
-			mesg->WriteNextLine(LOG_COMMAND,"%s: -n=%i", COM_FILTER_CMD, batch->npoints);
-			mesg->Dump();
-			
-			if (!heightmap) {
-				mesg->WriteNextLine(LOG_FATAL,"No heightmap present.");
-				DumpExit();
-			}
-			
-//			der = heightmap->Filter(batch->npoints, int(batch->overwrite), batch);
-//			_llMapList()->AddMap("_derivatives", der, "_heightmap");
-//			der->MakeDerivative(batch->use16bit);
-			mesg->WriteNextLine(LOG_COMMAND,"%s: done", COM_FILTER_CMD);
-		}
-#endif
-
 		if (com == COM_BREAKLINE) {
 			if (triangulation) {
 				mesg->WriteNextLine(LOG_COMMAND,"%s, %i new triangles added", COM_BREAKLINE_CMD, triangles->DivideAtZ(batch->z,minab,heightmap));
@@ -1750,6 +1566,7 @@ panorama_end: ;
 			mesg->WriteNextLine(LOG_COMMAND,"%s: %i vertices set", COM_BREAKLINE_CMD, con_points);
 			}
 		}
+#endif
 
 		if (com == COM_DIVIDEGRID) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s: -x=%.0f -y=%.0f", COM_DIVIDEGRID_CMD, batch->gridx, batch->gridy);
@@ -1946,6 +1763,7 @@ panorama_end: ;
 			}
 		}
 
+#if 0
 		if (com == COM_CREATEPOLYGON) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s (%s) -x1=%.0f -y1=%.0f -x2=%.0f -y2=%.0f ", COM_CREATEPOLYGON_CMD,
 				batch->polygon_name, batch->xx1,batch->yy1, batch->xx2,batch->yy2);			
@@ -1961,6 +1779,7 @@ panorama_end: ;
 			}
 			polygons->AddPolygon((batch->xx1),(batch->yy1),(batch->xx2),(batch->yy2),batch->polygon_name);    	    			
 		}
+
 
 		if (com == COM_ADDVERTEXTOPOLYGON) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s (%s) -x=%.0f -y=%.0f ",
@@ -2042,6 +1861,8 @@ panorama_end: ;
 				if (current_polygon) delete [] current_polygon;
 			} //fopen
 		}
+
+#endif
 
 		if (com == COM_INACTIVATEALLVERTICES) {
 			mesg->WriteNextLine(LOG_COMMAND,"%s", COM_INACTIVATEALLVERTICES_CMD);		

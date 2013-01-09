@@ -59,6 +59,7 @@ class llUtils {
 	//Flag handling:
 	char       *flag_list[MAX_FLAGS];
 	const char *flag_value[MAX_FLAGS];
+	double      flag_value_f[MAX_FLAGS];
 	char       *flag_description[MAX_FLAGS]; //for dropdowns
 	int         flag_enable[MAX_FLAGS];
 	int         flag_hidden[MAX_FLAGS];
@@ -89,6 +90,7 @@ class llUtils {
 
 	int SetValue(const char *_name, const char *_value);
 	const char* GetValue(const char *_name);
+	double GetValueF(const char *_name);
 	
 	int SetHidden(const char *_name);
 

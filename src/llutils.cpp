@@ -326,9 +326,11 @@ int llUtils::AddFlag(const char *_name) {
 	}
 	flag_list[num_flags] = tmp;
 	flag_value[num_flags] = val;
+	flag_value_f[num_flags] = 0.0;
 	flag_description[num_flags] = NULL;
 	flag_enable[num_flags] = 1;
 	flag_hidden[num_flags] = 0;
+
 	num_flags++;
 	return 1;
 }
@@ -382,6 +384,7 @@ int llUtils::SetValue(const char *_name, const char *_value) {
 	for (unsigned int i=0;i<num_flags;i++) {
 		if (_stricmp(_name,flag_list[i])==0) {
 			flag_value[i] = _value;
+			sscanf_s(_value, "%lf", &(flag_value[i]));
 			return 1;
 		}
 	}
@@ -427,6 +430,18 @@ const char* llUtils::GetValue(const char *_name) {
 			if (flag_value[i]) return flag_value[i];
 			if (flag_enable[i]) return "1";
 			return "0";
+		}
+	}
+	return NULL;
+}
+
+double llUtils::GetValueF(const char *_name) {
+//	int p=0;	
+	for (unsigned int i=0; i<num_flags; i++) {
+		if (_stricmp(_name,flag_list[i]) == 0) {
+			if (flag_value[i])  return flag_value_f[i];
+			if (flag_enable[i]) return 1.0;
+			return 0.0;
 		}
 	}
 	return NULL;

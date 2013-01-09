@@ -1800,6 +1800,27 @@
     <ClInclude Include="include\llsplitatgrid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\llpanorama.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llsetvertex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llreaddatafile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llsetcontour.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llcreatepolygon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\lladdvertextopolygon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llreadpolygondatafile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="externals\niflib\src\kfm.cpp">
@@ -3558,6 +3579,27 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\llsplitatgrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llpanorama.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llsetvertex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llreaddatafile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llsetcontour.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llcreatepolygon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lladdvertextopolygon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\llreadpolygondatafile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

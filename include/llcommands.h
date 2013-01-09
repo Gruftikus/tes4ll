@@ -51,29 +51,29 @@
 #define COM_SETHEIGHT_CMD			"SetHeight"
 
 //Vertex commands
-#define COM_SETGRID					40
-#define COM_SETGRID_CMD				"SetGrid"
-#define COM_SETGRIDBORDER			41
-#define COM_SETGRIDBORDER_CMD		"SetGridBorder"
-#define COM_PANORAMA				42
-#define COM_PANORAMA_CMD			"Panorama"
-#define COM_SETSINGLEPOINT			43
-#define COM_SETSINGLEPOINT_CMD		"SetVertex"
-#define COM_READFILE				44
-#define COM_READFILE_CMD			"ReadDataFile"
-#define COM_CREATEPOLYGON			45
-#define COM_CREATEPOLYGON_CMD		"CreatePolygon"
-#define COM_ADDVERTEXTOPOLYGON		46
-#define COM_ADDVERTEXTOPOLYGON_CMD	"AddVertexToPolygon"
-#define COM_READPOLYGONDATAFILE		47
-#define COM_READPOLYGONDATAFILE_CMD	"ReadPolygonDataFile"
+//#define COM_SETGRID					40
+//#define COM_SETGRID_CMD				"SetGrid"
+//#define COM_SETGRIDBORDER			41
+//#define COM_SETGRIDBORDER_CMD		"SetGridBorder"
+//#define COM_PANORAMA				42
+//#define COM_PANORAMA_CMD			"Panorama"
+//#define COM_SETSINGLEPOINT			43
+//#define COM_SETSINGLEPOINT_CMD		"SetVertex"
+//#define COM_READFILE				44
+//#define COM_READFILE_CMD			"ReadDataFile"
+//#define COM_CREATEPOLYGON			45
+//#define COM_CREATEPOLYGON_CMD		"CreatePolygon"
+//#define COM_ADDVERTEXTOPOLYGON		46
+//#define COM_ADDVERTEXTOPOLYGON_CMD	"AddVertexToPolygon"
+//#define COM_READPOLYGONDATAFILE		47
+//#define COM_READPOLYGONDATAFILE_CMD	"ReadPolygonDataFile"
 
 
 //Triangle modifier
 #define COM_DIVIDEGRID					50
 #define COM_DIVIDEGRID_CMD				"DivideGrid"
-#define COM_BREAKLINE					51
-#define COM_BREAKLINE_CMD				"ContourLine"
+//#define COM_BREAKLINE					51
+//#define COM_BREAKLINE_CMD				"ContourLine"
 #define COM_BREAKFLATTRIANGLES			52
 #define COM_BREAKFLATTRIANGLES_CMD		"SplitFlatTriangles"
 #define COM_REMOVEBROKENTRIANGLES		53

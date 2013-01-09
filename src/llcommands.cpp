@@ -409,6 +409,8 @@ out:
 		com = COM_STENCILPOLGON;
 		CurrentCommand = COM_STENCILPOLGON_CMD;
 	}
+	#if 0
+
 	if (_stricmp(ptr, COM_CREATEPOLYGON_CMD)==0) {
 		com = COM_CREATEPOLYGON;
 		CurrentCommand = COM_CREATEPOLYGON_CMD;
@@ -417,12 +419,13 @@ out:
 		com = COM_ADDVERTEXTOPOLYGON;
 		CurrentCommand = COM_ADDVERTEXTOPOLYGON_CMD;
 	}
+
+	
 	if (_stricmp(ptr, COM_BREAKLINE_CMD)==0) {
 		com = COM_BREAKLINE;
 		CurrentCommand = COM_BREAKLINE_CMD;
 	}
 
-#if 0
 	if (_stricmp(ptr, COM_ALGCONST_CMD)==0) {
 		com = COM_ALGCONST;
 		CurrentCommand = COM_ALGCONST_CMD;
@@ -470,6 +473,7 @@ out:
 		CurrentCommand = COM_SETMAXPOINTSPERQUAD_CMD;
 	}
 
+#if 0
 	if (_stricmp(ptr, COM_SETSINGLEPOINT_CMD)==0) {
 		com = COM_SETSINGLEPOINT;
 		CurrentCommand = COM_SETSINGLEPOINT_CMD;
@@ -478,10 +482,12 @@ out:
 		com = COM_READFILE;
 		CurrentCommand = COM_READFILE_CMD;
 	}
+
 	if (_stricmp(ptr, COM_READPOLYGONDATAFILE_CMD)==0) {
 		com = COM_READPOLYGONDATAFILE;
 		CurrentCommand = COM_READPOLYGONDATAFILE_CMD;
 	}
+	#endif
 	if (_stricmp(ptr, COM_WRITEQUAD_CMD)==0) {
 		com = COM_WRITEQUAD;
 		CurrentCommand = COM_WRITEQUAD_CMD;
@@ -526,10 +532,10 @@ out:
 		com = COM_REMOVEINACTIVETRIANGLES;
 		CurrentCommand = COM_REMOVEINACTIVETRIANGLES_CMD;
 	}
-	if (_stricmp(ptr, COM_PANORAMA_CMD)==0) {
-		com = COM_PANORAMA;
-		CurrentCommand = COM_PANORAMA_CMD;
-	}
+//	if (_stricmp(ptr, COM_PANORAMA_CMD)==0) {
+//		com = COM_PANORAMA;
+//		CurrentCommand = COM_PANORAMA_CMD;
+//	}
 	if (_stricmp(ptr, COM_CALLTES4QLOD_CMD)==0) {
 		com = COM_CALLTES4QLOD;
 		CurrentCommand = COM_CALLTES4QLOD_CMD;
@@ -1439,7 +1445,7 @@ out:
 				}
 			}
 		}
-
+#if 0
 		if (com == COM_SETSINGLEPOINT) {
 			CurrentCommand = COM_SETSINGLEPOINT_CMD;
 			ptr2 = strtok_int(ptr, '=',&saveptr2);
@@ -1465,7 +1471,9 @@ out:
 				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
+#endif
 
+#if 0
 		if (com == COM_PANORAMA) {
 			CurrentCommand = COM_PANORAMA_CMD;
 			ptr2 = strtok_int(ptr, '=',&saveptr2);
@@ -1505,7 +1513,7 @@ out:
 				mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;
 			}
 		}
-
+#endif
 
 		if (com == COM_WRITEALL) {
 			CurrentCommand = COM_WRITEALL_CMD;
@@ -1560,6 +1568,7 @@ out:
 			} 
 		}
 
+#if 0
 		if (com == COM_READFILE) {
 			CurrentCommand = COM_READFILE_CMD;
 			ptr2 = strtok_int(ptr, '=',&saveptr2);
@@ -1602,7 +1611,7 @@ out:
 				mesg->WriteNextLine(LOG_ERROR,"Unknown option [%s] after [ReadPolygonDataFile]",ptr);return com;
 			}
 		}
-
+#endif
 		if (com == COM_WRITEALLQUADS) {
 			if (_stricmp(ptr,"-writeheightmap")==0) {
 				writeheightmap=1;
@@ -1788,6 +1797,7 @@ out:
 			}
 		}
 
+#if 0
 		if (com == COM_BREAKLINE) {
 			CurrentCommand = COM_BREAKLINE_CMD;
 			if (_stricmp(ptr,"-setmin")==0) {
@@ -1841,6 +1851,7 @@ out:
 				} else {mesg->WriteNextLine(LOG_ERROR,CM_INVALID_OPTION,ptr,CurrentCommand);return com;}
 			}
 		}
+#endif
 
 		if (com == COM_DIVIDEGRID) {
 			CurrentCommand = COM_DIVIDEGRID_CMD;
@@ -1934,6 +1945,7 @@ out:
 			}
 		}
 
+#if 0
 		if (com == COM_CREATEPOLYGON) {
 			CurrentCommand = COM_CREATEPOLYGON_CMD;
 			ptr2 = strtok_int(ptr, '=',&saveptr2);
@@ -2012,7 +2024,8 @@ out:
 				}
 			} 
 		}
-		
+#endif
+
 		if (com == COM_DIVIDEATPOLGONBORDER) {
 			CurrentCommand = COM_DIVIDEATPOLGONBORDER_CMD;
 			ptr2 = strtok_int(ptr, '=',&saveptr2);
@@ -2248,8 +2261,10 @@ out:
 					if (_stricmp(ptr2,"-mindistance")==0) {
 						ptr2 = strtok_int(NULL, '=',&saveptr2);
 						utils->StripQuot(&ptr2);
-						if (ptr2)
+						if (ptr2) {
 							sscanf_s(ptr2,"%i",&mindistance);
+							_llUtils()->SetValue("_mindistance", ptr2);
+						}
 						else {
 							mesg->WriteNextLine(LOG_ERROR,CM_SYNTAX_ERROR,ptr,CurrentCommand);return com;
 						}
@@ -2520,19 +2535,6 @@ out:
 		y11 = (quady+1.f)*32.f*4096.f;
 	}
 
-	if (com == COM_SETGRID) {
-		if (gridx<0 || gridy<0) {
-			mesg->WriteNextLine(LOG_ERROR,"%s: no grid specified (needs -x and -y)",COM_SETGRID_CMD);
-			return -1;
-		}
-	}
-
-	if (com == COM_SETGRIDBORDER) {
-		if (gridx<0 || gridy<0) {
-			mesg->WriteNextLine(LOG_ERROR,"%s: no grid specified (needs -x and -y)",COM_SETGRIDBORDER_CMD);
-			return -1;
-		}
-	}
 
 	if (com == COM_BREAKATGRID) {
 		if (gridx<0 || gridy<0 || max<0) {
@@ -2541,12 +2543,6 @@ out:
 		}
 	}
 
-	if (com == COM_SETSINGLEPOINT) {
-		if (gridx<-999999 || gridy<-999999) {
-			mesg->WriteNextLine(LOG_ERROR,"%s: no coordinates specified (needs -x and -y)", CurrentCommand);
-			return -1;
-		}
-	}
 
 	if (com == COM_DIVIDEBETWEEN) {
 		if (xx1 <-999999 || yy1<-999999 || xx2<-999999 || yy2<-999999) {
@@ -2555,27 +2551,7 @@ out:
 		}
 	}
 
-	if (com == COM_CREATEPOLYGON) {
-		if (xx1 <-999999 || yy1<-999999 || xx2<-999999 || yy2<-999999) {
-			mesg->WriteNextLine(LOG_ERROR,"%s: no initial vertices specified (needs -x1, -x2, -y1 and -y2)", CurrentCommand);
-			return -1;
-		}
-		if (!polygon_name) {
-			mesg->WriteNextLine(LOG_ERROR,"%s: no name defined", CurrentCommand);
-			return -1;
-		}
-	}
 
-	if (com == COM_ADDVERTEXTOPOLYGON) {
-		if (xx1 <-999999 || yy1<-999999 ) {
-			mesg->WriteNextLine(LOG_ERROR,"%s: no vertex specified (needs -x and -x)", CurrentCommand);
-			return -1;
-		}
-		if (!polygon_name) {
-			mesg->WriteNextLine(LOG_ERROR,"%s: no name defined", CurrentCommand);
-			return -1;
-		}
-	}
 
 	if (com == COM_ACTIVATEVISIBLEVERTICES) {
 		if (xx1 <-999999 || yy1<-999999 ) {
@@ -2590,14 +2566,6 @@ out:
 			return -1;
 		}
 	}
-
-	if (com == COM_BREAKLINE) {
-		if (z<-111111 )	{
-			mesg->WriteNextLine(LOG_ERROR,"%s: no height specified (needs -z)",COM_BREAKLINE_CMD);
-			return -1;
-		}
-	}
-
 
 
 	if (com == COM_SETPOINTS || com == COM_SETPOINTSPERQUAD || 
