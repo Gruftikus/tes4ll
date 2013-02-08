@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <windows.h>
-#include "../include/llworker.h"
-#include "../include/llutils.h"
+#include "../../lltool/include/llworker.h"
+#include "../../lltool/include/llutils.h"
 
 class llParseModList : public llWorker {
 
@@ -28,7 +28,7 @@ public:
 	}
 
 	virtual int RegisterOptions(void);
-	virtual int Init(void);
+	virtual int Exec(void);
 
 };
 

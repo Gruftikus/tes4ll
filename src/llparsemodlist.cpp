@@ -20,8 +20,8 @@ int llParseModList::RegisterOptions(void) {
 	return 1;
 }
 
-int llParseModList::Init(void) {
-	llWorker::Init();
+int llParseModList::Exec(void) {
+	llWorker::Exec();
 
 	const char *option = _llUtils()->GetValue("_modlist");
 
