@@ -609,9 +609,25 @@
     <ClCompile Include="..\niflib\TriStripper\connectivity_graph.cpp" />
     <ClCompile Include="..\niflib\TriStripper\policy.cpp" />
     <ClCompile Include="..\niflib\TriStripper\tri_stripper.cpp" />
+    <ClCompile Include="externals\zlib\adler32.c" />
+    <ClCompile Include="externals\zlib\compress.c" />
+    <ClCompile Include="externals\zlib\crc32.c" />
+    <ClCompile Include="externals\zlib\deflate.c" />
+    <ClCompile Include="externals\zlib\gzclose.c" />
+    <ClCompile Include="externals\zlib\gzlib.c" />
+    <ClCompile Include="externals\zlib\gzread.c" />
+    <ClCompile Include="externals\zlib\gzwrite.c" />
+    <ClCompile Include="externals\zlib\infback.c" />
+    <ClCompile Include="externals\zlib\inffast.c" />
+    <ClCompile Include="externals\zlib\inflate.c" />
+    <ClCompile Include="externals\zlib\inftrees.c" />
+    <ClCompile Include="externals\zlib\trees.c" />
+    <ClCompile Include="externals\zlib\uncompr.c" />
+    <ClCompile Include="externals\zlib\zutil.c" />
     <ClCompile Include="src\llexportmeshtonif.cpp" />
     <ClCompile Include="src\llparsemodlist.cpp" />
     <ClCompile Include="src\tes4ll.cpp" />
+    <ClCompile Include="src\tes4qlod.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lltool\externals\triangle\triangle.h" />
@@ -1226,8 +1242,20 @@
     <ClInclude Include="..\niflib\TriStripper\detail\types.h" />
     <ClInclude Include="..\niflib\TriStripper\public_types.h" />
     <ClInclude Include="..\niflib\TriStripper\tri_stripper.h" />
+    <ClInclude Include="externals\zlib\crc32.h" />
+    <ClInclude Include="externals\zlib\deflate.h" />
+    <ClInclude Include="externals\zlib\gzguts.h" />
+    <ClInclude Include="externals\zlib\inffast.h" />
+    <ClInclude Include="externals\zlib\inffixed.h" />
+    <ClInclude Include="externals\zlib\inflate.h" />
+    <ClInclude Include="externals\zlib\inftrees.h" />
+    <ClInclude Include="externals\zlib\trees.h" />
+    <ClInclude Include="externals\zlib\zconf.h" />
+    <ClInclude Include="externals\zlib\zlib.h" />
+    <ClInclude Include="externals\zlib\zutil.h" />
     <ClInclude Include="include\llexportmeshtonif.h" />
     <ClInclude Include="include\llparsemodlist.h" />
+    <ClInclude Include="include\tes4qlod.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <Keyword>Win32Proj</Keyword>

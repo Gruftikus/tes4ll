@@ -301,6 +301,8 @@ int main(int argc, char **argv) {
 	llUtils    *utils = _llUtils();
 	llCommands *batch = new llCommands();
 	utils->SetValue("_worldspace", "Tamriel");
+	utils->SetValue("_dds_tool",   "S3TC.EXE");
+
 
     std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@texnexus" << std::endl;
