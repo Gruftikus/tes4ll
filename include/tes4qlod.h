@@ -17,13 +17,24 @@
 
 #include "../../lltool/include/llworker.h"
 #include "../../lltool/include/llutils.h"
+#include "../../lltool/include/llmap.h"
+
 
 class TES4qLOD : public llWorker {
 
 protected:
 
-	
+	int TES4qLOD::CheckTESVersion(char *_input_esp_filename);
+	int ExportTES4LandT4QLOD     (char *_input_esp_filename);
+
+	int Add4LTEXData    (char *_r, int _size);
+	int Process4CELLData(char *_r, int _size);
+	int Process4WRLDData(char *_r, int _size);
+	int Process4LANDData(char *_r, int _size);
 	int Process4REFRData(char *_r, int _size);
+	
+	int DumpCellBMP(int _cx, int _cy, char _vimage[136][136][3]);
+	int LOD2_Partial(char *_filename, int _cx, int _cy, int _mode);
 	int DecompressZLIBStream(char *_input, int _input_size, char _output[], int *_output_size);
 	int CompressZLIBStream  (char *_input, int _input_size, char _output[], int *_output_size, int _compress_level);
 	int CleanUp();
@@ -85,6 +96,9 @@ protected:
 	char  worldspace_lc[256];
 	const char *opt_install_dir;
 	const char *DDS_CONVERTOR;
+	int x_cell, y_cell;
+	int worldspace_found;
+	//end wrapper
 
 	//flags:
 	int opt_ltex,
@@ -112,7 +126,7 @@ protected:
 		opt_center,
 		opt_flip;
 
-	int verbosity;
+	int verbosity, in_vwd;
 
 	static int min_x, max_x, min_y, max_y;
 
@@ -123,13 +137,19 @@ protected:
 	static char *TES_FALLOUTNV;
 	static char *TES_OBLIVION;
 	static char *TES_UNKNOWN;
-
+	
 	/***************************
 	* Just some running totals.
 	**************************/
-	int total_refr, total_vwd;	
+	int total_refr, total_vwd, total_cells, total_land, total_worlds;	
+
+	llMap *map;
+	char  *mapname;
 
 public:
+	
+	static int num_esp_sorted;
+	static char *esp_list_sorted[256]; //list of sorted esp's
 
 	//constructor
 	TES4qLOD();

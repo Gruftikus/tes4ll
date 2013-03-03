@@ -1,6 +1,8 @@
 //base class for all algorithms
 
 #include "..\include\llparsemodlist.h"
+#include "..\include\tes4qlod.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <windows.h>
@@ -10,7 +12,7 @@
 //constructor
 llParseModList::llParseModList() : llWorker() {
 	num_esp = 0;
-	num_esp_sorted = 0;
+	TES4qLOD::num_esp_sorted = 0;
 	SetCommandName("ParseModList");
 }
 
@@ -93,26 +95,26 @@ int llParseModList::Exec(void) {
 			}
 			FILETIME time = fAt.ftLastWriteTime;
 
-			esp_list_sorted[num_esp_sorted]  = esp_list[i];
-			time_list_sorted[num_esp_sorted] = time;
-			num_esp_sorted++;
+			TES4qLOD::esp_list_sorted[TES4qLOD::num_esp_sorted]  = esp_list[i];
+			time_list_sorted[TES4qLOD::num_esp_sorted] = time;
+			TES4qLOD::num_esp_sorted++;
 
-			for (int j=num_esp_sorted-1; j>0; j--) {  //quicksort
+			for (int j=TES4qLOD::num_esp_sorted-1; j>0; j--) {  //quicksort
 				if (CompareFileTime(&time_list_sorted[j-1], &time_list_sorted[j]) > 0) {
 					FILETIME ttmp         = time_list_sorted[j-1];
-					char * tmp            = esp_list_sorted[j-1];
+					char * tmp            = TES4qLOD::esp_list_sorted[j-1];
 					time_list_sorted[j-1] = time_list_sorted[j];
-					esp_list_sorted[j-1]  = esp_list_sorted[j];
+					TES4qLOD::esp_list_sorted[j-1]  = TES4qLOD::esp_list_sorted[j];
 					time_list_sorted[j]   = ttmp;
-					esp_list_sorted[j]    = tmp;
+					TES4qLOD::esp_list_sorted[j]    = tmp;
 				}
 			}
 		}
 
-		for (int j=0; j<num_esp_sorted; j++) {
-			_llUtils()->AddMod(esp_list_sorted[j]);
-			char * my_flag_list = new char[strlen(esp_list_sorted[j]) + 1];
-			strcpy_s(my_flag_list, strlen(esp_list_sorted[j])+1, esp_list_sorted[j]);
+		for (int j=0; j<TES4qLOD::num_esp_sorted; j++) {
+			_llUtils()->AddMod(TES4qLOD::esp_list_sorted[j]);
+			char * my_flag_list = new char[strlen(TES4qLOD::esp_list_sorted[j]) + 1];
+			strcpy_s(my_flag_list, strlen(TES4qLOD::esp_list_sorted[j])+1, TES4qLOD::esp_list_sorted[j]);
 			for (unsigned int jj=0; jj<strlen(my_flag_list); jj++) {
 				if (*(my_flag_list+jj) == ' ') *(my_flag_list+jj)='_';
 			}

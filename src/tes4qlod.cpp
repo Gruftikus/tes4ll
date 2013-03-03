@@ -1,5 +1,9 @@
 
-#include "..\include\tes4qlod.h"
+#include "../include/tes4qlod.h"
+#include "../../lltool/include/llutils.h"
+#include "../../lltool/include/llmapworker.h"
+#include "../../lltool/include/llmaplist.h"
+
 
 #define MKDIR(a)	_mkdir(a)
 
@@ -18,11 +22,13 @@
 #define LOD_OUTPUT_DIR_SKYRIM		"Textures/Terrain/%s"
 #define LOD_OUTPUT_DIR_SKYRIM_DOS	"Textures\\Terrain\\%s"
 
+#define LOD_LTEX_DATA_FILE			"tes4qlod_%s_ltex.dat"
+#define IMPORT_TEX_DIR	            "tes4qlod_tex/%s"
+
 #define TES4_OB_RECORD_SIZE  20
 #define TES4_FA_SK_RECORD_SIZE 24
 
 enum { EXTERIOR, INTERIOR, TRUE1, FALSE1, TEXTURES, NORMALS };
-
 
 
 //global geometry:
@@ -40,21 +46,44 @@ char *TES4qLOD::TES_FALLOUTNV = "FalloutNV";
 char *TES4qLOD::TES_OBLIVION  = "Oblivion";
 char *TES4qLOD::TES_UNKNOWN   = "Unknown";
 
+//esp list
+int   TES4qLOD::num_esp_sorted;
+char *TES4qLOD::esp_list_sorted[256];
+
 //constructor
 TES4qLOD::TES4qLOD() : llWorker() {
 	SetCommandName("tes4qlod");
 
-
+	x_cell = y_cell = 0; //position of lower left corner 
 }
 
 int TES4qLOD::RegisterOptions(void) {
 	if (!llWorker::RegisterOptions()) return 0;
+
+	RegisterFlag ("-a", &opt_blending);
+	RegisterValue("-X", &opt_size_x);
+	RegisterValue("-Y", &opt_size_y);
+	RegisterFlag ("-z", &opt_center);
+	RegisterValue("-i", &opt_load_index);
+	RegisterFlag ("-f", &opt_full_map);
+	RegisterFlag ("-F", &opt_flip);
+	RegisterFlag ("-n", &opt_normals);
+	RegisterFlag ("-z", &opt_center);
+	RegisterValue("-q", &opt_q);
+	RegisterFlag ("-B", &opt_no_dds);
+	RegisterFlag ("-C", &opt_no_colorlods);
+	RegisterFlag ("-D", &opt_no_move);
+	RegisterFlag ("-d", &opt_debug);
+
 
 	return 1;
 }
 
 int TES4qLOD::Prepare(void) {
 	if (!llWorker::Prepare()) return 0;
+
+	map     = NULL;
+	mapname = NULL;
 
 	opt_ltex = -1;
     opt_bmp = 0;
@@ -85,10 +114,10 @@ int TES4qLOD::Prepare(void) {
 
 	total_refr = 0;
 	total_vwd  = 0;
+	total_cells = total_land = total_worlds = 0;
+	in_vwd = 0;
 
-	opt_install_dir = NULL; //BUGBUG
-	worldspace    = _llUtils()->GetValue("_worldspace");
-	DDS_CONVERTOR = _llUtils()->GetValue("_dds_tool");
+	worldspace_found = 0;
 
 	tes_rec_offset = TES4_OB_RECORD_SIZE; 
 
@@ -99,10 +128,1133 @@ int TES4qLOD::Exec(void) {
 	llWorker::Exec();
 
 	cleanup_list_count = 0;
-	
+
+	if (!Used("-map"))
+		mapname = (char *)"_heightmap";
+
+	//get the corresponding map from the global map container
+	map = _llMapList()->GetMap(mapname);
+
+	opt_install_dir = _llUtils()->GetValue("_install_dir");
+	if (opt_install_dir && !strlen(opt_install_dir)) opt_install_dir = NULL;
+	worldspace      = _llUtils()->GetValue("_worldspace");
+	DDS_CONVERTOR   = _llUtils()->GetValue("_dds_tool");
+
+	//--> original code starting here
+
+	if (opt_q < 1)  opt_q = 1;
+	if (opt_q == 3) opt_q = 2;
+	if (opt_q > 4)  opt_q = 4;
+
+	if (opt_lod_tex == 0 && !opt_vwd && !opt_read_heightmap && !opt_read_dimensions) { opt_lod_tex = 1; }
+
+	CleanUpDir(TMP_TEX_DIR);
+	CleanUpDir(TMP_NORMAL_DIR);
+	CleanUpDir(TMP_VWD_DIR);
+
+//	MKDIR(TMP_TEX_DIR, S_IRWXU | S_IRWXG | S_IRWXO);
+	if (opt_lod_tex)
+		MKDIR(TMP_TEX_DIR);
+
+	char tmp_dirname[1024];
+
+	/**********************************************************************
+	 * Create Final Texture directories (in case they don't exist).
+	 * This is where the games will expect to find their LOD texture files.
+	 **********************************************************************/
+	if (opt_lod_tex) {
+		if (opt_tes_mode == TES_OBLIVION) {
+			MKDIR("Textures");
+			MKDIR("Textures/LandscapeLOD");
+			MKDIR(LOD_OUTPUT_DIR_OBLIVION);
+		} else if (opt_tes_mode == TES_FALLOUT3 || opt_tes_mode == TES_FALLOUTNV) {
+			MKDIR("Textures");
+			MKDIR("Textures/Landscape");
+			MKDIR("Textures/Landscape/lod");
+			sprintf_s(tmp_dirname, 256, "Textures/Landscape/lod/%s", worldspace);
+			MKDIR(tmp_dirname);
+			sprintf_s(tmp_dirname, 256, "Textures/Landscape/lod/%s/diffuse", worldspace);
+			MKDIR(tmp_dirname);
+			sprintf_s(tmp_dirname, 256, "Textures/Landscape/lod/%s/normals", worldspace);
+			MKDIR(tmp_dirname);
+		} else { // Skyrim.
+			MKDIR("Textures");
+			MKDIR("Textures/terrain");
+			sprintf_s(tmp_dirname, 256, "Textures/terrain/%s/", worldspace);
+			MKDIR(tmp_dirname);
+		}
+	}
+	if (opt_normals) {
+		MKDIR(TMP_NORMAL_DIR);
+	}
+	if (opt_vwd) {
+		MKDIR(TMP_VWD_DIR);
+	}
+
+
+	/*
+	 * Initialize variables:
+	 */
+
+//	printf("X offset will be %d. Y will be %d\n", opt_x_offset, opt_y_offset);
+
+	cell.name[0] = '\0';
+	cell.current_x = 0;
+	cell.current_y = 0;
+
+	//DecodeFilenames(argv[argc-1]);
+	//printf("esp-list decoded, I will run over %i files\n",input_files.count); //CHANGE_IF
+
+	/***************************************************************************************
+	 * Open the first filename argument (argv[argc-1]) - the input ESM/ESP file for reading.
+	 **************************************************************************************/
+	CheckTESVersion(esp_list_sorted[0]);
+
+	char s[40];	/* For storing the 16-byte header. */
+	FILE *fpin; /* Input File Stream (original ESP/ESM).      */
+
+	if (fread(s, 1, 4, fpin) < 4) {
+		fprintf(stderr, "Unable to read the first 4 bytes from %s to determine if it's "
+			"a TES3 or TES4 file: %s\n", strerror(errno));
+		return(0);
+	} else {
+		if (strncmp(s, "TES3", 4) == 0) {
+			printf("This is a TES3: Morrowind file: But I only decode TES4: Oblivion/Fallout3/FalloutNV/Skyrim files. I only create landscape LOD textures and VisibleWhenDistant files!\n");
+			exit(1);
+		} else if (strncmp(s, "TES4", 4) != 0) {
+			printf("This is neither a TES3 or TES4 file - the first 4 bytes do not match what I'd expect!\n");
+			return(0);
+		}
+		fseek(fpin, 0, SEEK_SET);
+	}
+	fclose(fpin);
+
+	/*********************************************************************************************
+	 * Parse the texture directory (IMPORT_TEX_DIR) and read in all the BMP textures in to memory.
+	 ********************************************************************************************/
+
+	if (opt_lod_tex) {
+		sprintf_s(game_textures_filepath, 256, IMPORT_TEX_DIR, opt_tes_mode);
+		if (verbosity) printf("Caching all BMP texture files stored in the %s directory ... ", game_textures_filepath);
+		fflush(stdout);
+
+		ftex.count = 0;
+
+		ParseDir(game_textures_filepath);
+
+		if (verbosity) printf(" finished.\n");
+	}
+
+	/*********************************************************************************************
+	 * Load the standard (Oblivion.esm) LTEX FormIDs and their filenames in to memory.
+	 * The RGB data is matched up to the filenames cached from the IMPORT_TEX_DIR.
+	 ********************************************************************************************/
+
+	char lod_texture_formids_file[512];
+
+	if (opt_lod_tex) {
+		sprintf_s(lod_texture_formids_file, 512, LOD_LTEX_DATA_FILE, opt_tes_mode);
+		if (verbosity) printf("Reading %s.esm Texture FormIDs from %s ...", opt_tes_mode, lod_texture_formids_file);
+		fflush(stdout);
+		
+		ReadLODTextures(lod_texture_formids_file);
+		if (verbosity) printf(" finished.\n\n");
+	}
+
+	if (verbosity) printf("Searching for any cells in the worldspace %s:\n\n", worldspace);
+
+	int i;
+
+	for (i = 0; worldspace[i] != '\0'; i++) {
+		worldspace_lc[i] = tolower(worldspace[i]); //BUGBUG?
+	}
+	worldspace_lc[i] = '\0';
+			
+
+	/*********************************************************
+	 ** Start the ESP reading and exporting for each file.
+	 *********************************************************/
+
+	for (i = 0; i < num_esp_sorted; i++) {
+		ExportTES4LandT4QLOD(esp_list_sorted[i]);
+	}
+
+	if (opt_size_x) {
+		if (opt_center) 
+			min_x -= (opt_size_x - (max_x - min_x))/2;
+		max_x = min_x + opt_size_x - 1;
+	}
+	if (opt_size_y) {
+		if (opt_center) 
+			min_y -= (opt_size_y - (max_y - min_y))/2;
+		max_y = min_y + opt_size_y - 1;
+	}
+
+	if (total_cells > 0) {
+		if (opt_lod_tex) {
+			HumptyLODs();
+		}
+		if (opt_vwd) {
+			HumptyVWD();
+		}
+	} else {
+		fprintf(stderr, "No cells were found!! Did you specify the correct worldspace?! No LOD textures have been generated.\n");
+		exit(0);
+	}
+
+	/******************************
+	* Dump out the running totals.
+	*****************************/
+
+	if (verbosity) printf_s("\nWe've finished!\n\n"
+		"\tTotal Worldspaces  found:                     %d\n"
+		"\tTotal CELL records found:                     %d\n"
+		"\tTotal LAND records found:                     %d\n"
+		"\tTotal VWD  Objects written:                   %d\n",
+		total_worlds, total_cells, total_land, total_vwd);
+
+	if (opt_read_dimensions && (verbosity) ) {
+		printf("\nMin X:      %d",min_x);
+		printf("\nMax X:      %d",max_x);
+		printf("\nMin Y:      %d",min_y);
+		printf("\nMax Y:      %d",max_y);
+	}
+
+	if (!opt_debug) {
+		if (verbosity) printf("\nNow I'm cleaning up my temporary files ... (sometimes takes a while, but all your files are now generated).\n");
+		CleanUp();
+	} else {
+		if (verbosity) printf("\nYou're in \"Debug\" mode, so I won't delete my BMP files or my %s temp directory.\n", TMP_TEX_DIR);
+	}
+
 	return 1;
 }
 
+
+int TES4qLOD::CheckTESVersion(char *_input_esp_filename) {
+
+	/***************************************************************************************************
+	** CheckTESVersion(): Manually try to work out the file format (in case -G isn't specified).
+	**
+	** If it's a Fallout3/NV/Skyrim file, the record size is 4 bytes longer than an Oblivion file.
+	** This tries to guess it by checking imediately after the first chunk whether it's alphanumemeric.
+	**************************************************************************************************/
+
+	//BUGBUG: check for gamemode
+
+	char s[4];
+	FILE *fpin;
+
+	if ((fpin = fopen(esp_list_sorted[0], "rb")) == 0) {
+		fprintf(stderr, "Cannot open %s for reading: %s\n", 
+			_input_esp_filename, strerror(errno));
+		return -1;
+	}
+	fread(s, 4, 1, fpin);
+
+	if (strncmp("TES4", s, 4) == 0) {
+		fseek(fpin, TES4_FA_SK_RECORD_SIZE, SEEK_SET);
+		fread(s, 4, 1, fpin);
+		if (isalpha(s[0]) && isalpha(s[1]) && isalpha(s[2]) && isalpha(s[3])) {
+			if (verbosity) printf("'%s' looks like a TES4 (Fallout3 / FalloutNV / Skyrim) file\n", _input_esp_filename);
+			if (tes_rec_offset != TES4_FA_SK_RECORD_SIZE) {
+				tes_rec_offset = TES4_FA_SK_RECORD_SIZE;
+			}
+			if (opt_tes_mode == TES_UNKNOWN) {
+				if (verbosity) printf("Going to assume Skyrim LOD type. Please override with \"-G GameType\" if this is wrong\n");
+				opt_tes_mode = TES_SKYRIM;
+			}
+
+		} else {
+			if (verbosity) printf("'%s' looks like a TES4 Oblivion file.\n", _input_esp_filename);
+			if (tes_rec_offset != TES4_OB_RECORD_SIZE) {
+				tes_rec_offset = TES4_OB_RECORD_SIZE; 
+			}
+			if (opt_tes_mode == TES_UNKNOWN) {
+				printf("Going to assume Oblivion LOD type. Please override with \"-G GameType\" if this is wrong\n");
+				opt_tes_mode = TES_OBLIVION;				
+			}
+		}
+	}
+	fclose(fpin);
+
+	return 0;
+}
+
+
+int TES4qLOD::ExportTES4LandT4QLOD(char *_input_esp_filename) {
+	/************************************************************************************************
+	** ExportTES4LANDT4QLOD(): Export the texture details and/or VWD objects from ESM/ESPs.
+	**
+	**  Opens the specified TES file as input, parses looking for CELL, LAND, LTEX and FRMR records, 
+	**  reads each record in to memory for processingm handing them on to one of:
+	**                Process4CELLData(), Process4LANDData(), 
+	**                Process4LTEXData(), Process4FRMRData().
+	**
+	**  1. Process4CELLData() retrieves the X and Y co-ordinate of the cell.
+	**  2. Process4LTEXData() retrieves the land textute FormID and filename.
+	**  3. Process4LANDData() saves the normal and colour map data, and matches texture layer FormIDs
+	**     with the bitmap images, producing a BMP for each cell.
+	**  4. Process4FRMRData() retrieves placed object data; FormID and whether they're VWD.
+	***********************************************************************************************/
+
+	int //i,
+	    size,	   /* Size of current record.               */
+	    in_group = 0,  /* Are we in a GRUP record group or not? */
+	    pos = 0,
+	    group_size = 0;
+
+//	char c;		/* For command-line getopts args.     */
+	char s[40];	/* For storing the record header.     */
+	char *r;	/* Pointer to the Record Data.        */
+
+	FILE *fpin; /* Input File Stream (original ESP/ESM).  */
+
+	CheckTESVersion(_input_esp_filename);
+
+	if ((fpin = fopen(_input_esp_filename, "rb")) == NULL) {
+		fprintf(stderr, "Unable to open %s for reading: %s\n",
+			_input_esp_filename, strerror(errno));
+		exit(1);
+	}
+
+	while (fread(s, 1, 8, fpin) > 0) {
+
+		if (!isalpha(s[0]) && !isalpha(s[1]) && !isalpha(s[2]) && !isalpha(s[3])) 
+			printf(" - WARNING: FOUND A WILD NON-ASCII RECORD HEADER: %c%c%c%c ", s[0], s[1], s[2], s[3]);
+
+		/**************************************
+		 * The Core TES4 ESM/ESP Record Parser.
+		 *************************************/
+
+		if (strncmp(s, "TES4", 4) == 0 ||
+			strncmp(s, "GRUP", 4) == 0) {
+			size = tes_rec_offset;
+		} else if ( 
+			strncmp(s, "HEDR", 4) == 0 ||
+			strncmp(s, "OFST", 4) == 0 ||
+			strncmp(s, "MAST", 4) == 0 ||
+			strncmp(s, "DATA", 4) == 0 ||
+			strncmp(s, "DELE", 4) == 0 ||
+			strncmp(s, "CNAM", 4) == 0 ||
+			strncmp(s, "INTV", 4) == 0 ||
+			strncmp(s, "SNAM", 4) == 0) {
+
+			size = 0;
+			memcpy(&size, (s+4), 2);
+			size += 6;
+
+		} else  {
+			memcpy(&size, (s+4), 4);
+			size += tes_rec_offset;
+		}
+
+		/************************************
+		 * End of Core TES4 Parser.
+		 ***********************************/
+
+		/************************************
+		 * Keep seeking to the next record if
+		 * it's of no interest to us.
+		 ***********************************/
+
+		if (strncmp(s, "CELL", 4) != 0 &&
+			strncmp(s, "LAND", 4) != 0 &&
+			strncmp(s, "WRLD", 4) != 0 &&
+			strncmp(s, "TXST", 4) != 0 &&
+			strncmp(s, "LTEX", 4) != 0) {
+			fseek(fpin, size-8, SEEK_CUR);
+			continue;
+		}
+
+		/**********************************************
+		 * It must be one we need to process, so create
+		 * some memory space to store the record.
+		 *********************************************/
+
+		if ((r = (char *)(void *) malloc(size)) == NULL) { //!
+			fprintf(stderr, "Unable to allocate %d bytes of memory to store TES file record: %s\n",
+				2*size, strerror(errno));
+			exit(1);
+		}
+
+		fseek(fpin, -8, SEEK_CUR);
+
+		if (fread(r, 1, size, fpin) < size) {
+			fprintf(stderr, "Unable to read entire marker record (%d bytes) from %s into memory: %s\n",
+				size, _input_esp_filename, strerror(errno));
+			exit(1);
+		}
+		pos+= 6 + size;
+
+		/******************************************************
+		 ** If it's a CELL or a LAND record, then hand it on to
+		 ** a procedure that will handle the format, including
+		 ** determining if any modifications should be made.
+		 *****************************************************/
+
+		if (strncmp(s, "CELL", 4) == 0) {
+			total_cells++;
+			Process4CELLData(r, size);
+		} else if (strncmp(s, "WRLD", 4) == 0) {
+			if (!Process4WRLDData(r, size)) {
+				total_worlds++;
+			}
+		} else if (strncmp(s, "LAND", 4) == 0) {
+			total_land++;
+			Process4LANDData(r, size);
+		} else if (opt_lod_tex && (strncmp(s, "LTEX", 4) == 0)) { // || strncmp(s, "TXST", 4) == 0))  {
+		//else if ((strncmp(s, "LTEX", 4) == 0)) { // || strncmp(s, "TXST", 4) == 0))  {
+			Add4LTEXData(r, size);
+		} else if (strncmp(s, "GRUP", 4) == 0) {
+			if (r[12] == 0x0A) {
+				in_vwd = 1;
+			} else {
+				in_vwd = 0;
+			}
+		} else if ((opt_vwd_everything || (opt_vwd && in_vwd)) && strncmp(s, "REFR", 4) == 0) {
+			Process4REFRData(r, size);
+		}
+
+		free(r);
+	}
+	fclose(fpin);
+
+	return 0;
+}
+
+
+int TES4qLOD::Add4LTEXData(char *_r, int _size) {
+
+	/********************************************************************
+	** Add4LTEXData():
+	** 	Processes a TES4 LTEX record, extracts the FormID and texture 
+	**	filename and if it doesn't currently exist in the list of
+	**	used FormIDs, adds it.
+	**	If the FormID is already used, the RGB data should be replaced
+	**	in memory (the user may decide to replace an OB texture with a 
+	**	nicer file).
+	*********************************************************************/
+
+	int  i;
+	int  p, j, k, t;
+	int  nsize;
+	int  pos = 0;
+	int  formid = 0;
+	int  rgb[3];
+//	char tmp_int[5];
+
+	char fname[512];
+
+	memcpy(&formid, _r + 12, 4);
+
+	pos += tes_rec_offset;
+
+	while (pos < _size) {
+		nsize = 0;
+		memcpy(&nsize, _r+pos+4, 2);
+
+		if (strncmp("ICON", _r + pos, 4) == 0) {
+			memcpy(fname, _r + pos + 6, nsize);
+		} else if (strncmp("TX00", _r + pos, 4) == 0) {
+			if (opt_tes_mode == TES_SKYRIM) {
+				memcpy(fname, _r + pos + 6, nsize - 4);
+				fname[nsize - 4] = '\0';
+				strcat_s(fname, 512, ".dds");
+			}
+		} else if (strncmp("EDID", _r + pos, 4) == 0) {
+			if (opt_tes_mode == TES_SKYRIM) {
+				memcpy(fname, _r + pos + 7, nsize - 1);
+			} else {
+				memcpy(fname, _r + pos + 6, nsize);
+			}
+			strcat_s(fname, 512, ".dds");
+		}
+
+		pos += 6 + nsize;
+	}
+
+	/***************************************************************************
+	 ** Disabled, but useful to generating that initial DAT file for a new game.
+	{
+		unsigned char hex_formid[4];
+		memcpy(&hex_formid, &formid, 4);
+		printf("DAT:%2.2X%2.2X%2.2X%2.2X,%s\n", hex_formid[3], hex_formid[2], hex_formid[1], hex_formid[0], fname);
+	}
+	***************************************************************************/
+
+	if (fname[0] == '\0') {
+		printf("??? This is really weird. I found an LTEX record in your ESM/ESP file with no texture filename associated with it!! Ignoring ...\n");
+	}
+
+	for (i = 0; i < lod_ltex.count; i++) {
+		if (lod_ltex.formid[i] == formid) {
+			break;
+		}
+	}
+	if (i == lod_ltex.count) {
+		for (t = 0; t < ftex.count; t++) {
+			// printf("Comparing LTEX %s to %s\n", ftex.filename[i], fname);
+			if (_stricmp(ftex.filename[t], fname) == 0) {
+				break;
+			}
+		}
+		if (t == ftex.count) {
+			fprintf(stdout, "Unable to find the BMP version of the texture file %s in my textures directory (%s), but your mod file has an LTEX record that thinks it should exist. :-\\ \n",
+			fname, game_textures_filepath);
+		} else {
+			lod_ltex.formid[lod_ltex.count] = formid;
+			if (verbosity) printf("Texture %s: FormID: %d\n", fname, formid);
+			for (p = 0; p < 16; p++) {
+                                i = (int) p/4;
+                                j = p - (4*i);
+				memcpy(&lod_ltex.rgb[lod_ltex.count][i][j], &ftex.rgb[t][p][0], 3);
+                        }
+
+                        if (opt_q < 4) {
+                                for (i = 0; i < 2; i++) {
+                                        for (j = 0; j < 2; j++) {
+                                                for (k = 0; k < 3; k++) {
+                                                        rgb[k] = (unsigned char) lod_ltex.rgb[lod_ltex.count][2*i][2*j][k];
+                                                        rgb[k] += (unsigned char) lod_ltex.rgb[lod_ltex.count][2*i][2*j+1][k];
+                                                        rgb[k] += (unsigned char) lod_ltex.rgb[lod_ltex.count][2*i+1][2*j][k];
+                                                        rgb[k] += (unsigned char) lod_ltex.rgb[lod_ltex.count][2*i+1][2*j+1][k];
+                                                        lod_ltex.rgb[lod_ltex.count][i][j][k] = (unsigned char) ((float) rgb[k] / 4.0f);
+                                                }
+                                        }
+                                }
+                        }
+
+                        if (opt_q == 1) {
+                                for (i = 0; i < 2; i++) {
+                                        for (j = 0; j < 2; j++) {
+                                                for (k = 0; k < 3; k++) {
+                                                        rgb[k] = (unsigned char) lod_ltex.rgb[lod_ltex.count][2*i][2*j][k];
+                                                        rgb[k] += (unsigned char) lod_ltex.rgb[lod_ltex.count][2*i][2*j+1][k];
+                                                        rgb[k] += (unsigned char) lod_ltex.rgb[lod_ltex.count][2*i+1][2*j][k];
+                                                        rgb[k] += (unsigned char) lod_ltex.rgb[lod_ltex.count][2*i+1][2*j+1][k];
+                                                        lod_ltex.rgb[lod_ltex.count][i][j][k] = (unsigned char) ((float) rgb[k] / 4.0f);
+                                                }
+                                        }
+                                }
+                        }
+
+			lod_ltex.count++;
+		}
+	}
+
+	return 0;
+}
+
+int TES4qLOD::Process4CELLData(char *_r, int _size) {
+	
+	/***************************************************************
+	** Process4CELLData:
+	** 	Processes a TES4 CELL record, extracting name, region and any
+	**	REFR (objects in this cell) records (if they exist).
+	***************************************************************
+	** Format:
+	** CELL (4) + Length (2) + intro_data (tes_rec_offset; 20 for Oblivion, 24 for FalloutNV/Skyrim)
+	** EDID (name 4) + Length (2) + NameAsString (size given by Length)
+	** XCLC (4) + Length(2) + X-co-ord (4) + Y-co-ord (4)
+	***************************************************************/
+
+//	int  i;
+	int  nsize;
+//	int  sz;//, s1, s2;
+	int  pos = 0,
+	     xypos = 0;
+	int decomp_size = 0;
+//	char tmp_int[5];
+
+//	char filename[256];
+
+	char *decomp;
+//	FILE *fp_cell_data;
+
+	if (strcmp(cell.worldspace_name, worldspace_lc) != 0) {
+		return 0;
+	}
+
+	cell.current_x = 0;
+	cell.current_y = 0;
+
+	if (_llUtils()->MyIsUpper(_r[tes_rec_offset])   && _llUtils()->MyIsUpper(_r[tes_rec_offset+1]) && 
+		_llUtils()->MyIsUpper(_r[tes_rec_offset+2]) && _llUtils()->MyIsUpper(_r[tes_rec_offset+3])) {
+		decomp = (char *)calloc(_size, 1); //!
+		memcpy(decomp, _r+tes_rec_offset, _size-tes_rec_offset);
+		decomp_size = _size-tes_rec_offset;
+
+	} else {
+		decomp = (char *)calloc(_size*300, 1);
+
+		if (DecompressZLIBStream(_r+tes_rec_offset+4, _size-tes_rec_offset-4, decomp, &decomp_size) != 0) {
+			fprintf(stderr, "Decoding of ZLIB compressed CELL record failed: %s\n", strerror(errno));
+			return -1;
+		}
+	}
+
+	/*****************************************
+	 ****************************************/
+
+	while (pos < decomp_size -1) {
+		nsize = 0;
+		memcpy(&nsize, decomp+pos+4, 2);
+
+		/*****************************************************************************
+		 * The XCLC section. Bytes 7-14 contains two integers that represent the (x,y)
+		 * co-ordinates of this cell in the Worldspace's world grid.
+		 ****************************************************************************/
+		if (strncmp("XCLC", decomp + pos, 4) == 0) {
+			memcpy(&cell.current_x, decomp+pos+6, 4);
+			memcpy(&cell.current_y, decomp+pos+10, 4);
+		} else if (strncmp("EDID", decomp + pos, 4) == 0) {
+			strncpy(cell.name, decomp + pos + 6, nsize);
+		}
+		pos += 6 + nsize;
+	}
+
+	cleanup_list_x[cleanup_list_count] = cell.current_x;
+	cleanup_list_y[cleanup_list_count++] = cell.current_y;
+
+	free(decomp);
+
+	return 0;
+}
+
+int TES4qLOD::Process4WRLDData(char *_r, int _size) {
+
+	/*****************************************************************
+	** Process4WRLDData(): Process a TES4 Worldspace record.
+	*****************************************************************
+	** WRLD (4 bytes) + Length (2 bytes) + EDID (name)
+	****************************************************************/
+
+	int  i;
+	int  nsize;
+	int  pos = 0,
+	     xypos = 0;
+
+	char lod2_dir[256];
+
+	pos += tes_rec_offset;
+
+	/***********************************************
+	 * EDID (name of the Worldspace (6+Name bytes)).
+	 **********************************************/
+	if (strncmp("EDID", _r + pos, 4) == 0) {
+		nsize = 0;
+		memcpy(&nsize, _r+pos+4, 2);
+		pos += 6;
+		strncpy_s(cell.worldspace_name, 1024, _r + pos, nsize);
+		pos += nsize;
+		if (verbosity) printf("\nFound Worldspace: %s (FormID: %2.2X%2.2X%2.2X%2.2X)", 
+			cell.worldspace_name,
+			(unsigned char) (_r[15]),
+			(unsigned char) (_r[14]),
+			(unsigned char) (_r[13]),
+			(unsigned char) (_r[12]));
+
+		for (i = 0; cell.worldspace_name[i] != '\0'; i++) {
+			cell.worldspace_name[i] = tolower(cell.worldspace_name[i]);
+		} 
+
+		if (strcmp(cell.worldspace_name, worldspace_lc) == 0) {
+			if (verbosity) putchar('\n');
+			memcpy(&cell.worldspace_formid, _r+12, 4);
+			if (opt_lod2) {
+				MKDIR("Textures");
+				MKDIR("Textures/LOD");
+				sprintf_s(lod2_dir, 256, "Textures/LOD/%s", cell.worldspace_name);
+				MKDIR(lod2_dir);
+				for (i = 1; i < 5; i++) {
+					sprintf_s(lod2_dir, 256, "Textures/LOD/%s/%d", cell.worldspace_name, i);
+					MKDIR(lod2_dir);
+				}
+			}
+			return 1;
+		} else {
+			if (verbosity) printf(" - Ignoring this Worldspace.\n");
+		}
+	} else {
+		cell.worldspace_name[0] = '\0';
+		printf("\nWarning: Could not find a name for this worldspace!!\n");
+	}
+
+	return 0;
+}
+
+
+int TES4qLOD::Process4LANDData(char *_r, int _size) {
+
+	/*****************************************************************
+	** 5. Process4LandData(): Process a TES4 LAND record.
+	*****************************************************************
+	** LAND (4 bytes) + Length (4 bytes) + X (4 bytes) + Y (4 bytes).
+	****************************************************************/
+
+	/*********************************************************
+	 * Hopefully we have the X and & co-ords already from the 
+	 * preceding CELL record.
+	 ********************************************************/
+	/*
+	Did a lot of changes here to add the different layers, CHANGE_IF
+	Too much to mark it
+	*/
+
+	int i, j, k, l, m, x, y, layer, //CHANGE_IF
+	    decomp_size = 0,
+//	    ltex_index,
+	    nsize = 0,
+	    pos = 0,
+	    sz = 0,
+	    texture_matched = 0, base_layer = 0;
+
+	char c,
+	     vtxt[9][34][34][4],
+	     vimage[136][136][3],
+	     atxt[4],
+	     vclr[33][33][3],
+	     tmp_land_filename[64],
+	     *decomp;
+
+	short int quad, t;
+
+	float vtxt_opacity;
+
+	float tex_opacity[9][34][34];
+	int num_layer[34][34];
+//	float my_rgb[4];
+	float add_tex_opacity[136][136], add_rgb[136][136][3], tex_opacity_a, tex_opacity_b, tex_opacity_c;
+
+	FILE *fp_land;
+
+	for (i=0;i<34;i++) for (j=0;j<34;j++) num_layer[i][j]=0;
+
+	if (strcmp(cell.worldspace_name, worldspace_lc) != 0) {
+		return 0;
+	}
+	if (verbosity) printf("(%d, %d) ", cell.current_x, cell.current_y);
+	fflush(stdout);
+
+	if (cell.current_x < min_x) min_x = cell.current_x;
+	if (cell.current_x > max_x) max_x = cell.current_x;
+
+	if (cell.current_y < min_y) min_y = cell.current_y;
+	if (cell.current_y > max_y) max_y = cell.current_y;
+
+	worldspace_found = 1;
+
+	if (_llUtils()->MyIsUpper(_r[tes_rec_offset])   && _llUtils()->MyIsUpper(_r[tes_rec_offset+1]) && 
+		_llUtils()->MyIsUpper(_r[tes_rec_offset+2]) && _llUtils()->MyIsUpper(_r[tes_rec_offset+3])) {
+		decomp = (char *) calloc(_size, 1);
+		memcpy(decomp, _r+tes_rec_offset, _size-tes_rec_offset);
+		decomp_size = _size-tes_rec_offset;
+
+	} else {
+		decomp = (char *) calloc(_size*300, 1);
+
+		if (DecompressZLIBStream(_r+tes_rec_offset+4, _size-tes_rec_offset-4, decomp, &decomp_size) != 0) {
+			fprintf(stderr, "Decoding of ZLIB compressed CELL record failed: %s\n", strerror(errno));
+			return -1;
+		}
+	}
+
+	while (pos < decomp_size && 
+	       strncmp("VCLR", decomp + pos, 4) != 0 && 
+	       strncmp("BTXT", decomp + pos, 4) != 0 &&
+	       strncmp("ATXT", decomp + pos, 4) != 0) {
+	       memcpy(&nsize, decomp + pos + 4, 2);
+		pos += 6 + nsize;
+	}
+
+	if (opt_read_heightmap) {
+		pos = 3289-6;
+		if (pos < decomp_size && strncmp("VHGT", decomp + pos, 4) == 0) {
+			float start_height;
+			memcpy(&start_height, decomp + pos + 6, 4);
+			//cout << start_height << ":";
+			for (y = 0; y < 33; y++) {
+				start_height += decomp[pos + 6 + 4 + y*33];
+				float running_height = start_height;
+				for (x = 1; x < 33; x++) {
+					running_height += decomp[pos+6+x+4+y*33];
+					if (map) {
+						map->SetElementRaw((cell.current_x * 32 + x - x_cell *32 - 1), 
+							(cell.current_y * 32 + y - y_cell *32 - 1), running_height);
+					}
+				}
+			}
+		}
+	}
+
+	if (!opt_lod_tex) {
+		free(decomp);
+		return 0;
+	}
+
+	/***********************************
+	 ** Write out Normals to a BMP file.
+	 **********************************/
+	if (opt_normals) {
+
+		sprintf_s(tmp_land_filename, 64, "%s/normal.%d.%d.bmp", TMP_NORMAL_DIR, cell.current_x, cell.current_y);
+
+		if ((fp_land = fopen(tmp_land_filename, "wb")) == 0) {
+			fprintf(stderr, "Unable to create a temporary normals file for writing, %s: %s\n", 
+				tmp_land_filename, strerror(errno));
+			exit(1);
+		}
+
+		WriteBMPHeader(fp_land, 32, 32, 24);
+		for (i = 1; i < 33; i++) {
+			for (j = 0; j < 96; j++) {
+				c = (unsigned char) (decomp[10+6+(99*i)+2+j] + 125);
+				fputc(c, fp_land);
+			}
+		}
+
+		fclose(fp_land);
+	}
+
+	pos = 3289+1096;
+	memset(vclr, 255, 3267);
+	if (pos < decomp_size && strncmp("VCLR", decomp + pos, 4) == 0) {
+		for (i = 0; i < 3267; i++) {
+			if (pos+6+i < decomp_size) {
+				memcpy((&vclr[0][0][0])+i, decomp+pos+6+i, 1);
+			}
+		}
+		pos += 3267 + 6;
+	}
+
+	/**********************************************************
+	 ** TEXTURE MATCHING:
+	 ** Now accumulate the VTXT data in to a 34x34 array, storing the FormID for each
+	 ** texture for each grid point (each FormID is 4 bytes).
+	 *********************************************************/
+
+	memset(&tex_opacity, 0, sizeof(tex_opacity));
+
+	memset(vtxt[0], 0, sizeof(vtxt));
+	for (i = 0; i < 34; i++) {
+		for (j = 0; j < 34; j++) {
+			tex_opacity[0][i][j] = 1.0f;
+			for (k = 0; k < 8; k++) tex_opacity[k+1][i][j] = 0.f; //CHANGE_IF
+		}
+	}
+
+	while (pos < decomp_size) {
+		nsize = (unsigned char) decomp[pos + 4] + 256 * ((unsigned char) decomp[pos+5]);
+
+		if (strncmp("ATXT", decomp+pos, 4) == 0) {
+			memcpy(atxt, decomp+pos+6, 4);
+			quad = decomp[pos+6+4];
+			layer = decomp[pos+6+6]; //Get layer number, IF
+			if (layer > 7) {
+				printf("Found strange layer number %i\n",layer);
+				layer = 7;
+			}
+		} else if (strncmp("BTXT", decomp+pos, 4) == 0) {
+			memcpy(atxt, decomp+pos+6, 4);
+			quad = decomp[pos+6+4];
+
+			if (quad == 0) {
+				for (i = 0; i < 17 ; i++) {
+					for (j = 0; j < 17; j++) {
+						if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
+							memcpy(vtxt[0][i][j], atxt, 4);
+							tex_opacity[0][i][j] = 1.0;
+						} 
+					}
+				}
+			} else if (quad == 1) {
+				for (i = 0; i < 17; i++) {
+					for (j = 17; j < 34; j++) {
+						if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
+							memcpy(vtxt[0][i][j], atxt, 4);
+							tex_opacity[0][i][j] = 1.0;
+						}
+					}
+				}
+			} else if (quad == 2) {
+				for (i = 17; i < 34 ; i++) {
+					for (j = 0; j < 17; j++) {
+						if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
+							memcpy(vtxt[0][i][j], atxt, 4);
+							tex_opacity[0][i][j] = 1.0;
+						}
+					}
+				}
+			} else if (quad == 3) {
+				for (i = 17; i < 34; i++) {
+					for (j = 17; j < 34; j++) {
+						if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
+							memcpy(vtxt[0][i][j], atxt, 4);
+							tex_opacity[0][i][j] = 1.0;
+						}
+					}
+				}
+			}
+		} else if (strncmp("VTXT", decomp+pos, 4) == 0) {
+
+			for (k = 6; k < (6+nsize); k += 8) {
+				memcpy(&t, decomp+pos+k, 2); 
+				//= (unsigned int) ((unsigned char) decomp[pos+k] + (unsigned char) decomp[pos+k+1]*256);
+				i = (int) t/17;
+				j = t - i*17;
+
+				if (quad == 1) {
+					j += 17;
+				} else if (quad == 2) {
+					i += 17;
+				} else if (quad == 3) {
+					i += 17; j+= 17;
+				}
+
+				memcpy(&vtxt_opacity, decomp+pos+k+4, 4);
+				memcpy(vtxt[layer+1][i][j], atxt, 4);
+				tex_opacity[layer+1][i][j] = vtxt_opacity;
+				num_layer[i][j] = layer + 1;
+
+			}
+		}
+
+		pos += 6 + nsize;
+	}
+
+	/* Create an RGB image in memory. The TES4 texture array is 34x34. We discard the 'frame', leaving 
+	* a 32x32 image. Looks fine in game. What the precise 'correct' behaviour should be, I don't know.
+	*
+	* Compare the FormID of the VTXT position with all those LTEX records we have stored.
+	* If the 4th byte of both is 0, it's a modindex 00 texture (from the master). If both are non-zero
+	* then they're plugins and changeable; in which case just the first 3 bytes can be compared.
+	*/
+
+	memset(vimage, 0, sizeof(vimage));
+
+	for (i = 1; i < 33; i++) {
+		for (j = 1; j < 33; j++) {
+			for (y = 0; y < opt_q; y++) { //Clean additional layers
+					for (x = 0; x < opt_q; x++) {
+						add_tex_opacity[y+opt_q*i][x+opt_q*j] = 0.f;
+						for (m = 0; m < 3; m++) {
+							add_rgb[y+opt_q*i][x+opt_q*j][m] = 0;
+						}
+					}
+				}
+			for (l=0; l<=num_layer[i][j]; l++) {
+				texture_matched = 0;
+				
+				for (k = 0; k < lod_ltex.count; k++) {			
+					if (memcmp(&vtxt[l][i][j], &lod_ltex.formid[k], 4) == 0) {
+						texture_matched = 1;
+					} else if (vtxt[l][i][j][3] != 0 && lod_ltex.formid[k] >= 16777216 && memcmp(&vtxt[l][i][j], &lod_ltex.formid[k], 3) == 0) {
+						texture_matched = 1;
+					} 
+
+					if (texture_matched) {
+						for (y = 0; y < opt_q; y++) {
+							for (x = 0; x < opt_q; x++) {
+								if (l==0) {
+									memcpy(&vimage[y+opt_q*i][x+opt_q*j], &lod_ltex.rgb[k][y][x], 3);				
+									add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[0][i][j];	
+									for (m = 0; m < 3; m++) {
+										add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
+									}
+									base_layer=opt_q*opt_q;
+								} else if (tex_opacity[l][i][j] && (base_layer)) {
+									for (m = 0; m < 3; m++) {
+										add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];	
+										add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
+									}
+									base_layer--;
+								} else if (tex_opacity[l][i][j] && (1)) {
+									if (opt_blending == 0) { //use Lightwaves "best win" method
+										if (tex_opacity[l][i][j] > add_tex_opacity[y+opt_q*i][x+opt_q*j]) {
+											for (m = 0; m < 3; m++) {
+												add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];	
+												add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
+											}
+										}
+									} else if (1) {
+										tex_opacity_b = (tex_opacity[l][i][j]);	
+										tex_opacity_a = add_tex_opacity[y+opt_q*i][x+opt_q*j];
+										tex_opacity_c = tex_opacity_a + (1.0f - tex_opacity_a)*tex_opacity_b;
+										add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity_c;
+										for (m = 0; m < 3; m++) {
+											add_rgb[y+opt_q*i][x+opt_q*j][m] = (1.f/tex_opacity_c) * (
+												tex_opacity_a*add_rgb[y+opt_q*i][x+opt_q*j][m] + (1.f - tex_opacity_a)*
+												tex_opacity_b*((float) (unsigned char) lod_ltex.rgb[k][y][x][m])
+												);
+										}
+									} else if (0) { //Only for testing, ignored for the time being, IF
+										for (m = 0; m < 3; m++) {
+											tex_opacity_c = add_rgb[y+opt_q*i][x+opt_q*j][m];
+											add_rgb[y+opt_q*i][x+opt_q*j][m] = tex_opacity[l][i][j]*((float) (unsigned char) lod_ltex.rgb[k][y][x][m])
+												+ (1.0 - tex_opacity[l][i][j])*tex_opacity_c;
+										}
+									}
+								}
+							}
+						}
+						k = lod_ltex.count;
+					}
+				}
+			}
+			for (y = 0; y < opt_q; y++) {
+				for (x = 0; x < opt_q; x++) {
+					for (m = 0; m < 3; m++) {
+						if (opt_blending) {
+							vimage[y+opt_q*i][x+opt_q*j][m] = 
+							(unsigned char) (((float) (unsigned char) vimage[y+opt_q*i][x+opt_q*j][m]) * (1.f - add_tex_opacity[y+opt_q*i][x+opt_q*j]) 
+							+ (add_rgb[y+opt_q*i][x+opt_q*j][m]) * add_tex_opacity[y+opt_q*i][x+opt_q*j]);
+						} else {
+							if (add_tex_opacity[y+opt_q*i][x+opt_q*j] > 0.5)
+								vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) add_rgb[y+opt_q*i][x+opt_q*j][m];
+						}
+						//vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) add_rgb[y+opt_q*i][x+opt_q*j][m];
+						if (!opt_no_vclr) vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) ((float) (unsigned char) vimage[y+opt_q*i][x+opt_q*j][m] * ((float) (unsigned char) vclr[i][j][2-m]/ 255.0f));									
+					}
+				}
+			}
+
+/*
+			if (!texture_matched) {
+				{	
+					char l[4];
+					memcpy(l, &lod_ltex.formid[k], 4);
+					printf("No match  for texture %2.2X %2.2X %2.2X %2.2X\n", (unsigned char) vtxt[i][j][0], (unsigned char) vtxt[i][j][1], (unsigned char) vtxt[i][j][2], (unsigned char) vtxt[i][j][3]);
+					printf("To match with texture %2.2X %2.2X %2.2X %2.2X!\n", (unsigned char) l[0], (unsigned char) l[1], (unsigned char) l[2], (unsigned char) l[3]);
+				}
+			}
+*/
+
+
+		}
+	}
+
+	DumpCellBMP(cell.current_x, cell.current_y, vimage);
+
+	// fclose(fp_land);
+
+	free(decomp);
+
+	return 0;
+}
+
+
+
+int TES4qLOD::DumpCellBMP(int _cx, int _cy, char _vimage[136][136][3]) {
+	int i, j; //, r;
+	int l = 0;
+
+	char filename[64];
+
+	FILE *fp_c;
+
+	sprintf_s(filename, 64, "%s/partial.%d.%d.bmp", TMP_TEX_DIR, _cx, _cy);
+
+	if ((fp_c = fopen(filename, "wb")) == 0) {
+		fprintf(stderr, "Unable to create a cell BMP called %s: %s\n",
+			filename, strerror(errno));
+		return 1;
+	}
+
+	WriteBMPHeader(fp_c, opt_q*32, opt_q*32, 24); // 24-bit 32x32 (or more, if opt_q is greater) image.
+
+	l = (32 * opt_q) + opt_q; // The right and top-most limit of the texture image to copy.
+
+	for (i = opt_q; i < l; i++) {
+		for (j = opt_q; j < l; j++) {
+			fwrite(_vimage[i][j], 3, 1, fp_c);
+		}
+	}
+
+	fclose(fp_c);
+
+	if (opt_lod2) {
+		sprintf_s(filename, 64, "partial.%d.%d.bmp", _cx, _cy);
+		LOD2_Partial(filename, _cx, _cy, TEXTURES);
+		if (opt_normals) {
+			sprintf_s(filename, 64, "normal.%d.%d.bmp", _cx, _cy);
+			LOD2_Partial(filename, _cx, _cy, NORMALS);
+		}
+	}
+
+	return 0;
+}
+
+int TES4qLOD::LOD2_Partial(char *_filename, int _cx, int _cy, int _mode) {
+	char lod_filename[256];
+	char dds_filename[256];
+	char dds_command[256];
+//	char lod_command[256];
+
+//	FILE *fp_p;
+
+//	sprintf(dds_command, "%s /M /3 %s", DDS_CONVERTOR, filename);
+	if (_mode == TEXTURES) {
+		sprintf_s(dds_command, 256, "copy %s\\%s %s", TMP_TEX_DIR,    _filename, _filename);
+	} else {
+		sprintf_s(dds_command, 256, "copy %s\\%s %s", TMP_NORMAL_DIR, _filename, _filename);
+	}
+	system(dds_command);
+	sprintf_s(dds_command, 256, "%s %s", DDS_CONVERTOR, _filename);
+	printf("Running External DDS Convertor: %s\n", dds_command);
+	printf("Running %s\n", dds_command);
+	fflush(stdout);
+	system(dds_command);
+
+	strcpy_s(dds_filename, 256, _filename);
+	memcpy(dds_filename + strlen(dds_filename) - 3, "dds", 3);
+
+	//sprintf(lod_filename, "%d.%.2d.%.2d.32.dds", world_index, cx, cy);
+	//printf("LOD2_Partial\n");
+	if (_cx >= 0 && _cy >= 0) {
+		sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\1", cell.worldspace_name);
+		MKDIR(lod_filename);
+		if (_mode == TEXTURES) {
+			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\1\\%d.%d.dds",    cell.worldspace_name, _cx, _cy);
+		} else {
+			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\1\\%d.%d_fn.dds", cell.worldspace_name, _cx, _cy);
+		}
+	} else if (_cx >= 0 && _cy <= 0) {
+		sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\2", cell.worldspace_name);
+		MKDIR(lod_filename);
+		if (_mode == TEXTURES) {
+			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\2\\%d.%d.dds",    cell.worldspace_name, _cx, _cy);
+		} else {
+			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\2\\%d.%d_fn.dds", cell.worldspace_name, _cx, _cy);
+		}
+	} else if (_cx <= 0 && _cy >= 0) {
+		sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\3", cell.worldspace_name);
+		MKDIR(lod_filename);
+		if (_mode == TEXTURES) {
+			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\3\\%d.%d.dds",    cell.worldspace_name, _cx, _cy);
+		} else {
+			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\3\\%d.%d_fn.dds", cell.worldspace_name, _cx, _cy);
+		}
+	} else {
+		sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\4", cell.worldspace_name);
+		MKDIR(lod_filename);
+		if (_mode == TEXTURES) {
+			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\4\\%d.%d.dds",    cell.worldspace_name, _cx, _cy);
+		} else {
+			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\4\\%d.%d_fn.dds", cell.worldspace_name, _cx, _cy);
+		}
+	}
+
+	if (!opt_no_move) {
+		sprintf_s(dds_command, 256, "move %s %s", dds_filename, lod_filename);
+		printf("Doing %s\n", dds_command);
+		system(dds_command);
+		if (_unlink(dds_filename) == -1)
+			fprintf(stdout, "Could not delete dds %s\n",dds_filename);
+	}
+
+	return 0;
+}
 
 
 int TES4qLOD::Process4REFRData(char *_r, int _size) {
