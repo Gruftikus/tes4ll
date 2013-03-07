@@ -46,10 +46,6 @@ char *TES4qLOD::TES_FALLOUTNV = "FalloutNV";
 char *TES4qLOD::TES_OBLIVION  = "Oblivion";
 char *TES4qLOD::TES_UNKNOWN   = "Unknown";
 
-//esp list
-int   TES4qLOD::num_esp_sorted;
-char *TES4qLOD::esp_list_sorted[256];
-
 //constructor
 TES4qLOD::TES4qLOD() : llWorker() {
 	SetCommandName("tes4qlod");
@@ -68,12 +64,13 @@ int TES4qLOD::RegisterOptions(void) {
 	RegisterFlag ("-f", &opt_full_map);
 	RegisterFlag ("-F", &opt_flip);
 	RegisterFlag ("-n", &opt_normals);
-	RegisterFlag ("-z", &opt_center);
+	RegisterFlag ("-x", &opt_read_dimensions);
 	RegisterValue("-q", &opt_q);
 	RegisterFlag ("-B", &opt_no_dds);
 	RegisterFlag ("-C", &opt_no_colorlods);
 	RegisterFlag ("-D", &opt_no_move);
 	RegisterFlag ("-d", &opt_debug);
+	RegisterFlag ("-M", &opt_read_heightmap);
 
 
 	return 1;
@@ -148,6 +145,10 @@ int TES4qLOD::Exec(void) {
 
 	if (opt_lod_tex == 0 && !opt_vwd && !opt_read_heightmap && !opt_read_dimensions) { opt_lod_tex = 1; }
 
+	std::cout << opt_lod_tex << std::endl;
+
+	
+
 	CleanUpDir(TMP_TEX_DIR);
 	CleanUpDir(TMP_NORMAL_DIR);
 	CleanUpDir(TMP_VWD_DIR);
@@ -205,13 +206,28 @@ int TES4qLOD::Exec(void) {
 	//DecodeFilenames(argv[argc-1]);
 	//printf("esp-list decoded, I will run over %i files\n",input_files.count); //CHANGE_IF
 
+	opt_tes_mode = TES_UNKNOWN;
+	if (_llUtils()->GetValue("_gamemode")) {
+		if (_stricmp(_llUtils()->GetValue("_gamemode"), TES_OBLIVION) == 0)  opt_tes_mode = TES_OBLIVION;
+		if (_stricmp(_llUtils()->GetValue("_gamemode"), TES_SKYRIM) == 0)    opt_tes_mode = TES_SKYRIM;
+		if (_stricmp(_llUtils()->GetValue("_gamemode"), TES_FALLOUT3) == 0)  opt_tes_mode = TES_FALLOUT3;
+		if (_stricmp(_llUtils()->GetValue("_gamemode"), TES_FALLOUTNV) == 0) opt_tes_mode = TES_FALLOUTNV;
+	}
+
 	/***************************************************************************************
-	 * Open the first filename argument (argv[argc-1]) - the input ESM/ESP file for reading.
+	 * Open the first filename - the input ESM/ESP file for reading.
 	 **************************************************************************************/
-	CheckTESVersion(esp_list_sorted[0]);
+	if (_llUtils()->GetNumMods())
+		CheckTESVersion(_llUtils()->GetMod(0));
 
 	char s[40];	/* For storing the 16-byte header. */
 	FILE *fpin; /* Input File Stream (original ESP/ESM).      */
+
+	if ((fpin = fopen(_llUtils()->GetMod(0), "rb")) == NULL) {
+		fprintf(stderr, "Unable to open %s for reading: %s\n",
+			_llUtils()->GetMod(0), strerror(errno));
+		return 0;
+	}
 
 	if (fread(s, 1, 4, fpin) < 4) {
 		fprintf(stderr, "Unable to read the first 4 bytes from %s to determine if it's "
@@ -275,8 +291,8 @@ int TES4qLOD::Exec(void) {
 	 ** Start the ESP reading and exporting for each file.
 	 *********************************************************/
 
-	for (i = 0; i < num_esp_sorted; i++) {
-		ExportTES4LandT4QLOD(esp_list_sorted[i]);
+	for (i = 0; i < _llUtils()->GetNumMods(); i++) {
+		ExportTES4LandT4QLOD(_llUtils()->GetMod(i));
 	}
 
 	if (opt_size_x) {
@@ -340,12 +356,12 @@ int TES4qLOD::CheckTESVersion(char *_input_esp_filename) {
 	** This tries to guess it by checking imediately after the first chunk whether it's alphanumemeric.
 	**************************************************************************************************/
 
-	//BUGBUG: check for gamemode
+	//std::cout << opt_tes_mode << std::endl;
 
 	char s[4];
 	FILE *fpin;
 
-	if ((fpin = fopen(esp_list_sorted[0], "rb")) == 0) {
+	if ((fpin = fopen(_llUtils()->GetMod(0), "rb")) == 0) {
 		fprintf(stderr, "Cannot open %s for reading: %s\n", 
 			_input_esp_filename, strerror(errno));
 		return -1;
@@ -361,7 +377,7 @@ int TES4qLOD::CheckTESVersion(char *_input_esp_filename) {
 				tes_rec_offset = TES4_FA_SK_RECORD_SIZE;
 			}
 			if (opt_tes_mode == TES_UNKNOWN) {
-				if (verbosity) printf("Going to assume Skyrim LOD type. Please override with \"-G GameType\" if this is wrong\n");
+				if (verbosity) printf("Going to assume Skyrim LOD type. Please override with the flag \"_gamemode=GameType\" if this is wrong\n");
 				opt_tes_mode = TES_SKYRIM;
 			}
 
@@ -371,7 +387,7 @@ int TES4qLOD::CheckTESVersion(char *_input_esp_filename) {
 				tes_rec_offset = TES4_OB_RECORD_SIZE; 
 			}
 			if (opt_tes_mode == TES_UNKNOWN) {
-				printf("Going to assume Oblivion LOD type. Please override with \"-G GameType\" if this is wrong\n");
+				printf("Going to assume Oblivion LOD type. Please override with the flag \"_gamemode=GameType\" if this is wrong\n");
 				opt_tes_mode = TES_OBLIVION;				
 			}
 		}

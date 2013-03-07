@@ -1866,6 +1866,9 @@
     <ClCompile Include="externals\zlib\deflate.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\llimportmapfrommodlist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lltool\include\llsetpath.h">
@@ -3744,6 +3747,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="externals\zlib\zutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llimportmapfrommodlist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -148,9 +148,6 @@ protected:
 
 public:
 	
-	static int num_esp_sorted;
-	static char *esp_list_sorted[256]; //list of sorted esp's
-
 	//constructor
 	TES4qLOD();
 

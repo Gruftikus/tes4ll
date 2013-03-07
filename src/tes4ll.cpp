@@ -17,6 +17,10 @@
 
 #include "../include/llparsemodlist.h"
 #include "../include/llexportmeshtonif.h"
+#include "../include/llimportmapfrommodlist.h"
+#include "../include/tes4qlod.h"
+
+
 
 
 //#define USE_CATCH 
@@ -391,6 +395,9 @@ int main(int argc, char **argv) {
 
 	batch->RegisterWorker(new llParseModList());
 	batch->RegisterWorker(new llExportMeshToNif());
+	batch->RegisterWorker(new llImportMapFromModlist());
+	batch->RegisterWorker(new TES4qLOD());
+
 
 	//******************
     //open the batch
