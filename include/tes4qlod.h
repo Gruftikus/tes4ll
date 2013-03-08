@@ -96,7 +96,6 @@ protected:
 	char  worldspace_lc[256];
 	const char *opt_install_dir;
 	const char *DDS_CONVERTOR;
-	int x_cell, y_cell;
 	int worldspace_found;
 	//end wrapper
 
@@ -128,8 +127,6 @@ protected:
 
 	int verbosity, in_vwd;
 
-	static int min_x, max_x, min_y, max_y;
-
 	static char *opt_tes_mode;
 	static char *TES_SKYRIM;
 	static char *TES_MORROWIND;
@@ -159,6 +156,9 @@ public:
 	int RegisterOptions(void);
 	int Exec(void);
 
+	static int min_x, max_x, min_y, max_y;
+	int x_cell, y_cell;
+	
 };
 
 #endif

@@ -32,9 +32,9 @@ enum { EXTERIOR, INTERIOR, TRUE1, FALSE1, TEXTURES, NORMALS };
 
 
 //global geometry:
-int TES4qLOD::min_x = 32768;
+int TES4qLOD::min_x =  32768;
 int TES4qLOD::max_x = -32768;
-int TES4qLOD::min_y = 32768;
+int TES4qLOD::min_y =  32768;
 int TES4qLOD::max_y = -32768;
 
 //Gamemode:

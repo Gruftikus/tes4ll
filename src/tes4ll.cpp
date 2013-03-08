@@ -417,8 +417,8 @@ int main(int argc, char **argv) {
 	_llUtils()->SetValue("_cellsize_x", "4096");
 	_llUtils()->SetValue("_cellsize_y", "4096");
 
-	_llUtils()->SetValue("_quadsize_x", "4096");
-	_llUtils()->SetValue("_quadsize_y", "4096");
+	_llUtils()->SetValue("_quadsize_x", "131072");
+	_llUtils()->SetValue("_quadsize_y", "131072");
 	_llUtils()->SetValue("_quad_levels", "1");
 
 	_llUtils()->SetValue("_dds_tool", "s3tc.exe");
