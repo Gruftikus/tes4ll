@@ -44,259 +44,6 @@ void DumpExit(void) {
 }
 
 
-
-#if 0
-void WriteNif(llPointList *_points, llTriangleList *_triangles, llMap *_heightmap,
-	      float _x00, float _x11, float _y00, float _y11, char *_filename, llCommands *_batch,
-	      char *_texname = NULL, int _ps = 0, int _createpedestals = 0, int _useshapes = 0) {
-
-	
-    using namespace Niflib;
-    float min=44444444,lowestz=999999;
-
-#if 1
-    _triangles->DivideAt(true, _x00, _heightmap);    
-    _triangles->DivideAt(true, _x11, _heightmap);  
-    _triangles->DivideAt(false,_y00, _heightmap);    
-    _triangles->DivideAt(false,_y11, _heightmap);  
-#endif
-    _points->ClearSecondaryList();
-	//pointliste kopieren, matching alt->neu
-	llPointList * newpoints = new llPointList(_points->GetN(), NULL);
-	
-	newpoints->SetTexAnchor(_x00, _y00, _x11, _y11);
-	newpoints->ClearSecondaryList();
-	for (int i=0; i<_points->GetN(); i++) {
-		if (_points->GetX(i)>= (_x00) && _points->GetX(i)<= (_x11) &&
-			_points->GetY(i)>= (_y00) && _points->GetY(i)<= (_y11)) {
-
-				float d = newpoints->GetMinDistance(_points->GetX(i), _points->GetY(i));
-				if (d<min) min=d;
-				float z=heightmap->GetZ(_points->GetX(i), _points->GetY(i));
-				int newp = newpoints->AddPoint(_points->GetX(i), _points->GetY(i),z);
-				if (z<lowestz) lowestz=z;
-				_points->SetSecondary(i,newp);
-		}
-	}
-
-	if (!newpoints->GetN()) {
-		_llLogger()->WriteNextLine(LOG_WARNING,"The mesh %s is empty and was therefore not written",_filename);
-	    delete newpoints;
-	    return;
-	}
-    
-    
-	//copy all triangles which have all 3 points in newpoints
-	llTriangleList * newtriangles = new llTriangleList(newpoints->GetN(), newpoints);
-	
-	if (lowestz>0) lowestz=0;
-	else lowestz-=100;
-
-	newtriangles->ps_x00 = _x00;
-	newtriangles->ps_x11 = _x11;
-	newtriangles->ps_y00 = _y00;
-	newtriangles->ps_y11 = _y11;
-	for (int i=0; i<_triangles->GetN(); i++) {
-
-		int old1 = _triangles->GetPoint1(i);
-		int old2 = _triangles->GetPoint2(i);
-		int old3 = _triangles->GetPoint3(i);
-		int new1 = _points->GetSecondary(old1);
-		int new2 = _points->GetSecondary(old2);
-		int new3 = _points->GetSecondary(old3);
-
-		if (new1 > -1 && new2 > -1 && new3 > -1 && _triangles->GetTriangle(i)->write_flag) {
-			newtriangles->AddTriangle(new1, new2, new3);
-
-			//add optional pedestals
-			if (_createpedestals) {
-				int p1=-1,p2=-1,opt=-1;
-				if (fabs(newpoints->GetX(new1)-_x00)<1.f && fabs(newpoints->GetX(new2)-_x00)<1.f) {p1=new1;p2=new2;opt=0;}
-				if (fabs(newpoints->GetX(new1)-_x00)<1.f && fabs(newpoints->GetX(new3)-_x00)<1.f) {p1=new1;p2=new3;opt=0;}
-				if (fabs(newpoints->GetX(new2)-_x00)<1.f && fabs(newpoints->GetX(new3)-_x00)<1.f) {p1=new2;p2=new3;opt=0;}
-				if (fabs(newpoints->GetX(new1)-_x11)<1.f && fabs(newpoints->GetX(new2)-_x11)<1.f) {p1=new1;p2=new2;opt=1;}
-				if (fabs(newpoints->GetX(new1)-_x11)<1.f && fabs(newpoints->GetX(new3)-_x11)<1.f) {p1=new1;p2=new3;opt=1;}
-				if (fabs(newpoints->GetX(new2)-_x11)<1.f && fabs(newpoints->GetX(new3)-_x11)<1.f) {p1=new2;p2=new3;opt=1;}
-
-				if (p1>-1) {
-					int p3=newpoints->GetPoint(newpoints->GetX(p1),newpoints->GetY(p1), lowestz);
-					int p4=newpoints->GetPoint(newpoints->GetX(p2),newpoints->GetY(p2), lowestz);
-					if (p3<0) {
-						p3 = newpoints->AddPoint(newpoints->GetX(p1),newpoints->GetY(p1), lowestz);
-					}
-					if (p4<0) {
-						p4 = newpoints->AddPoint(newpoints->GetX(p2),newpoints->GetY(p2), lowestz);
-					}
-					if (opt==0 && newpoints->GetY(p1)>newpoints->GetY(p2)) {
-						newtriangles->AddTriangle(p1,p3,p4);
-						newtriangles->AddTriangle(p2,p1,p4);
-					}
-					if (opt==0 && newpoints->GetY(p1)<newpoints->GetY(p2)) {
-						newtriangles->AddTriangle(p1,p4,p3);
-						newtriangles->AddTriangle(p1,p2,p4);
-					}
-					if (opt==1 && newpoints->GetY(p1)>newpoints->GetY(p2)) {
-						newtriangles->AddTriangle(p1,p4,p3);
-						newtriangles->AddTriangle(p1,p2,p4);
-					}
-					if (opt==1 && newpoints->GetY(p1)<newpoints->GetY(p2)) {
-						newtriangles->AddTriangle(p1,p3,p4);
-						newtriangles->AddTriangle(p2,p1,p4);
-					}
-				}
-
-				if (fabs(newpoints->GetY(new1)-_y00)<1.f && fabs(newpoints->GetY(new2)-_y00)<1.f) {p1=new1;p2=new2;opt=2;}
-				if (fabs(newpoints->GetY(new1)-_y00)<1.f && fabs(newpoints->GetY(new3)-_y00)<1.f) {p1=new1;p2=new3;opt=2;}
-				if (fabs(newpoints->GetY(new2)-_y00)<1.f && fabs(newpoints->GetY(new3)-_y00)<1.f) {p1=new2;p2=new3;opt=2;}
-				if (fabs(newpoints->GetY(new1)-_y11)<1.f && fabs(newpoints->GetY(new2)-_y11)<1.f) {p1=new1;p2=new2;opt=3;}
-				if (fabs(newpoints->GetY(new1)-_y11)<1.f && fabs(newpoints->GetY(new3)-_y11)<1.f) {p1=new1;p2=new3;opt=3;}
-				if (fabs(newpoints->GetY(new2)-_y11)<1.f && fabs(newpoints->GetY(new3)-_y11)<1.f) {p1=new2;p2=new3;opt=3;}
-
-				if (p1>-1) {
-					int p3=newpoints->GetPoint(newpoints->GetX(p1),newpoints->GetY(p1), lowestz);
-					int p4=newpoints->GetPoint(newpoints->GetX(p2),newpoints->GetY(p2), lowestz);
-					if (p3<0) {
-						p3 = newpoints->AddPoint(newpoints->GetX(p1),newpoints->GetY(p1), lowestz);
-					}
-					if (p4<0) {
-						p4 = newpoints->AddPoint(newpoints->GetX(p2),newpoints->GetY(p2), lowestz);
-					}
-					
-					if (opt==2 && newpoints->GetX(p1)<newpoints->GetX(p2)) {
-						newtriangles->AddTriangle(p1,p3,p4);
-						newtriangles->AddTriangle(p2,p1,p4);
-					}
-					if (opt==2 && newpoints->GetX(p1)>newpoints->GetX(p2)) {
-						newtriangles->AddTriangle(p1,p4,p3);
-						newtriangles->AddTriangle(p1,p2,p4);
-					}
-					if (opt==3 && newpoints->GetX(p1)<newpoints->GetX(p2)) {
-						newtriangles->AddTriangle(p1,p4,p3);
-						newtriangles->AddTriangle(p1,p2,p4);
-					}
-					if (opt==3 && newpoints->GetX(p1)>newpoints->GetX(p2)) {
-						newtriangles->AddTriangle(p1,p3,p4);
-						newtriangles->AddTriangle(p2,p1,p4);
-					}
-				}
-			}
-		}
-	}
-
-
-	int num_triangles = newtriangles->GetN();
-    std::vector<Triangle> t(num_triangles);
-	newpoints->Resize();
-	newpoints->Translation(_batch->trans_x, _batch->trans_y, _batch->trans_z);
-
-	if (_useshapes) {
-
-		NiTriShape* node_ptr = new NiTriShape;
-		NiTriShapeRef node = node_ptr;
-
-		NiTriShapeData * node2_ptr = new NiTriShapeData();
-		NiTriShapeDataRef node2 = node2_ptr;
-		node_ptr->SetData(node2);
-		node_ptr->SetFlags(14);
-
-		node2_ptr->SetVertices(newpoints->GetVertices());   
-		node2_ptr->SetTspaceFlag(16);
-
-		for (int i=0;i<num_triangles;i++) {
-			t[i].v1 = newtriangles->GetPoint1(i);
-			t[i].v2 = newtriangles->GetPoint2(i);
-			t[i].v3 = newtriangles->GetPoint3(i);
-		}
-
-		node2_ptr->SetTriangles(t);
-		node2_ptr->SetUVSetCount(1);
-		node2_ptr->SetUVSet(0,newpoints->GetUV());
-
-		if (_texname) {
-			//optional textures
-			NiTexturingProperty * texture_ptr = new NiTexturingProperty();
-			NiTexturingPropertyRef texture = texture_ptr;
-			NiSourceTexture * image_ptr = new NiSourceTexture();
-			NiSourceTextureRef image = image_ptr;
-			image->SetExternalTexture(_texname);
-			TexDesc tex;
-			tex.source = image_ptr;
-			texture_ptr->SetTexture(0,tex);
-			node_ptr->AddProperty(texture);
-		}
-
-		//int stripcount = node2_ptr->GetStripCount();
-
-		vector<Triangle> newt=node2_ptr->GetTriangles();
-
-		_llLogger()->WriteNextLine(LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
-			_filename, newt.size(), newpoints->GetVertices().size());
-
-		NifInfo info = NifInfo();
-		info.version = 335544325;
-
-		WriteNifTree(_filename, node, info);
-
-	} else {
-
-		NiTriStrips* node_ptr = new NiTriStrips;
-		NiTriStripsRef node = node_ptr;
-
-		NiTriStripsData * node2_ptr = new NiTriStripsData();
-		NiTriStripsDataRef node2 = node2_ptr;
-		node_ptr->SetData(node2);
-		node_ptr->SetFlags(14);
-
-		node2_ptr->SetVertices(newpoints->GetVertices());   
-		node2_ptr->SetTspaceFlag(16);
-
-		newtriangles->Stripification();
-		node2_ptr->SetStripCount(1);
-		node2_ptr->SetStrip(0,newtriangles->GetVertices());
-
-		node2_ptr->SetUVSetCount(1);
-		node2_ptr->SetUVSet(0,newpoints->GetUV());
-
-		if (_texname) {
-			//optional textures
-			NiTexturingProperty * texture_ptr = new NiTexturingProperty();
-			NiTexturingPropertyRef texture = texture_ptr;
-			NiSourceTexture * image_ptr = new NiSourceTexture();
-			NiSourceTextureRef image = image_ptr;
-			image->SetExternalTexture(_texname);
-			TexDesc tex;
-			tex.source = image_ptr;
-			texture_ptr->SetTexture(0,tex);
-			node_ptr->AddProperty(texture);
-		}
-
-		int stripcount = node2_ptr->GetStripCount();
-
-		vector<Triangle> newt=node2_ptr->GetTriangles();
-
-		_llLogger()->WriteNextLine(LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
-			_filename, newt.size(), newpoints->GetVertices().size());
-
-		NifInfo info = NifInfo();
-		info.version = 335544325;
-
-		WriteNifTree(_filename, node, info);
-	}
-
-	if (_ps) {
-		char newfilename[1000];
-		sprintf_s(newfilename,1000,"%s.ps",_filename);
-		newtriangles->WritePS(newfilename);
-	}
-
-	delete newpoints;
-	delete newtriangles;
-
-}
-#endif
-
-//************************************************************************************
-
 int main(int argc, char **argv) {
 
     //FILE *fptr;
@@ -304,20 +51,11 @@ int main(int argc, char **argv) {
 	llLogger   *mesg  = _llLogger();
 	llUtils    *utils = _llUtils();
 	llCommands *batch = new llCommands();
-	utils->SetValue("_worldspace", "Tamriel");
-	//utils->SetValue("_dds_tool",   "S3TC.EXE");
-
-    std::cout << "Landscape LOD generator" << std::endl;
+	
+	std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@texnexus" << std::endl;
 	std::cout << "V4.10, 29.12.2012" << std::endl;
     std::cout << "***********************" << std::endl;
-
-	//open registry
-	HKEY keyHandle;
-    char rgValue [1024];
-//    char fnlRes [1024];
-    DWORD size1;
-    DWORD Type;
 
 	char *list_string = NULL;
 
@@ -365,29 +103,6 @@ int main(int argc, char **argv) {
 
 	mesg->WriteNextLine(-LOG_INFO, "[Opt] Batchfile: %s", batchname); 
 			
-
-#if 0
-	if (!utils->IsEnabled("_gamedir")) {
-		if( RegOpenKeyEx(    HKEY_LOCAL_MACHINE, 
-			"SOFTWARE\\Bethesda Softworks\\Oblivion",0, 
-			KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
-			size1=1023;
-			RegQueryValueEx( keyHandle, "Installed Path", NULL, &Type, 
-				(LPBYTE)rgValue,&size1);
-			char *oblivion_path = new char[strlen(rgValue)+2];
-			strcpy_s(oblivion_path,strlen(rgValue)+1,rgValue);
-			mesg->WriteNextLine(LOG_INFO,"Game path is: %s",oblivion_path);
-			utils->SetValue("_gamedir",oblivion_path);
-		} else {
-			mesg->WriteNextLine(LOG_WARNING,"Game not installed, I will use the working directory.");
-			utils->SetValue("_gamedir",".");
-			//DumpExit();
-		}
-		RegCloseKey(keyHandle);
-	} else {
-		mesg->WriteNextLine(LOG_INFO,"Game path is: %s",utils->GetValue("_gamedir"));
-	}
-#endif
 	mesg->Dump();
 	CreateWorkers(batch);
 	mesg->Dump();
@@ -422,7 +137,9 @@ int main(int argc, char **argv) {
 	_llUtils()->SetValue("_quad_levels", "1");
 
 	_llUtils()->SetValue("_dds_tool", "s3tc.exe");
-
+	_llUtils()->SetValue("_worldspace",    "Tamriel");
+	_llUtils()->SetValue("_worldspace_id", "60");
+	
 
 #ifdef _MSC_VER
 	__int64 time_statistics[LLCOM_MAX_WORKERS];

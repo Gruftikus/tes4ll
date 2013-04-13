@@ -41,6 +41,14 @@ int llExportMeshToNif::Exec(void) {
 	    filename = (char *)"map.nif";
 	if (!MakeSelection()) return 0;
 
+	//look for _install_dir:
+	if (_llUtils()->GetValue("_install_dir")) {
+		char *filename_tmp = new char[strlen(filename) + strlen(_llUtils()->GetValue("_install_dir")) + 2];
+		sprintf_s(filename_tmp, strlen(filename) + strlen(_llUtils()->GetValue("_install_dir")) + 2, "%s\\%s", 
+			_llUtils()->GetValue("_install_dir"), filename);
+		filename = filename_tmp;
+	}
+
 	//Now the nif-specific part:
 
 	using namespace Niflib;
@@ -142,6 +150,10 @@ int llExportMeshToNif::Exec(void) {
 		info.version = 335544325;
 
 		WriteNifTree(filename, node, info);
+	}
+
+	if (_llUtils()->GetValue("_install_dir")) {
+		delete filename;
 	}
 
 	return 1;

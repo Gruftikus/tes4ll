@@ -1513,7 +1513,11 @@ int TES4qLOD::HumptyLODs(void) {
 	char dest_dir[256];
 	char full_lod_map[128];
 
-	world_index = cell.worldspace_formid + (opt_load_index * 16777216);
+	world_index = cell.worldspace_formid;
+	if (_llUtils()->GetValue("_worldspace_id")) {
+		sscanf(_llUtils()->GetValue("_worldspace_id"), "%i", &world_index);
+	}
+	world_index += (opt_load_index * 16777216);
 
 //	printf("Worldspace formid is %d\n", cell.worldspace_formid);
 

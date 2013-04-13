@@ -24,16 +24,40 @@ int llParseModList::RegisterOptions(void) {
 int llParseModList::Exec(void) {
 	llWorker::Exec();
 
+	HKEY keyHandle;
+	char rgValue [1024];
+	//    char fnlRes [1024];
+	DWORD size1;
+	DWORD Type;
+
+	//seek for game dir, if not yet set by user
+	if (!_llUtils()->IsEnabled("_gamedir")) {
+		if( RegOpenKeyEx(    HKEY_LOCAL_MACHINE, 
+			"SOFTWARE\\Bethesda Softworks\\Oblivion",0, 
+			KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
+				size1 = 1023;
+				RegQueryValueEx( keyHandle, "Installed Path", NULL, &Type, 
+					(LPBYTE)rgValue,&size1);
+				char *oblivion_path = new char[strlen(rgValue)+2];
+				strcpy_s(oblivion_path, strlen(rgValue)+1, rgValue);
+				_llLogger()->WriteNextLine(-LOG_INFO, "Game path is: %s", oblivion_path);
+				_llUtils()->SetValue("_gamedir", oblivion_path);
+		} else {
+			_llLogger()->WriteNextLine(LOG_WARNING, "Game not installed, I will use the working directory.");
+			_llUtils()->SetValue("_gamedir", ".");
+			//DumpExit();
+		}
+		RegCloseKey(keyHandle);
+	} else {
+		_llLogger()->WriteNextLine(LOG_INFO,"Game path is: %s", _llUtils()->GetValue("_gamedir"));
+	}
+
 	const char *option = _llUtils()->GetValue("_modlist");
 
 	if (!option) { // mod list not provided my main program
 		char oblivion_app_path[1024];
 		//open registry
-		HKEY keyHandle;
-		char rgValue [1024];
-		//    char fnlRes [1024];
-		DWORD size1;
-		DWORD Type;
+		
 		if( RegOpenKeyEx(    HKEY_CURRENT_USER, 
 			"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",0, 
 			KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
