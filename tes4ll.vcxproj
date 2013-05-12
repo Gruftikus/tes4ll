@@ -11,11 +11,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParser.cpp" />
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserCompiler.cpp" />
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserExcepStrEng.cpp" />
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserLocalizer.cpp" />
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserMacroFunc.cpp" />
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserRegistrar.cpp" />
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserTestCases.cpp" />
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTSearchFile.cpp" />
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTTools.cpp" />
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTUnicodeANSIDefs.cpp" />
     <ClCompile Include="..\lltool\externals\triangle\triangle.cc" />
     <ClCompile Include="..\lltool\src\llactivatevisiblevertices.cpp" />
     <ClCompile Include="..\lltool\src\lladdvertextopolygon.cpp" />
     <ClCompile Include="..\lltool\src\llalg.cpp" />
     <ClCompile Include="..\lltool\src\llalgconst.cpp" />
+    <ClCompile Include="..\lltool\src\llalgequation.cpp" />
     <ClCompile Include="..\lltool\src\llalgfirst.cpp" />
     <ClCompile Include="..\lltool\src\llalglist.cpp" />
     <ClCompile Include="..\lltool\src\llalgpeakfinder.cpp" />
@@ -33,6 +44,7 @@
     <ClCompile Include="..\lltool\src\llexportmap.cpp" />
     <ClCompile Include="..\lltool\src\llexportmeshtoobj.cpp" />
     <ClCompile Include="..\lltool\src\llexportmeshtops.cpp" />
+    <ClCompile Include="..\lltool\src\llexportmeshtoVRML.cpp" />
     <ClCompile Include="..\lltool\src\llfillcolormap.cpp" />
     <ClCompile Include="..\lltool\src\llfilter.cpp" />
     <ClCompile Include="..\lltool\src\llinactivateallvertices.cpp" />
@@ -124,7 +136,6 @@
     <ClCompile Include="..\niflib\src\gen\Morph.cpp" />
     <ClCompile Include="..\niflib\src\gen\MorphWeight.cpp" />
     <ClCompile Include="..\niflib\src\gen\MotorDescriptor.cpp" />
-    <ClCompile Include="..\niflib\src\gen\MTransform.cpp" />
     <ClCompile Include="..\niflib\src\gen\MultiTextureElement.cpp" />
     <ClCompile Include="..\niflib\src\gen\NodeGroup.cpp" />
     <ClCompile Include="..\niflib\src\gen\OblivionColFilter.cpp" />
@@ -631,11 +642,29 @@
     <ClCompile Include="src\tes4qlod.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTException.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTGlobalString.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParser.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserCompiler.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserDefFuncs.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserDefOps.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserExcepStrEng.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserException.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserLocalizer.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserMacroFunc.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserPrivate.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserPublic.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserRegistrar.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserTestCases.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTSearchFile.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTTools.h" />
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTUnicodeANSIDefs.h" />
     <ClInclude Include="..\lltool\externals\triangle\triangle.h" />
     <ClInclude Include="..\lltool\include\llactivatevisiblevertices.h" />
     <ClInclude Include="..\lltool\include\lladdvertextopolygon.h" />
     <ClInclude Include="..\lltool\include\llalg.h" />
     <ClInclude Include="..\lltool\include\llalgconst.h" />
+    <ClInclude Include="..\lltool\include\llalgequation.h" />
     <ClInclude Include="..\lltool\include\llalgfirst.h" />
     <ClInclude Include="..\lltool\include\llalglist.h" />
     <ClInclude Include="..\lltool\include\llalgpeakfinder.h" />
@@ -654,6 +683,7 @@
     <ClInclude Include="..\lltool\include\llexportmap.h" />
     <ClInclude Include="..\lltool\include\llexportmeshtoobj.h" />
     <ClInclude Include="..\lltool\include\llexportmeshtops.h" />
+    <ClInclude Include="..\lltool\include\llexportmeshtoVRML.h" />
     <ClInclude Include="..\lltool\include\llfillcolormap.h" />
     <ClInclude Include="..\lltool\include\llfilter.h" />
     <ClInclude Include="..\lltool\include\llinactivateallvertices.h" />
@@ -746,7 +776,6 @@
     <ClInclude Include="..\niflib\include\gen\Morph.h" />
     <ClInclude Include="..\niflib\include\gen\MorphWeight.h" />
     <ClInclude Include="..\niflib\include\gen\MotorDescriptor.h" />
-    <ClInclude Include="..\niflib\include\gen\MTransform.h" />
     <ClInclude Include="..\niflib\include\gen\MultiTextureElement.h" />
     <ClInclude Include="..\niflib\include\gen\NodeGroup.h" />
     <ClInclude Include="..\niflib\include\gen\OblivionColFilter.h" />
@@ -1308,7 +1337,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;NIFLIB_STATIC_LINK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>

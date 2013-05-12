@@ -420,9 +420,6 @@
     <ClCompile Include="..\niflib\src\gen\MotorDescriptor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\niflib\src\gen\MTransform.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\niflib\src\gen\MultiTextureElement.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1867,6 +1864,42 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\llimportmapfrommodlist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserCompiler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserExcepStrEng.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserLocalizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserMacroFunc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserRegistrar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTParserTestCases.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTSearchFile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTTools.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTUnicodeANSIDefs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\src\llalgequation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\src\llexportmeshtoVRML.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -3623,9 +3656,6 @@
     <ClInclude Include="..\niflib\include\gen\MotorDescriptor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\niflib\include\gen\MTransform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\niflib\include\gen\MultiTextureElement.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -3750,6 +3780,63 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\llimportmapfrommodlist.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTGlobalString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserCompiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserDefFuncs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserDefOps.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserExcepStrEng.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserLocalizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserMacroFunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserPrivate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserPublic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserRegistrar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTParserTestCases.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTSearchFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTTools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTUnicodeANSIDefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\llalgequation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\llexportmeshtoVRML.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
