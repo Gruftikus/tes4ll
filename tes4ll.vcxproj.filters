@@ -1902,6 +1902,18 @@
     <ClCompile Include="..\lltool\src\llexportmeshtoVRML.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\lltool\src\llcopymap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\src\llscalemap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\src\llimportmap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\externals\resampler\resampler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lltool\include\llsetpath.h">
@@ -3837,6 +3849,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\lltool\include\llexportmeshtoVRML.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\llcopymap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\llscalemap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\llimportmap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\externals\resampler\resampler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

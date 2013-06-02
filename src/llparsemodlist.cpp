@@ -12,11 +12,14 @@
 llParseModList::llParseModList() : llWorker() {
 	num_esp = 0;
 	num_esp_sorted = 0;
+	cd = 0;
 	SetCommandName("ParseModList");
 }
 
 int llParseModList::RegisterOptions(void) {
 	if (!llWorker::RegisterOptions()) return 0;
+
+	RegisterFlag ("-cd", &cd);
 
 	return 1;
 }
@@ -52,13 +55,19 @@ int llParseModList::Exec(void) {
 		_llLogger()->WriteNextLine(LOG_INFO,"Game path is: %s", _llUtils()->GetValue("_gamedir"));
 	}
 
+	if (cd) {
+		_llLogger()->WriteNextLine(LOG_COMMAND,"%s: change directory path to %s", command_name, _llUtils()->GetValue("_gamedir"));
+		_chdir(_llUtils()->GetValue("_gamedir"));
+		_chdir("Data");
+	}
+
 	const char *option = _llUtils()->GetValue("_modlist");
 
 	if (!option) { // mod list not provided my main program
 		char oblivion_app_path[1024];
 		//open registry
 		
-		if( RegOpenKeyEx(    HKEY_CURRENT_USER, 
+		if( RegOpenKeyEx(HKEY_CURRENT_USER, 
 			"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",0, 
 			KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
 				size1=1023;
@@ -85,7 +94,7 @@ int llParseModList::Exec(void) {
 
 		FILE *fesplist = NULL;    
 		if (fopen_s(&fesplist,listname,"r")) {
-			_llLogger()->WriteNextLine(-LOG_FATAL,"Unable to open plugin file \"%s\"\n",listname);
+			_llLogger()->WriteNextLine(-LOG_FATAL, "Unable to open plugin file \"%s\"\n",listname);
 		}
 
 		esp_list[0] = new char[1024];
@@ -93,7 +102,7 @@ int llParseModList::Exec(void) {
 			if (esp_list[num_esp][0] != '#' && strlen(esp_list[num_esp])>5) {
 				//remove the trailing \n
 				if (num_esp == 256) {
-					_llLogger()->WriteNextLine(-LOG_FATAL,"Too many plugins\n");
+					_llLogger()->WriteNextLine(-LOG_FATAL,"Too many mod files\n");
 				}
 				esp_list[num_esp][strlen(esp_list[num_esp])-1] = '\0';
 				//cout << esp_list[num_esp];
@@ -103,7 +112,7 @@ int llParseModList::Exec(void) {
 		}
 		fclose(fesplist);
 
-		_llLogger()->WriteNextLine(LOG_INFO,"%i plugins will be used",num_esp);
+		_llLogger()->WriteNextLine(LOG_INFO, "%i plugins will be used", num_esp);
 
 		for (int i=0; i<num_esp; i++) {
 			//open the esp
@@ -112,8 +121,8 @@ int llParseModList::Exec(void) {
 			sprintf_s(tmpName2,2000, "%s", esp_list[i]); 
 			wchar_t tmpName[2000]; 
 			swprintf(tmpName, 2000, L"%s", tmpName2); 
-			if (!GetFileAttributesEx(tmpName2,GetFileExInfoStandard,&fAt)) {
-				_llLogger()->WriteNextLine(-LOG_FATAL, "The esp '%s' was not found", esp_list[i]);
+			if (!GetFileAttributesEx(tmpName2, GetFileExInfoStandard, &fAt)) {
+				_llLogger()->WriteNextLine(-LOG_FATAL, "The mod file '%s' was not found", esp_list[i]);
 				//cout << GetLastError() << endl;
 			}
 			FILETIME time = fAt.ftLastWriteTime;

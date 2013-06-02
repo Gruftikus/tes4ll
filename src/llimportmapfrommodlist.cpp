@@ -9,7 +9,7 @@ llImportMapFromModlist::llImportMapFromModlist() : llWorker() {
 int llImportMapFromModlist::Prepare(void) {
 	if (!llWorker::Prepare()) return 0;
 
-	mapname  = NULL;
+	mapname = NULL;
 
 	return 1;
 }
@@ -36,6 +36,7 @@ int llImportMapFromModlist::Exec(void) {
 	tes4qlod = new TES4qLOD();
 	tes4qlod->RegisterOptions();
 	tes4qlod->CheckFlag("-x");
+	tes4qlod->CheckFlag("-silent");
 	tes4qlod->Prepare();
 	tes4qlod->ReplaceFlags();
 
@@ -50,7 +51,6 @@ int llImportMapFromModlist::Exec(void) {
 	float x2 = TES4qLOD::max_x*(*_llUtils()->GetValueF("_cellsize_x"));
 	float y2 = TES4qLOD::max_y*(*_llUtils()->GetValueF("_cellsize_y"));
 
-
 	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32);
 	heightmap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
 
@@ -59,7 +59,6 @@ int llImportMapFromModlist::Exec(void) {
 	_llUtils()->x11 = x2;
 	_llUtils()->y11 = y2;
 
-	
 	llQuadList     *quads      = heightmap->GenerateQuadList();
 	llPointList    *points     = new llPointList(0, quads); 
 	llPolygonList  *polygons   = new llPolygonList(points, heightmap);
@@ -70,8 +69,6 @@ int llImportMapFromModlist::Exec(void) {
 	else
 		_llMapList()->AddMap(mapname, heightmap, points, triangles, polygons);
 
-
-
 	delete tes4qlod;
 	tes4qlod = new TES4qLOD();
 
@@ -80,16 +77,16 @@ int llImportMapFromModlist::Exec(void) {
 	_llLogger()->WriteNextLine(-LOG_INFO, "x corner: %i", tes4qlod->x_cell);
 	_llLogger()->WriteNextLine(-LOG_INFO, "y corner: %i", tes4qlod->y_cell);
 
-
 	tes4qlod->RegisterOptions();
 	tes4qlod->CheckFlag("-map=_heightmap"); //BUGBUG
+	tes4qlod->CheckFlag("-silent");
 	tes4qlod->CheckFlag("-M");
 	tes4qlod->Prepare();
 	tes4qlod->ReplaceFlags();
 
 	if (!tes4qlod->Exec()) {
-		tes4qlod = NULL;
 		delete tes4qlod;
+		tes4qlod = NULL;
 		return 0;
 	}
 

@@ -14,7 +14,6 @@
 //constructor
 llExportMeshToNif::llExportMeshToNif() : llExportMeshToObj() {
 	SetCommandName("ExportMeshToNif");
-
 }
 
 int llExportMeshToNif::Prepare(void) {
@@ -35,7 +34,7 @@ int llExportMeshToNif::RegisterOptions(void) {
 
 
 int llExportMeshToNif::Exec(void) {
-	if (!llExportMeshToObj::Exec()) return 0;
+	if (!llTriMod::Exec()) return 0;
 
 	if (!Used("-filename"))
 	    filename = (char *)"map.nif";
@@ -46,6 +45,7 @@ int llExportMeshToNif::Exec(void) {
 		char *filename_tmp = new char[strlen(filename) + strlen(_llUtils()->GetValue("_install_dir")) + 2];
 		sprintf_s(filename_tmp, strlen(filename) + strlen(_llUtils()->GetValue("_install_dir")) + 2, "%s\\%s", 
 			_llUtils()->GetValue("_install_dir"), filename);
+		std::cout << _llUtils()->GetValue("_install_dir") << ":" << filename << std::endl;
 		filename = filename_tmp;
 	}
 
@@ -143,7 +143,7 @@ int llExportMeshToNif::Exec(void) {
 
 		vector<Triangle> newt=node2_ptr->GetTriangles();
 
-		_llLogger()->WriteNextLine(LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
+		_llLogger()->WriteNextLine(LOG_INFO, "The (stripe-based) mesh %s has %i triangles and %i vertices",
 			filename, newt.size(), newpoints->GetVertices().size());
 
 		NifInfo info = NifInfo();

@@ -12,6 +12,7 @@ protected:
 
 	char *esp_list[257]; //list of unsorted esp's
 	int num_esp;
+	int cd;
 
 	char *esp_list_sorted[256]; //list of sorted esp's
 	int num_esp_sorted;

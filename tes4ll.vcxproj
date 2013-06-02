@@ -21,6 +21,7 @@
     <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTSearchFile.cpp" />
     <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTTools.cpp" />
     <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTUnicodeANSIDefs.cpp" />
+    <ClCompile Include="..\lltool\externals\resampler\resampler.cpp" />
     <ClCompile Include="..\lltool\externals\triangle\triangle.cc" />
     <ClCompile Include="..\lltool\src\llactivatevisiblevertices.cpp" />
     <ClCompile Include="..\lltool\src\lladdvertextopolygon.cpp" />
@@ -35,6 +36,7 @@
     <ClCompile Include="..\lltool\src\llalgslope.cpp" />
     <ClCompile Include="..\lltool\src\llalgstripe.cpp" />
     <ClCompile Include="..\lltool\src\llcommands.cpp" />
+    <ClCompile Include="..\lltool\src\llcopymap.cpp" />
     <ClCompile Include="..\lltool\src\llcreatemap.cpp" />
     <ClCompile Include="..\lltool\src\llcreatenormalmap.cpp" />
     <ClCompile Include="..\lltool\src\llcreatepolygon.cpp" />
@@ -47,6 +49,7 @@
     <ClCompile Include="..\lltool\src\llexportmeshtoVRML.cpp" />
     <ClCompile Include="..\lltool\src\llfillcolormap.cpp" />
     <ClCompile Include="..\lltool\src\llfilter.cpp" />
+    <ClCompile Include="..\lltool\src\llimportmap.cpp" />
     <ClCompile Include="..\lltool\src\llinactivateallvertices.cpp" />
     <ClCompile Include="..\lltool\src\lllogger.cpp" />
     <ClCompile Include="..\lltool\src\llmakederivatives.cpp" />
@@ -61,6 +64,7 @@
     <ClCompile Include="..\lltool\src\llreaddatafile.cpp" />
     <ClCompile Include="..\lltool\src\llreadpolygondatafile.cpp" />
     <ClCompile Include="..\lltool\src\llremoveinactivetriangles.cpp" />
+    <ClCompile Include="..\lltool\src\llscalemap.cpp" />
     <ClCompile Include="..\lltool\src\llselectall.cpp" />
     <ClCompile Include="..\lltool\src\llselectrec.cpp" />
     <ClCompile Include="..\lltool\src\llset.cpp" />
@@ -659,6 +663,7 @@
     <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTSearchFile.h" />
     <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTTools.h" />
     <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTUnicodeANSIDefs.h" />
+    <ClInclude Include="..\lltool\externals\resampler\resampler.h" />
     <ClInclude Include="..\lltool\externals\triangle\triangle.h" />
     <ClInclude Include="..\lltool\include\llactivatevisiblevertices.h" />
     <ClInclude Include="..\lltool\include\lladdvertextopolygon.h" />
@@ -673,6 +678,7 @@
     <ClInclude Include="..\lltool\include\llalgslope.h" />
     <ClInclude Include="..\lltool\include\llalgstripe.h" />
     <ClInclude Include="..\lltool\include\llcommands.h" />
+    <ClInclude Include="..\lltool\include\llcopymap.h" />
     <ClInclude Include="..\lltool\include\llcreatemap.h" />
     <ClInclude Include="..\lltool\include\llcreatenormalmap.h" />
     <ClInclude Include="..\lltool\include\llcreatepolygon.h" />
@@ -686,6 +692,7 @@
     <ClInclude Include="..\lltool\include\llexportmeshtoVRML.h" />
     <ClInclude Include="..\lltool\include\llfillcolormap.h" />
     <ClInclude Include="..\lltool\include\llfilter.h" />
+    <ClInclude Include="..\lltool\include\llimportmap.h" />
     <ClInclude Include="..\lltool\include\llinactivateallvertices.h" />
     <ClInclude Include="..\lltool\include\lllogger.h" />
     <ClInclude Include="..\lltool\include\llmakederivatives.h" />
@@ -700,6 +707,7 @@
     <ClInclude Include="..\lltool\include\llreaddatafile.h" />
     <ClInclude Include="..\lltool\include\llreadpolygondatafile.h" />
     <ClInclude Include="..\lltool\include\llremoveinactivetriangles.h" />
+    <ClInclude Include="..\lltool\include\llscalemap.h" />
     <ClInclude Include="..\lltool\include\llselectall.h" />
     <ClInclude Include="..\lltool\include\llselectrec.h" />
     <ClInclude Include="..\lltool\include\llset.h" />

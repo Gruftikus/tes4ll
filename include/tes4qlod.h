@@ -125,7 +125,7 @@ protected:
 		opt_center,
 		opt_flip;
 
-	int verbosity, in_vwd;
+	int verbosity, in_vwd, silent;
 
 	static char *opt_tes_mode;
 	static char *TES_SKYRIM;

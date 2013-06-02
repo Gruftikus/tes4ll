@@ -72,6 +72,7 @@ int TES4qLOD::RegisterOptions(void) {
 	RegisterFlag ("-d", &opt_debug);
 	RegisterFlag ("-M", &opt_read_heightmap);
 
+	RegisterFlag ("-silent", &silent);
 
 	return 1;
 }
@@ -108,6 +109,7 @@ int TES4qLOD::Prepare(void) {
 	opt_flip = 0;
 
 	verbosity = 1;
+	silent    = 0;
 
 	total_refr = 0;
 	total_vwd  = 0;
@@ -143,11 +145,9 @@ int TES4qLOD::Exec(void) {
 	if (opt_q == 3) opt_q = 2;
 	if (opt_q > 4)  opt_q = 4;
 
+	if (silent) verbosity = 0;
+
 	if (opt_lod_tex == 0 && !opt_vwd && !opt_read_heightmap && !opt_read_dimensions) { opt_lod_tex = 1; }
-
-	std::cout << opt_lod_tex << std::endl;
-
-	
 
 	CleanUpDir(TMP_TEX_DIR);
 	CleanUpDir(TMP_NORMAL_DIR);
