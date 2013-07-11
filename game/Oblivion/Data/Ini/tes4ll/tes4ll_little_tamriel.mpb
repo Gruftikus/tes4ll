@@ -1,0 +1,95 @@
+[tes4ll]
+
+ParseModList -cd
+
+; ****************************
+; Make color maps
+; ****************************
+
+SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\myworld"
+@makecolormap Tes4qlod -a -f -Flip -C -dimX=128 -dimY=128 -z
+
+ImportMapFromModList
+
+; ****************************
+; Make normal maps
+; ****************************
+
+SelectAll
+@makenormalmap CreateNormalMap -name="_normalmap"
+@makenormalmap ExportMap -depth=24 -filename="$_worldspaceMap_n.bmp" -compress
+
+; ****************************
+; Make meshes 
+; ****************************
+
+
+SetFlag -name="_mindistance" -value=256
+SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\myworld"
+
+SetGridBorder -x=4096 -y=4096 -zmin=0
+SetGridBorder -x=16384 -y=16384
+SetGrid -x=16384 -y=16384
+
+Filter -n=4
+MakeDerivatives -map="_heightmap_filtered"
+
+AlgFirstOrder  -add=0.2
+AlgSecondOrder -add=0.5 
+
+AlgPeakFinder  -multiply=1 -radius=4096 -scanradius=8192 -lowest=4000 -insideval=1 -outsideval=0.5
+AlgSecondOrder -multiply=1
+
+; Switch off sampling below the shore line:
+AlgLayer -multiply=1 -minz=-999999 -zmax=10 -outsideval=1 -insideval=0
+; ============================
+
+SelectAll 
+
+SetAlgVertices -n=25000 -max
+
+SelectAll 
+MakeTriangulation
+
+
+SelectAll 
+
+ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -filename="Tamriel.nif" 
+
+
+; ****************************
+[mpgui]
+; ****************************
+
+GUIRequestVersion -value="1.22"
+
+@!tes4ll_doonce GUITab -help="Options for interior LOD generation" -text="Interior LODs" -name=tes4ll_gui
+
+@!tes4ll_doonce GUIConsoleEcho -text="Tes4ll batch file for generation of Immersive Interiors LODs loaded"
+@!tes4ll_doonce GUIConsoleEcho -text="***** This will NOT generate the landscape LODs of exterior cells *****"
+SetFlag -name=tes4ll_doonce -hidden
+
+SetOption -noskipinfo ;avoid nasty skip messenges in loop mode
+
+
+; ****************************
+[tes4ll_gui]
+; ****************************
+
+GUIDisable -name=tab_ws
+
+GUIDisable -name=tes4ll_gui
+@_modlist GUIEnable -name=tes4ll_gui
+@_modlist="" GUIDisable -name=tes4ll_gui
+
+GUICheckBox -name=makenormalmap -text="Make normal maps" -help="Select this if you want to generate the normal map"
+
+GUICheckBox -name=makecolormap -text="Make color maps (calls build-in TES4qLOD)" -help="Select this if you want to generate the color map with TES4qLOD"
+
+
+## The final button. Once the button is clicked, the flag "exec_tes4ll" is set for one single run of this section
+GUIButton -name=exec_tes4ll -text="Click me if you are ready" -vdist=30
+
+
+@exec_tes4ll GUIExec -exe="tes4ll.exe -w Tamriel -f \"$_flaglist\" -l \"$_modlist\" stdin" -dumpbatch
+

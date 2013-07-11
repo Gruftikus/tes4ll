@@ -57,21 +57,21 @@ int TES4qLOD::RegisterOptions(void) {
 	if (!llWorker::RegisterOptions()) return 0;
 
 	RegisterFlag ("-a", &opt_blending);
-	RegisterValue("-X", &opt_size_x);
-	RegisterValue("-Y", &opt_size_y);
-	RegisterFlag ("-z", &opt_center);
-	RegisterValue("-i", &opt_load_index);
-	RegisterFlag ("-f", &opt_full_map);
-	RegisterFlag ("-F", &opt_flip);
-	RegisterFlag ("-n", &opt_normals);
-	RegisterFlag ("-x", &opt_read_dimensions);
-	RegisterValue("-q", &opt_q);
-	RegisterFlag ("-B", &opt_no_dds);
-	RegisterFlag ("-C", &opt_no_colorlods);
-	RegisterFlag ("-D", &opt_no_move);
+	RegisterFlag ("-b", &opt_no_dds);
+	RegisterFlag ("-c", &opt_no_colorlods);
 	RegisterFlag ("-d", &opt_debug);
-	RegisterFlag ("-M", &opt_read_heightmap);
+	RegisterFlag ("-f", &opt_full_map);
+	RegisterValue("-i", &opt_load_index);
+	RegisterFlag ("-m", &opt_read_heightmap);
+	//RegisterFlag ("-n", &opt_normals); //disabled
+	RegisterFlag ("-n", &opt_no_move);
+	RegisterValue("-q", &opt_q);
+	RegisterFlag ("-x", &opt_read_dimensions);
+	RegisterFlag ("-z", &opt_center);
 
+	RegisterValue("-dimX",   &opt_size_x);
+	RegisterValue("-dimY",   &opt_size_y);
+	RegisterFlag ("-Flip",   &opt_flip);
 	RegisterFlag ("-silent", &silent);
 
 	return 1;

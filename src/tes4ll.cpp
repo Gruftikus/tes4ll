@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 	
 	std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@github" << std::endl;
-	std::cout << "V5.xx, xx.xx.2013" << std::endl;
+	std::cout << "V5.01, xx.xx.2013" << std::endl;
     std::cout << "***********************" << std::endl;
 
 	char *list_string = NULL;
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
 	//******************
 	//open the batch
 	//******************
-	if (batchname) {
+	if (batchname && _stricmp(batchname, "stdin") != 0) {
 		if (!batch->Open(batchname, section)) DumpExit();
 		batch->ReadCache();
 		batch->CompileScript(0);

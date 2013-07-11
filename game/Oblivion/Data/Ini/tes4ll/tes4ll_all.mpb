@@ -6,90 +6,103 @@
 ; Enable this only if you want to exchange or overwrite single quads
 ; Not required if you rerun tes4ll after landscape changes
 ; Read the manual for more info
-; SetOption -createpedestals
+; SetFlag -name="createpedestals" -value="-createpedestals"
 ; ============================
 
 ; ============================
 ; Optional 16 bit matrices (no 32-bit floats)
 ; enable this only if the tes4ll task exceeds 3GB 
 ; and you have a crash
-; SetOption -use16bit
+; SetFlag -name="use16bit" -value="-use16bit"
 ; ============================
 
-@testmode SetPath -value="$_gamedir\Data"
-@use16bit SetOption -use16bit
+SetFlag -name="_quad_levels" -value=2
 
-@_worldspaceid SetOption -worldspaceid=$_worldspaceid
-@c_nconvert SetOption -ddstool="nconvert.exe -out dds"
-@c_dxt1 SetOption -ddstool="nvdxt -dxt1c -file"
-@c_8888 SetOption -ddstool="nvdxt -u8888 -file"
-@c_none SetOption -ddstool=""
+@c_nconvert SetFlag -name="_dds_tool" -value="nconvert.exe -out dds"
+@c_dxt1     SetFlag -name="_dds_tool" -value="nvdxt -dxt1c -file"
+@c_8888     SetFlag -name="_dds_tool" -value="nvdxt -u8888 -file"
+@c_none     SetFlag -name="_dds_tool" -value=""
 
-SetOption -minheight="-2048"
-@minheight SetOption -minheight="$minheight"
+@!minheight SetFlag -name="minheight" -value="-2048"
 
-ParseModList  ; reads mod list from Plugins.txt (or from -l option) and sets the flags
+ParseModList -cd    ;reads mod list from Plugins.txt (or from -l option) and set the flags
 
 ; ****************************
 ; Make color maps
 ; ****************************
 
-@overwritelods SetOption -installdirectory="$_gamedir\Data\Textures\landscapelod\generated"
+@overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
 SetFlag -name=tes4qlod_flag_a -value="" 
 @option_blending SetFlag -name=tes4qlod_flag_a -value="-a"
 SetFlag -name=tes4qlod_flag_f -value=""
 @option_map SetFlag -name=tes4qlod_flag_f -value="-f"
-SetFlag -name=tes4qlod_flag_q -value="-q 1"
-@qlod2 SetFlag -name=tes4qlod_flag_q -value="-q 2"
-@qlod4 SetFlag -name=tes4qlod_flag_q -value="-q 4"
+SetFlag -name=tes4qlod_flag_q -value="-q=1"
+@qlod2 SetFlag -name=tes4qlod_flag_q -value="-q=2"
+@qlod4 SetFlag -name=tes4qlod_flag_q -value="-q=4"
 SetFlag -name=tes4qlod_flag_D -value="" 
 @!overwritelods SetFlag -name=tes4qlod_flag_D -value="-D"
 SetFlag -name=tes4qlod_flag_B -value="" 
 @c_none SetFlag -name=tes4qlod_flag_B -value="-B"
 
 
-@tes4qlod @option_silent CallTes4qlod -options="$tes4qlod_flag_q $tes4qlod_flag_f $tes4qlod_flag_a $tes4qlod_flag_D $tes4qlod_flag_B" -silent
-@tes4qlod @!option_silent CallTes4qlod -options="$tes4qlod_flag_q $tes4qlod_flag_f $tes4qlod_flag_a $tes4qlod_flag_D $tes4qlod_flag_B" 
+@tes4qlod {
+	@option_silent Tes4qlod $tes4qlod_flag_q $tes4qlod_flag_f $tes4qlod_flag_a $tes4qlod_flag_D $tes4qlod_flag_B -silent
+	@!option_silent Tes4qlod $tes4qlod_flag_q $tes4qlod_flag_f $tes4qlod_flag_a $tes4qlod_flag_D $tes4qlod_flag_B
+}
 
 
 @!makemeshes @!makenormalmaps @!writeout Exit
 
 ; ****************************
+; Generate heightmap
+; ****************************
+
+ImportMapFromModList
+SelectAll
+SetHeight -min -z=$minheight -usegameunits
+
+; ****************************
 ; Make normal maps
 ; ****************************
 
-@!2048 GenerateHeightmap -n=1
-@2048 GenerateHeightmap -n=2
+@makenormalmaps {
+	CopyMap -name="_heightmap_tmp"
+	@2048  ScaleMap -map="_heightmap_tmp" -factor=2
+	@512   ScaleMap -map="_heightmap_tmp" -factor=0.5
+	@!lodshadows CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -boost=$z_val
+	@lodshadows  CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -shadows -northboost=$z_val
+	@!overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
+	QuadIterator -level=0 {
+		SetFlag -name=_flag_format -value="02.0" 
+		ExportMap -depth=24 -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32.bmp" -compress
+	}
+}
 
-@makenormalmaps @lodshadows SetOption -lodshadows -zboost=4.0
-@makenormalmaps @!lodshadows SetOption -zboost=$z_val
-@makenormalmaps @512 SetOption -bmpscaling=0.5
-@makenormalmaps @overwritelods SetOption -installdirectory="$_gamedir\Data\Textures\landscapelod\generated"
-@makenormalmaps WriteAllQuads -writenormalmap
 
 ; ****************************
-; Generate final heightmap
+; Generate optional heightmap
 ; ****************************
 
-@2048 GenerateHeightmap -n=1 -quick ;;reread standard resolution
-; fixes bug in Valenwood-Elsweyr patch
+@writeout {
+	SetFlag -name="_install_dir" -value="$_gamedir\Data"
+	SelectAll
+	ExportMap -depth=32 -filename="$_worldspace.bmp" 
+}
 
-@writeout SetOption -installdirectory="$_gamedir\Data"
-@writeout WriteAll -writeheightmap
 
 ; ****************************
 ; Make meshes 
 ; ****************************
 
 @!makemeshes Exit
-;;@!notesannwyn CallTesannwyn
-;;@!notesannwyn ReadHeightmap -n=1
-;;@notesannwyn GenerateHeightmap -n=1
 
-@overwritelods SetOption -installdirectory="$_gamedir\Data\Meshes\Landscape\LOD"
-@ultimate      SetOption -useshapes
-@useshapes     SetOption -useshapes
+@!overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD"
 
+SetFlag -name="opt_useshapes" -value=""
+@ultimate      SetFlag -name="opt_useshapes" -value="-useshapes"
+@useshapes     SetFlag -name="opt_useshapes" -value="-useshapes"
 
 ; ============================
 ; Step 1:
@@ -120,22 +133,22 @@ SetFlag -name=tes4qlod_flag_B -value=""
 ; NB: the DivideGrid commands sets vertices at the grid points anyhow.
 ; So it does not hurt to have the points in advance
 ; ============================
-FocusAll                       ; use the entire worldspace
+SelectAll                       ; use the entire worldspace
 SetGrid -x=4096 -y=4096
-@wallremover @ultimate SetOption -mindistance=100  
-@wallremover @ultimate @!small_world BreakAtGrid -x=4096 -y=4096 -max=80  -zmin=-200
-@wallremover @ultimate @small_world BreakAtGrid -x=4096 -y=4096 -max=50  -zmin=0
-@wallremover @high_res SetOption -mindistance=128 
-@wallremover @high_res @!small_world BreakAtGrid -x=4096 -y=4096 -max=150 -zmin=-200
-@wallremover @high_res @small_world BreakAtGrid -x=4096 -y=4096 -max=130 -zmin=0
+@wallremover @ultimate SetFlag -name="_mindistance" -value=100  
+@wallremover @ultimate @!small_world SetAtGridLine -x=4096 -y=4096 -max=80  -zmin=-200
+@wallremover @ultimate @small_world  SetAtGridLine -x=4096 -y=4096 -max=50  -zmin=0
+@wallremover @high_res SetFlag -name="_mindistance" -value=128 
+@wallremover @high_res @!small_world SetAtGridLine -x=4096 -y=4096 -max=150 -zmin=-200
+@wallremover @high_res @small_world  SetAtGridLine -x=4096 -y=4096 -max=130 -zmin=0
 ; ============================
 
 
 ; ============================
 ; Step 3:
 ; Set custom panorama view for better horizon
-FocusAll
-SetOption -mindistance=256  
+SelectAll
+SetFlag -name="_mindistance" -value=256  
 @usepanorama Panorama -x=0 -y=0            ;imperial city  
 @usepanorama Panorama -x=38520 -y=46880    ;university
 @ElsweyrAnequina.esp @usepanorama Panorama -x=7410  -y=-157980    ;corinthe
@@ -160,13 +173,15 @@ SetOption -mindistance=256
 ;         Displaced offsets of the lower and upper contour lines
 ;         produces a "zick-zack" line.
 ; ============================
-FocusAll 
-SetOption -mindistance=128  ; 32
+SelectAll
+SetFlag -name="_mindistance" -value=128 
+
 ContourLine -x=4096 -y=4096 -z=0 -offsetx=0 -offsety=0             
 
 ContourLine -x=512 -y=512 -z=100 -offsetx=0 -offsety=0 -findmax                  
-ContourLine -x=512 -y=512 -z=-100 -offsetx=256 -offsety=256 -findmin            
-SetOption -mindistance=256 ;;; CS uses 1/16th of a cell = 256
+ContourLine -x=512 -y=512 -z=-100 -offsetx=256 -offsety=256 -findmin   
+         
+SetFlag -name="_mindistance" -value=256 ;;; CS uses 1/16th of a cell = 256
 ; ============================
 
 
@@ -179,8 +194,10 @@ SetOption -mindistance=256 ;;; CS uses 1/16th of a cell = 256
 ; with X as the distance 
 ; Computing time goes quadratically with X
 ; ============================
-@!small_world Filter -n=4     ; -n=4
+@!small_world Filter -n=4    
 @small_world Filter -n=3
+
+MakeDerivatives -map="_heightmap_filtered" $use16bit
 ; ============================
 
 
@@ -189,26 +206,20 @@ SetOption -mindistance=256 ;;; CS uses 1/16th of a cell = 256
 ; Define the density algorithms for the 
 ; random vertex points in Step 6
 ; ============================
-; Each algorithm can be restricted to specific regions
-; by the focus command:
-; 1.) FocusAll
-; 2.) FocusQuad -x=... -y=...
-; 
-; ============================
-FocusAll 
+SelectAll
 
 AlgFirstOrder -add=0.2
 @!small_world AlgSecondOrder -add=0.5 
 @small_world AlgSecondOrder -add=1
 
-;improve mountain peaks by a factor of 5
-@nicer_mountains @!small_world AlgPeakFinder -multiply=1 -radius=4096 -scanradius=8192 -lowest=4000 -maxval=1 -minval=0.2
-@nicer_mountains @small_world AlgPeakFinder -multiply=1 -radius=4096 -scanradius=4096 -lowest=1000 -maxval=1 -minval=0.2 -linear
+;improve mountain peaks
+;;;@nicer_mountains @!small_world AlgPeakFinder -multiply=1 -radius=4096 -scanradius=8192 -lowest=4000 -insideval=1 -outsideval=0.2
+@nicer_mountains AlgPeakFinder -multiply=1 -radius=4096 -scanradius=4096 -lowest=1000 -insideval=1 -outsideval=0.5 -linear
 
-AlgSecondOrder -multiply=1
+;AlgSecondOrder -multiply=1
 
 ; Switch off sampling below the shore line:
-AlgLayer -multiply=1 -lowest=-999999 -highest=-300 -minval=1 -maxval=0
+AlgLayer -multiply=1 -zmin=-999999 -zmax=-300 -outsideval=1 -insideval=0
 ; ============================
 
 
@@ -222,33 +233,53 @@ AlgLayer -multiply=1 -lowest=-999999 -highest=-300 -minval=1 -maxval=0
 ;
 ; The focus command can be used, as described in Step 6,
 ; ============================
-FocusAll 
-@mid_res  SetMaxVerticesPerQuad -n=10000   
-@high_res SetOption -mindistance=200  
-@high_res @!small_world SetMaxVerticesPerQuad -n=13000  
-@high_res @small_world SetMaxVerticesPerQuad -n=20000  
-@ultimate SetOption -mindistance=200
-@ultimate @small_world SetOption -mindistance=128  
-@ultimate @!small_world SetMaxVerticesPerQuad -n=18000  
-@ultimate @small_world @_worldspace=DibellasWatch SetMaxVerticesPerQuad -n=30000   
-@ultimate @small_world @!_worldspace=DibellasWatch SetMaxVerticesPerQuad -n=25000
+SelectAll
+
+;;mid-res:
+SetFlag -name="_mindistance" -value=256  
+SetFlag -name="n" -value=10000   
+
+@high_res {
+	SetFlag -name="_mindistance" -value=200  
+	@!small_world SetFlag -name="n" -value=13000  
+	@small_world  SetFlag -name="n" -value=20000  
+}
+@ultimate {
+	SetFlag -name="_mindistance" -value=200
+	@small_world  SetFlag -name="_mindistance" -value=128  
+	@!small_world SetFlag -name="n" -value=18000  
+	@small_world @_worldspace=DibellasWatch  SetFlag -name="n" -value=30000   
+	@small_world @!_worldspace=DibellasWatch SetFlag -name="n" -value=25000
+}
+
+QuadIterator -level=0 {
+	Echo -text="Filling quad $_quad_x&,$_quad_y with vertices"
+	SetAlgVertices -n=$n -max
+}
 ; ============================
 
 
+
 ; ============================
-FocusAll 
+SelectAll
 MakeTriangulation
-FocusAll
-DivideGrid -x=4096 -y=4096
+
+SelectAll
+SplitAtGrid -x=4096 -y=4096
 ; ============================
 
 
 ; ============================
-;WriteQuad -x=00 -y=00 -tex=60.00.00.32.dds
-;WriteQuad -x=00 -y=00 -ps   
-;WriteQuad -x=0 -y=0 
-WriteAllQuads
+
+SetFlag -name=_flag_format -value="02.0" 
+
+QuadIterator -level=0 {
+	ExportMeshToNif -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32.nif" $opt_useshapes $createpedestals
+}
+
 ; ============================
+
+@end
 
 ; ****************************
 [mpgui]
@@ -314,7 +345,7 @@ GUIEnable -name=exec_tes4ll
 
 
 @exec_tes4ll @!overwritelods GUIMessageBox -title="Hint" -text="You have not selected the option to overwrite the original files. Do not forget to copy your files by hand to the appropriate place (or stop the process, and check the \"overwrite\" option)"
-@exec_tes4ll @_worldspace GUIExec -exe="tes4ll.exe -f \"$_flaglist\" -w $_worldspace -l \"$_modlist\" " -dumpbatch
+@exec_tes4ll @_worldspace GUIExec -exe="tes4ll.exe -f \"$_flaglist\" -w $_worldspace -l \"$_modlist\" stdin" -dumpbatch
 
 
 ; ****************************

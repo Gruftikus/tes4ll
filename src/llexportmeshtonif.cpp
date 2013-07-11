@@ -45,7 +45,7 @@ int llExportMeshToNif::Exec(void) {
 		char *filename_tmp = new char[strlen(filename) + strlen(_llUtils()->GetValue("_install_dir")) + 2];
 		sprintf_s(filename_tmp, strlen(filename) + strlen(_llUtils()->GetValue("_install_dir")) + 2, "%s\\%s", 
 			_llUtils()->GetValue("_install_dir"), filename);
-		std::cout << _llUtils()->GetValue("_install_dir") << ":" << filename << std::endl;
+		//std::cout << _llUtils()->GetValue("_install_dir") << ":" << filename << std::endl;
 		filename = filename_tmp;
 	}
 
