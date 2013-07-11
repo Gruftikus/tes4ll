@@ -142,6 +142,8 @@ protected:
 
 	llMap *map;
 	char  *mapname;
+	llMap *watermap;
+	char  *watername;
 
 public:
 	

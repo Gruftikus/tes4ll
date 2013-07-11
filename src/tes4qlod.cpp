@@ -74,6 +74,9 @@ int TES4qLOD::RegisterOptions(void) {
 	RegisterFlag ("-Flip",   &opt_flip);
 	RegisterFlag ("-silent", &silent);
 
+	RegisterValue("-map",      &mapname);
+	RegisterValue("-watermap", &watername);
+
 	return 1;
 }
 
@@ -82,6 +85,9 @@ int TES4qLOD::Prepare(void) {
 
 	map     = NULL;
 	mapname = NULL;
+	watermap  = NULL;
+	watername = NULL;
+
 
 	opt_ltex = -1;
     opt_bmp = 0;
@@ -130,9 +136,12 @@ int TES4qLOD::Exec(void) {
 
 	if (!Used("-map"))
 		mapname = (char *)"_heightmap";
+	if (!Used("-watermap"))
+		watername = (char *)"_watermap";
 
 	//get the corresponding map from the global map container
-	map = _llMapList()->GetMap(mapname);
+	map      = _llMapList()->GetMap(mapname);
+	watermap = _llMapList()->GetMap(watername);
 
 	opt_install_dir = _llUtils()->GetValue("_install_dir");
 	if (opt_install_dir && !strlen(opt_install_dir)) opt_install_dir = NULL;
@@ -713,6 +722,9 @@ int TES4qLOD::Process4CELLData(char *_r, int _size) {
 	/*****************************************
 	 ****************************************/
 
+	int   has_water  = 0;
+	float waterlevel = 0.0;
+
 	while (pos < decomp_size -1) {
 		nsize = 0;
 		memcpy(&nsize, decomp+pos+4, 2);
@@ -726,11 +738,24 @@ int TES4qLOD::Process4CELLData(char *_r, int _size) {
 			memcpy(&cell.current_y, decomp+pos+10, 4);
 		} else if (strncmp("EDID", decomp + pos, 4) == 0) {
 			strncpy(cell.name, decomp + pos + 6, nsize);
-		}
+		} else if (strncmp("XCLW", decomp + pos, 4) == 0) {
+			memcpy(&waterlevel, decomp+pos+6, 4);
+			has_water  = 1;
+		} 
 		pos += 6 + nsize;
 	}
+	 
+	if (has_water) {
+		printf("found water %f %i %i\n", waterlevel, opt_read_heightmap, watermap);
+	}
 
-	cleanup_list_x[cleanup_list_count] = cell.current_x;
+	if (has_water && opt_read_heightmap && watermap) {
+		//printf("%i %i\n", (cell.current_x * 3 - x_cell * 3 + 1), (cell.current_y * 3 - y_cell * 3 + 1));
+		watermap->SetElementRaw((cell.current_x * 3 - x_cell * 3 + 1), 
+			(cell.current_y * 3 - y_cell * 3 + 1), waterlevel);
+	}
+
+	cleanup_list_x[cleanup_list_count]   = cell.current_x;
 	cleanup_list_y[cleanup_list_count++] = cell.current_y;
 
 	free(decomp);

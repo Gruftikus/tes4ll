@@ -17,12 +17,15 @@ ImportMapFromModList
 
 SelectAll
 @makenormalmap CreateNormalMap -name="_normalmap"
-@makenormalmap ExportMap -depth=24 -filename="$_worldspaceMap_n.bmp" -compress
+@makenormalmap ExportMap -depth=24 -filename="$_worldspace$Map_n.bmp" -compress
 
 ; ****************************
 ; Make meshes 
 ; ****************************
 
+ExportMap -depth=24 -map="_watermap" -filename="$_worldspace$Water.bmp"
+
+exit
 
 SetFlag -name="_mindistance" -value=256
 SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\myworld"
@@ -44,6 +47,7 @@ AlgSecondOrder -multiply=1
 AlgLayer -multiply=1 -minz=-999999 -zmax=10 -outsideval=1 -insideval=0
 ; ============================
 
+
 SelectAll 
 
 SetAlgVertices -n=25000 -max
@@ -51,11 +55,11 @@ SetAlgVertices -n=25000 -max
 SelectAll 
 MakeTriangulation
 
-
 SelectAll 
 
 ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -filename="Tamriel.nif" 
 
+@end
 
 ; ****************************
 [mpgui]

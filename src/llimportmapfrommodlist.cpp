@@ -17,7 +17,8 @@ int llImportMapFromModlist::Prepare(void) {
 int llImportMapFromModlist::RegisterOptions(void) {
 	if (!llWorker::RegisterOptions()) return 0;
 
-	RegisterValue("-name", &mapname);
+	RegisterValue("-name",  &mapname);
+	RegisterValue("-water", &watername);
 
 	return 1;
 }
@@ -25,7 +26,8 @@ int llImportMapFromModlist::RegisterOptions(void) {
 int llImportMapFromModlist::Exec(void) {
 	if (!llWorker::Exec()) return 0;
 
-	if (!Used("-name")) mapname = "_heightmap";
+	if (!Used("-name"))  mapname   = "_heightmap";
+	if (!Used("-water")) watername = "_watermap";
 
 	if (_llMapList()->GetMap(mapname)) {
 		_llLogger()->WriteNextLine(-LOG_INFO, "Delete old heightmap");
@@ -53,6 +55,8 @@ int llImportMapFromModlist::Exec(void) {
 
 	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32);
 	heightmap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
+	llMap *watermap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*3, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*3);
+	watermap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
 
 	_llUtils()->x00 = x1;
 	_llUtils()->y00 = y1;
@@ -63,11 +67,14 @@ int llImportMapFromModlist::Exec(void) {
 	llPointList    *points     = new llPointList(0, quads); 
 	llPolygonList  *polygons   = new llPolygonList(points, heightmap);
 	llTriangleList *triangles  = new llTriangleList(0, points);
+
+	llQuadList     *wquads      = watermap->GenerateQuadList();
+	llPointList    *wpoints     = new llPointList(0, wquads); 
+	llPolygonList  *wpolygons   = new llPolygonList(wpoints, watermap);
+	llTriangleList *wtriangles  = new llTriangleList(0, wpoints);
 		
-	if (!Used("-name"))
-		_llMapList()->AddMap("_heightmap", heightmap, points, triangles, polygons);
-	else
-		_llMapList()->AddMap(mapname, heightmap, points, triangles, polygons);
+	_llMapList()->AddMap(mapname,   heightmap, points,  triangles,  polygons);
+	_llMapList()->AddMap(watername, watermap,  wpoints, wtriangles, wpolygons);
 
 	delete tes4qlod;
 	tes4qlod = new TES4qLOD();
@@ -79,6 +86,7 @@ int llImportMapFromModlist::Exec(void) {
 
 	tes4qlod->RegisterOptions();
 	tes4qlod->CheckFlag("-map=_heightmap"); //BUGBUG
+	tes4qlod->CheckFlag("-watermap=_watermap");
 	tes4qlod->CheckFlag("-silent");
 	tes4qlod->CheckFlag("-M");
 	tes4qlod->Prepare();
