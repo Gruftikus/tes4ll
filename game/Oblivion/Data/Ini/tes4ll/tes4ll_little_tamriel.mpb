@@ -19,13 +19,19 @@ SelectAll
 @makenormalmap CreateNormalMap -name="_normalmap"
 @makenormalmap ExportMap -depth=24 -filename="$_worldspace$Map_n.bmp" -compress
 
+
 ; ****************************
 ; Make meshes 
 ; ****************************
 
-ExportMap -depth=24 -map="_watermap" -filename="$_worldspace$Water.bmp"
+ExportMap -depth=24 -map="_watermap" -filename="$_worldspace&Water.bmp"
+SetGrid -x=4096 -y=4096 -map="_watermap" 
+AddDiscontinuityGrid -x=4096 -y=4096 -map="_watermap" 
+MakeTriangulation -map="_watermap" 
+ExportMeshToNif -useshapes -map="_watermap" -makeninode
 
-exit
+
+;;exit
 
 SetFlag -name="_mindistance" -value=256
 SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\myworld"
@@ -50,6 +56,7 @@ AlgLayer -multiply=1 -minz=-999999 -zmax=10 -outsideval=1 -insideval=0
 
 SelectAll 
 
+SetGrid -x=4096 -y=4096
 SetAlgVertices -n=25000 -max
 
 SelectAll 
@@ -57,7 +64,8 @@ MakeTriangulation
 
 SelectAll 
 
-ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -filename="Tamriel.nif" 
+ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -filename="Tamriel.nif"  ; -makeninode
+;;ExportMeshToNif -useshapes -filename="Tamriel.nif"
 
 @end
 

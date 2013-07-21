@@ -745,14 +745,13 @@ int TES4qLOD::Process4CELLData(char *_r, int _size) {
 		pos += 6 + nsize;
 	}
 	 
-	if (has_water) {
-		printf("found water %f %i %i\n", waterlevel, opt_read_heightmap, watermap);
-	}
+	//if (has_water) {
+		//printf("found water %f %i %i\n", waterlevel, cell.current_x, cell.current_y);
+	//}
 
 	if (has_water && opt_read_heightmap && watermap) {
 		//printf("%i %i\n", (cell.current_x * 3 - x_cell * 3 + 1), (cell.current_y * 3 - y_cell * 3 + 1));
-		watermap->SetElementRaw((cell.current_x * 3 - x_cell * 3 + 1), 
-			(cell.current_y * 3 - y_cell * 3 + 1), waterlevel);
+		watermap->SetElementRaw(cell.current_x - x_cell, cell.current_y - y_cell, waterlevel);
 	}
 
 	cleanup_list_x[cleanup_list_count]   = cell.current_x;

@@ -1914,6 +1914,15 @@
     <ClCompile Include="..\lltool\externals\resampler\resampler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\lltool\src\lladddiscontinuitygrid.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\src\lladddiscontinuityline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lltool\src\lllinelist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lltool\include\llsetpath.h">
@@ -3861,6 +3870,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\lltool\externals\resampler\resampler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\lladddiscontinuitygrid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\lladddiscontinuityline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\lllinelist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

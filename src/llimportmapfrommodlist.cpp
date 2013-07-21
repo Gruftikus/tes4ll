@@ -53,10 +53,11 @@ int llImportMapFromModlist::Exec(void) {
 	float x2 = (TES4qLOD::max_x + 1)*(*_llUtils()->GetValueF("_cellsize_x"));
 	float y2 = (TES4qLOD::max_y + 1)*(*_llUtils()->GetValueF("_cellsize_y"));
 
-	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32);
+	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32+1, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32+1);
 	heightmap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
-	llMap *watermap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*3, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*3);
-	watermap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
+	llMap *watermap = new llMap(TES4qLOD::max_x - TES4qLOD::min_x + 1, TES4qLOD::max_y - TES4qLOD::min_y + 1);
+	watermap->SetEven();
+	watermap->SetCoordSystem(x1, y1, x2, y2, 1.0f);
 
 	_llUtils()->x00 = x1;
 	_llUtils()->y00 = y1;
@@ -66,15 +67,17 @@ int llImportMapFromModlist::Exec(void) {
 	llQuadList     *quads      = heightmap->GenerateQuadList();
 	llPointList    *points     = new llPointList(0, quads); 
 	llPolygonList  *polygons   = new llPolygonList(points, heightmap);
+	llLineList     *lines      = new llLineList(0, points, heightmap);
 	llTriangleList *triangles  = new llTriangleList(0, points);
 
 	llQuadList     *wquads      = watermap->GenerateQuadList();
 	llPointList    *wpoints     = new llPointList(0, wquads); 
 	llPolygonList  *wpolygons   = new llPolygonList(wpoints, watermap);
+	llLineList     *wlines      = new llLineList(0, wpoints, watermap);
 	llTriangleList *wtriangles  = new llTriangleList(0, wpoints);
 		
-	_llMapList()->AddMap(mapname,   heightmap, points,  triangles,  polygons);
-	_llMapList()->AddMap(watername, watermap,  wpoints, wtriangles, wpolygons);
+	_llMapList()->AddMap(mapname,   heightmap, points,  triangles,  polygons, lines);
+	_llMapList()->AddMap(watername, watermap,  wpoints, wtriangles, wpolygons, wlines);
 
 	delete tes4qlod;
 	tes4qlod = new TES4qLOD();
@@ -85,7 +88,7 @@ int llImportMapFromModlist::Exec(void) {
 	_llLogger()->WriteNextLine(-LOG_INFO, "y corner: %i", tes4qlod->y_cell);
 
 	tes4qlod->RegisterOptions();
-	tes4qlod->CheckFlag("-map=_heightmap"); //BUGBUG
+	tes4qlod->CheckFlag("-map=_heightmap");
 	tes4qlod->CheckFlag("-watermap=_watermap");
 	tes4qlod->CheckFlag("-silent");
 	tes4qlod->CheckFlag("-M");
