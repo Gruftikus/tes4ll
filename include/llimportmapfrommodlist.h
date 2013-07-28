@@ -9,8 +9,11 @@ class llImportMapFromModlist : public llWorker {
 
 protected:
 
-	char     *mapname;
-	char     *watername;
+	char *mapname;
+	char *watername;
+	int	opt_size_x,
+		opt_size_y,
+		opt_center;
 	TES4qLOD *tes4qlod;
 
 public:

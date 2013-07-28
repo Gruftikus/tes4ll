@@ -9,7 +9,10 @@ llImportMapFromModlist::llImportMapFromModlist() : llWorker() {
 int llImportMapFromModlist::Prepare(void) {
 	if (!llWorker::Prepare()) return 0;
 
-	mapname = NULL;
+	mapname    = NULL;
+	opt_size_x = 0;
+	opt_size_y = 0;
+	opt_center = 0;
 
 	return 1;
 }
@@ -19,6 +22,11 @@ int llImportMapFromModlist::RegisterOptions(void) {
 
 	RegisterValue("-name",  &mapname);
 	RegisterValue("-water", &watername);
+
+	RegisterFlag ("-z",     &opt_center);
+
+	RegisterValue("-dimX",  &opt_size_x);
+	RegisterValue("-dimY",  &opt_size_y);
 
 	return 1;
 }
@@ -36,12 +44,24 @@ int llImportMapFromModlist::Exec(void) {
 
 	if (tes4qlod) delete tes4qlod;
 	tes4qlod = new TES4qLOD();
+
+	char dummy[100];
 	tes4qlod->RegisterOptions();
 	tes4qlod->CheckFlag("-x");
 	tes4qlod->CheckFlag("-silent");
+	if (Used("-z")) tes4qlod->CheckFlag("-z");
+	if (Used("-dimX")) {
+		sprintf_s(dummy, 100, "%i", opt_size_x);
+		tes4qlod->SetValue("-dimX", dummy);
+	}
+	if (Used("-dimY")) {
+		sprintf_s(dummy, 100, "%i", opt_size_y);
+		tes4qlod->SetValue("-dimY", dummy);
+	}
 	tes4qlod->Prepare();
 	tes4qlod->ReplaceFlags();
-
+	tes4qlod->Print();
+	
 	if (!tes4qlod->Exec()) {
 		tes4qlod = NULL;
 		delete tes4qlod;
@@ -92,6 +112,15 @@ int llImportMapFromModlist::Exec(void) {
 	tes4qlod->CheckFlag("-watermap=_watermap");
 	tes4qlod->CheckFlag("-silent");
 	tes4qlod->CheckFlag("-M");
+	if (Used("-z")) tes4qlod->CheckFlag("-z");
+	if (Used("-dimX")) {
+		sprintf_s(dummy, 100, "%i", opt_size_x);
+		tes4qlod->SetValue("-dimX", dummy);
+	}
+	if (Used("-dimY")) {
+		sprintf_s(dummy, 100, "%i", opt_size_y);
+		tes4qlod->SetValue("-dimY", dummy);
+	}
 	tes4qlod->Prepare();
 	tes4qlod->ReplaceFlags();
 
