@@ -123,6 +123,7 @@ protected:
 		opt_size_x,
 		opt_size_y,
 		opt_center,
+		opt_keepout,
 		opt_flip;
 
 	int verbosity, in_vwd, silent;

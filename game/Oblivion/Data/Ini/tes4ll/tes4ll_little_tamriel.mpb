@@ -10,12 +10,16 @@ SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\myworld"
 @makecolormap Tes4qlod -a -f -Flip -C -dimX=128 -dimY=128 -z
 
 ImportMapFromModList -dimX=128 -dimY=128 -z
-;;ImportMapFromModList
+;;ExportMap -depth=24 -filename="map.bmp"  
 
-CreateAlgCollection -name=eq
-AlgEquation -alg=eq -equation="(3000-3000*sin((x/5+y/2)/10000))" -add=1 
-SelectAll
-;;SetHeight -alg=eq -z=-1000
+@makewatermap {
+	CreateMap -name=watercolor -widthx=$(128*32) -widthy=$(128*32) -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
+	CreateAlgCollection -name=blue
+	AlgLinear -alg=blue -zmin=-10000 -zmax=2000 -zminval=0 -zmaxval=1
+	FillColorMap -map=watercolor  -algblue=blue
+	ExportMapToDDS -filename="water.dds" -map="watercolor" -format=dxt1
+	ExportMap -depth=24 -filename="water.bmp" -map="watercolor" 
+}
 
 
 ; ****************************
@@ -31,16 +35,12 @@ SelectAll
 ; Make meshes 
 ; ****************************
 
-ExportMap -depth=24 -map="_watermap" -filename="$_worldspace&Water.bmp"
+;;ExportMap -depth=24 -map="_watermap" -filename="$_worldspace&Water.bmp"
 SetGrid -x=4096 -y=4096 -map="_watermap" 
-;;AddDiscontinuityGrid -x=4096 -y=4096 -map="_watermap" 
-;;SetGrid -x=$(8*4096) -y=$(8*4096) -map="_watermap" 
+AddDiscontinuityGrid -x=4096 -y=4096 -map="_watermap" 
 MakeTriangulation -map="_watermap" 
-ExportMeshToNif -useshapes -map="_watermap" -makeninode  -scale=0.01
-
-
-
-;;exit
+StencilPolygon -map=_watermap
+ExportMeshToNif -useshapes -map="_watermap" -makeninode  -scale=0.01 -texname="textures\myworld\Water.dds" 
 
 
 SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\myworld"
@@ -77,10 +77,11 @@ SetAlgVertices -n=25000 -max
 SelectAll 
 MakeTriangulation
 
+StencilPolygon 
+
 SelectAll 
 
 ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -scale=0.01 -filename="Tamriel.nif"  ; -makeninode
-;ExportMeshToNif  -filename="Tamriel.nif" -useshapes -scale=0.01
 
 
 @end
@@ -112,7 +113,9 @@ GUIDisable -name=tes4ll_gui
 
 GUICheckBox -name=makenormalmap -text="Make normal maps" -help="Select this if you want to generate the normal map"
 
-GUICheckBox -name=makecolormap -text="Make color maps (calls build-in TES4qLOD)" -help="Select this if you want to generate the color map with TES4qLOD"
+GUICheckBox -name=makecolormap -text="Make color map (calls build-in TES4qLOD)" -help="Select this if you want to generate the color map with TES4qLOD"
+
+GUICheckBox -name=makewatermap -text="Make color map for water plane" 
 
 
 ## The final button. Once the button is clicked, the flag "exec_tes4ll" is set for one single run of this section

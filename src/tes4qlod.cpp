@@ -68,6 +68,7 @@ int TES4qLOD::RegisterOptions(void) {
 	RegisterValue("-q", &opt_q);
 	RegisterFlag ("-x", &opt_read_dimensions);
 	RegisterFlag ("-z", &opt_center);
+	RegisterFlag ("-AddKeepout", &opt_keepout);
 
 	RegisterValue("-dimX",   &opt_size_x);
 	RegisterValue("-dimY",   &opt_size_y);
@@ -112,7 +113,8 @@ int TES4qLOD::Prepare(void) {
 	opt_size_x = 0;
 	opt_size_y = 0;
 	opt_center = 0;
-	opt_flip = 0;
+	opt_flip   = 0;
+	opt_keepout = 0;
 
 	verbosity = 1;
 	silent    = 0;
@@ -313,6 +315,41 @@ int TES4qLOD::Exec(void) {
 		if (opt_center) 
 			min_y -= (opt_size_y - (max_y - min_y))/2;
 		max_y = min_y + opt_size_y - 1;
+	}
+
+	//keepout polygons
+	if (opt_keepout && opt_read_heightmap) {
+		llPolygonList *polygons  = _llMapList()->GetPolygonList(mapname);
+		llPolygonList *wpolygons = _llMapList()->GetPolygonList(watername);
+		if (!polygons) {
+			_llLogger()->WriteNextLine(-LOG_FATAL, "%s: no polygon list in map [%s]", command_name, mapname);
+		} else {
+			for (int x=min_x; x<=max_x; x++) {
+				for (int y=min_y; y<=max_y; y++) {
+					int found=0;
+					for (int c=0; c<cleanup_list_count; c++) {
+						if (cleanup_list_x[c]==x && cleanup_list_y[c]==y) 
+							found=1;
+					}
+					if (!found) {
+						float x1 = x*(*_llUtils()->GetValueF("_cellsize_x"));
+						float x2 = (x+1)*(*_llUtils()->GetValueF("_cellsize_x"));
+						float y1 = y*(*_llUtils()->GetValueF("_cellsize_x"));
+						float y2 = (y+1)*(*_llUtils()->GetValueF("_cellsize_x"));
+						char *polygon_name = new char[100];
+						sprintf_s(polygon_name, 100, "cell_%i_%i", x, y);
+						polygons->AddPolygon(x1, y1, x1, y2, polygon_name);
+						polygons->AddVertexToPolygon(x2, y2, polygon_name);
+						polygons->AddVertexToPolygon(x2, y1, polygon_name);
+						if (wpolygons) {
+							wpolygons->AddPolygon(x1, y1, x1, y2, polygon_name);
+							wpolygons->AddVertexToPolygon(x2, y2, polygon_name);
+							wpolygons->AddVertexToPolygon(x2, y1, polygon_name);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	if (total_cells > 0) {

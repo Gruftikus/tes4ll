@@ -112,6 +112,7 @@ int llImportMapFromModlist::Exec(void) {
 	tes4qlod->CheckFlag("-watermap=_watermap");
 	tes4qlod->CheckFlag("-silent");
 	tes4qlod->CheckFlag("-M");
+	tes4qlod->CheckFlag("-AddKeepout");
 	if (Used("-z")) tes4qlod->CheckFlag("-z");
 	if (Used("-dimX")) {
 		sprintf_s(dummy, 100, "%i", opt_size_x);
