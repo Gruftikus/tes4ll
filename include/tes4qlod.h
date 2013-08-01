@@ -33,16 +33,8 @@ protected:
 	int Process4LANDData(char *_r, int _size);
 	int Process4REFRData(char *_r, int _size);
 	
-	int DumpCellBMP(int _cx, int _cy, char _vimage[136][136][3]);
-	int LOD2_Partial(char *_filename, int _cx, int _cy, int _mode);
 	int DecompressZLIBStream(char *_input, int _input_size, char _output[], int *_output_size);
 	int CompressZLIBStream  (char *_input, int _input_size, char _output[], int *_output_size, int _compress_level);
-	int CleanUp();
-	int CleanUpDir(char *_dirname);
-	void WriteBMPHeader(FILE *_fp_out, int _sx, int _sy, int _bpp);
-	int HumptyLODs(void);
-	int HumptyLOD(char *_lod_filename, char *_tmp_bmp_dir, char *_fprefix, 
-		int _lmin_x, int _lmax_x, int _lmin_y, int _lmax_y, int _dsize, int _invert, int _qual, int _mode);
 
 	int InitLoadTexture(char *_filename);
 	int ParseDir(char *_dirname);
@@ -145,6 +137,8 @@ protected:
 	char  *mapname;
 	llMap *watermap;
 	char  *watername;
+	llMap *colormap;
+	char  *colorname;
 
 public:
 	

@@ -57,14 +57,9 @@ int TES4qLOD::RegisterOptions(void) {
 	if (!llWorker::RegisterOptions()) return 0;
 
 	RegisterFlag ("-a", &opt_blending);
-	RegisterFlag ("-b", &opt_no_dds);
-	RegisterFlag ("-c", &opt_no_colorlods);
 	RegisterFlag ("-d", &opt_debug);
-	RegisterFlag ("-f", &opt_full_map);
 	RegisterValue("-i", &opt_load_index);
 	RegisterFlag ("-m", &opt_read_heightmap);
-	//RegisterFlag ("-n", &opt_normals); //disabled
-	RegisterFlag ("-n", &opt_no_move);
 	RegisterValue("-q", &opt_q);
 	RegisterFlag ("-x", &opt_read_dimensions);
 	RegisterFlag ("-z", &opt_center);
@@ -72,11 +67,11 @@ int TES4qLOD::RegisterOptions(void) {
 
 	RegisterValue("-dimX",   &opt_size_x);
 	RegisterValue("-dimY",   &opt_size_y);
-	RegisterFlag ("-Flip",   &opt_flip);
 	RegisterFlag ("-silent", &silent);
 
 	RegisterValue("-map",      &mapname);
 	RegisterValue("-watermap", &watername);
+	RegisterValue("-colormap", &colorname);
 
 	return 1;
 }
@@ -84,36 +79,29 @@ int TES4qLOD::RegisterOptions(void) {
 int TES4qLOD::Prepare(void) {
 	if (!llWorker::Prepare()) return 0;
 
-	map     = NULL;
-	mapname = NULL;
+	map       = NULL;
+	mapname   = NULL;
 	watermap  = NULL;
 	watername = NULL;
-
+	colormap  = NULL;
+	colorname = NULL;
 
 	opt_ltex = -1;
     opt_bmp = 0;
-    opt_no_dds = 0;
-	opt_no_colorlods = 0;
-	opt_no_move = 0;
     opt_load_index = 0;
     opt_q = 1;
-    opt_full_map = 0;
     opt_x_offset = 0;
     opt_y_offset = 0;
     opt_debug = 0;
     opt_no_vclr = 0;
     opt_lod_tex = 0;
     opt_normals = 0;
-    opt_lod2 = 0;
-    opt_vwd = 0;
-    opt_vwd_everything = 0;
 	opt_blending = 0; //CHANGE_IF
 	opt_read_heightmap = 0; //CHANGE_IF
 	opt_read_dimensions = 0;//CHANGE_IF
 	opt_size_x = 0;
 	opt_size_y = 0;
 	opt_center = 0;
-	opt_flip   = 0;
 	opt_keepout = 0;
 
 	verbosity = 1;
@@ -141,9 +129,12 @@ int TES4qLOD::Exec(void) {
 	if (!Used("-watermap"))
 		watername = (char *)"_watermap";
 
+
 	//get the corresponding map from the global map container
 	map      = _llMapList()->GetMap(mapname);
 	watermap = _llMapList()->GetMap(watername);
+	if (Used("-colormap")) 
+		colormap = _llMapList()->GetMap(colorname);
 
 	opt_install_dir = _llUtils()->GetValue("_install_dir");
 	if (opt_install_dir && !strlen(opt_install_dir)) opt_install_dir = NULL;
@@ -159,14 +150,6 @@ int TES4qLOD::Exec(void) {
 	if (silent) verbosity = 0;
 
 	if (opt_lod_tex == 0 && !opt_vwd && !opt_read_heightmap && !opt_read_dimensions) { opt_lod_tex = 1; }
-
-	CleanUpDir(TMP_TEX_DIR);
-	CleanUpDir(TMP_NORMAL_DIR);
-	CleanUpDir(TMP_VWD_DIR);
-
-//	MKDIR(TMP_TEX_DIR, S_IRWXU | S_IRWXG | S_IRWXO);
-	if (opt_lod_tex)
-		MKDIR(TMP_TEX_DIR);
 
 	char tmp_dirname[1024];
 
@@ -196,13 +179,6 @@ int TES4qLOD::Exec(void) {
 			MKDIR(tmp_dirname);
 		}
 	}
-	if (opt_normals) {
-		MKDIR(TMP_NORMAL_DIR);
-	}
-	if (opt_vwd) {
-		MKDIR(TMP_VWD_DIR);
-	}
-
 
 	/*
 	 * Initialize variables:
@@ -353,9 +329,6 @@ int TES4qLOD::Exec(void) {
 	}
 
 	if (total_cells > 0) {
-		if (opt_lod_tex) {
-			HumptyLODs();
-		}
 		if (opt_vwd) {
 			HumptyVWD();
 		}
@@ -371,22 +344,14 @@ int TES4qLOD::Exec(void) {
 	if (verbosity) printf_s("\nWe've finished!\n\n"
 		"\tTotal Worldspaces  found:                     %d\n"
 		"\tTotal CELL records found:                     %d\n"
-		"\tTotal LAND records found:                     %d\n"
-		"\tTotal VWD  Objects written:                   %d\n",
-		total_worlds, total_cells, total_land, total_vwd);
+		"\tTotal LAND records found:                     %d\n",
+		total_worlds, total_cells, total_land);
 
 	if (opt_read_dimensions && (verbosity) ) {
 		printf("\nMin X:      %d",min_x);
 		printf("\nMax X:      %d",max_x);
 		printf("\nMin Y:      %d",min_y);
 		printf("\nMax Y:      %d",max_y);
-	}
-
-	if (!opt_debug) {
-		if (verbosity) printf("\nNow I'm cleaning up my temporary files ... (sometimes takes a while, but all your files are now generated).\n");
-		CleanUp();
-	} else {
-		if (verbosity) printf("\nYou're in \"Debug\" mode, so I won't delete my BMP files or my %s temp directory.\n", TMP_TEX_DIR);
 	}
 
 	return 1;
@@ -965,33 +930,9 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 		}
 	}
 
-	if (!opt_lod_tex) {
+	if (!opt_lod_tex || !colormap) {
 		free(decomp);
 		return 0;
-	}
-
-	/***********************************
-	 ** Write out Normals to a BMP file.
-	 **********************************/
-	if (opt_normals) {
-
-		sprintf_s(tmp_land_filename, 64, "%s/normal.%d.%d.bmp", TMP_NORMAL_DIR, cell.current_x, cell.current_y);
-
-		if ((fp_land = fopen(tmp_land_filename, "wb")) == 0) {
-			fprintf(stderr, "Unable to create a temporary normals file for writing, %s: %s\n", 
-				tmp_land_filename, strerror(errno));
-			exit(1);
-		}
-
-		WriteBMPHeader(fp_land, 32, 32, 24);
-		for (i = 1; i < 33; i++) {
-			for (j = 0; j < 96; j++) {
-				c = (unsigned char) (decomp[10+6+(99*i)+2+j] + 125);
-				fputc(c, fp_land);
-			}
-		}
-
-		fclose(fp_land);
 	}
 
 	pos = 3289+1096;
@@ -1193,142 +1134,17 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 						//vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) add_rgb[y+opt_q*i][x+opt_q*j][m];
 						if (!opt_no_vclr) vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) ((float) (unsigned char) vimage[y+opt_q*i][x+opt_q*j][m] * ((float) (unsigned char) vclr[i][j][2-m]/ 255.0f));									
 					}
+					unsigned int posx = colormap->GetRawX(128.0f * float(cell.current_x * 32)) + x + j * opt_q;
+					unsigned int posy = colormap->GetRawY(128.0f * float(cell.current_y * 32)) + y + i * opt_q;
+					colormap->SetRed  (posx, posy, vimage[y+opt_q*i][x+opt_q*j][2]);
+					colormap->SetGreen(posx, posy, vimage[y+opt_q*i][x+opt_q*j][1]);
+					colormap->SetBlue (posx, posy, vimage[y+opt_q*i][x+opt_q*j][0]);
 				}
 			}
-
-/*
-			if (!texture_matched) {
-				{	
-					char l[4];
-					memcpy(l, &lod_ltex.formid[k], 4);
-					printf("No match  for texture %2.2X %2.2X %2.2X %2.2X\n", (unsigned char) vtxt[i][j][0], (unsigned char) vtxt[i][j][1], (unsigned char) vtxt[i][j][2], (unsigned char) vtxt[i][j][3]);
-					printf("To match with texture %2.2X %2.2X %2.2X %2.2X!\n", (unsigned char) l[0], (unsigned char) l[1], (unsigned char) l[2], (unsigned char) l[3]);
-				}
-			}
-*/
-
-
 		}
 	}
-
-	DumpCellBMP(cell.current_x, cell.current_y, vimage);
-
-	// fclose(fp_land);
 
 	free(decomp);
-
-	return 0;
-}
-
-
-
-int TES4qLOD::DumpCellBMP(int _cx, int _cy, char _vimage[136][136][3]) {
-	int i, j; //, r;
-	int l = 0;
-
-	char filename[64];
-
-	FILE *fp_c;
-
-	sprintf_s(filename, 64, "%s/partial.%d.%d.bmp", TMP_TEX_DIR, _cx, _cy);
-
-	if ((fp_c = fopen(filename, "wb")) == 0) {
-		fprintf(stderr, "Unable to create a cell BMP called %s: %s\n",
-			filename, strerror(errno));
-		return 1;
-	}
-
-	WriteBMPHeader(fp_c, opt_q*32, opt_q*32, 24); // 24-bit 32x32 (or more, if opt_q is greater) image.
-
-	l = (32 * opt_q) + opt_q; // The right and top-most limit of the texture image to copy.
-
-	for (i = opt_q; i < l; i++) {
-		for (j = opt_q; j < l; j++) {
-			fwrite(_vimage[i][j], 3, 1, fp_c);
-		}
-	}
-
-	fclose(fp_c);
-
-	if (opt_lod2) {
-		sprintf_s(filename, 64, "partial.%d.%d.bmp", _cx, _cy);
-		LOD2_Partial(filename, _cx, _cy, TEXTURES);
-		if (opt_normals) {
-			sprintf_s(filename, 64, "normal.%d.%d.bmp", _cx, _cy);
-			LOD2_Partial(filename, _cx, _cy, NORMALS);
-		}
-	}
-
-	return 0;
-}
-
-int TES4qLOD::LOD2_Partial(char *_filename, int _cx, int _cy, int _mode) {
-	char lod_filename[256];
-	char dds_filename[256];
-	char dds_command[256];
-//	char lod_command[256];
-
-//	FILE *fp_p;
-
-//	sprintf(dds_command, "%s /M /3 %s", DDS_CONVERTOR, filename);
-	if (_mode == TEXTURES) {
-		sprintf_s(dds_command, 256, "copy %s\\%s %s", TMP_TEX_DIR,    _filename, _filename);
-	} else {
-		sprintf_s(dds_command, 256, "copy %s\\%s %s", TMP_NORMAL_DIR, _filename, _filename);
-	}
-	system(dds_command);
-	sprintf_s(dds_command, 256, "%s %s", DDS_CONVERTOR, _filename);
-	printf("Running External DDS Convertor: %s\n", dds_command);
-	printf("Running %s\n", dds_command);
-	fflush(stdout);
-	system(dds_command);
-
-	strcpy_s(dds_filename, 256, _filename);
-	memcpy(dds_filename + strlen(dds_filename) - 3, "dds", 3);
-
-	//sprintf(lod_filename, "%d.%.2d.%.2d.32.dds", world_index, cx, cy);
-	//printf("LOD2_Partial\n");
-	if (_cx >= 0 && _cy >= 0) {
-		sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\1", cell.worldspace_name);
-		MKDIR(lod_filename);
-		if (_mode == TEXTURES) {
-			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\1\\%d.%d.dds",    cell.worldspace_name, _cx, _cy);
-		} else {
-			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\1\\%d.%d_fn.dds", cell.worldspace_name, _cx, _cy);
-		}
-	} else if (_cx >= 0 && _cy <= 0) {
-		sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\2", cell.worldspace_name);
-		MKDIR(lod_filename);
-		if (_mode == TEXTURES) {
-			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\2\\%d.%d.dds",    cell.worldspace_name, _cx, _cy);
-		} else {
-			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\2\\%d.%d_fn.dds", cell.worldspace_name, _cx, _cy);
-		}
-	} else if (_cx <= 0 && _cy >= 0) {
-		sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\3", cell.worldspace_name);
-		MKDIR(lod_filename);
-		if (_mode == TEXTURES) {
-			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\3\\%d.%d.dds",    cell.worldspace_name, _cx, _cy);
-		} else {
-			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\3\\%d.%d_fn.dds", cell.worldspace_name, _cx, _cy);
-		}
-	} else {
-		sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\4", cell.worldspace_name);
-		MKDIR(lod_filename);
-		if (_mode == TEXTURES) {
-			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\4\\%d.%d.dds",    cell.worldspace_name, _cx, _cy);
-		} else {
-			sprintf_s(lod_filename, 256, "textures\\lod2\\%s\\4\\%d.%d_fn.dds", cell.worldspace_name, _cx, _cy);
-		}
-	}
-
-	if (!opt_no_move) {
-		sprintf_s(dds_command, 256, "move %s %s", dds_filename, lod_filename);
-		printf("Doing %s\n", dds_command);
-		system(dds_command);
-		if (_unlink(dds_filename) == -1)
-			fprintf(stdout, "Could not delete dds %s\n",dds_filename);
-	}
 
 	return 0;
 }
@@ -1384,7 +1200,6 @@ int TES4qLOD::Process4REFRData(char *_r, int _size) {
 	if ((fp = fopen(tmp_vwd_filename, "ab+")) == 0) {
 		fprintf(stderr, "Unable to create temporary VWD file called %s: %s\n",
 			tmp_vwd_filename, strerror(errno));
-		CleanUp();
 		exit(1);
 	}
 
@@ -1458,434 +1273,6 @@ int TES4qLOD::CompressZLIBStream(char *_input, int _input_size, char _output[], 
 	*_output_size += avail_out - z.avail_out;
 
 	(void)deflateEnd(&z);
-
-	return 0;
-}
-
-
-int TES4qLOD::CleanUp() {
-	int i;
-
-	char filename[128];
-
-	for (i = 0; i < cleanup_list_count; i++) {
-		if (opt_lod_tex) {
-			sprintf_s(filename, 128, "%s/partial.%d.%d.bmp", TMP_TEX_DIR, cleanup_list_x[i], cleanup_list_y[i]);
-			_unlink(filename);
-				
-		}
-		if (opt_vwd) {
-			sprintf_s(filename, 128, "%s/%s.%d.%d.tmp", TMP_VWD_DIR, worldspace_lc, cleanup_list_x[i], cleanup_list_y[i]);
-			_unlink(filename);
-				
-		}
-		if (opt_normals) {
-			sprintf_s(filename, 128, "%s/normal.%d.%d.tmp", 
-				TMP_NORMAL_DIR, cleanup_list_x[i], cleanup_list_y[i]);
-			_unlink(filename);
-				
-		}
-	}
-
-	if (opt_vwd) {
-		_rmdir(TMP_VWD_DIR);
-	}
-
-	if (opt_lod2) {
-		_rmdir(TMP_NORMAL_DIR);
-	}
-
-	_rmdir(TMP_TEX_DIR);
-	
-	return 0;
-}
-
-int TES4qLOD::CleanUpDir(char *_dirname) {
-	DIR             *dis;
-	struct dirent   *dir;
-
-	char filename[512];
-
-	if ((dis = opendir(_dirname)) != NULL) {
-		if (verbosity) printf("Cleaning up temporary directory (%s) ... ", _dirname);
-		fflush(stdout);
-
-		while ((dir = readdir(dis)) != NULL) {
-			if (dir->d_name[0] != '.' && (dir->d_name[1] != '\0' || (dir->d_name[1] != '.' && dir->d_name[2] != '\0'))) {
-				sprintf_s(filename, 512, "%s/%s", _dirname, dir->d_name);
-				if(_unlink(filename) == -1 )
-					fprintf(stdout,  "Could not delete partial %s, errno=%i\n" , filename,errno);
-			}
-		}
-		closedir(dis);
-		if (verbosity) printf("finished.\n");
-		fflush(stdout);
-	}
-
-	_unlink(_dirname);
-
-	return 0;
-}
-
-
-void TES4qLOD::WriteBMPHeader(FILE *_fp_out, int _sx, int _sy, int _bpp) {
-	int i;
-
-	char bmp_head[54] = {
-			0x42, 0x4D, 0x98, 0xEA, 0x00, 0x00, 0x00, 0x00, 
-			0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00, 
-			0x00, 0x00, 0xC8, 0x00, 0x00, 0x00, 0x64, 0x00, 
-			0x00, 0x00, 0x01, 0x00, 0x20, 0x00, 0x00, 0x00, 
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x12, 0x0B, 
-			0x00, 0x00, 0x12, 0x0B, 0x00, 0x00, 0x00, 0x00, 
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	};
-
-	i = (_sx*_sy*4)+54;
-
-	memcpy(bmp_head+2,  &i,   4);
-	memcpy(bmp_head+18, &_sx, 4);
-	memcpy(bmp_head+22, &_sy, 4);
-	//memcpy(bmp_head+28, &bpp, 1);  // Correct the header for bits per pixel.
-	bmp_head[28] = _bpp;
-
-	i = (_sx*_sy*4);
-	memcpy(bmp_head+34, &i, 4);
-
-	for (i = 0; i < 54; i++) {
-		fputc(bmp_head[i], _fp_out);
-	}
-}
-
-
-
-int TES4qLOD::HumptyLODs(void) {
-	//loops over the quads, the calls "HumptyLOD"
-	int i, j, l, quad;
-	int dsize = 32;
-	int quad_max = 32,
-	    quad_start = 4;
-	int lod_min_x, lod_max_x,
-	    lod_min_y, lod_max_y;
-	int world_index;
-	char dds_command[128];
-	char lod_bmpname[64];
-	char lod_ddsname[64];
-	char dest_dir[256];
-	char full_lod_map[128];
-
-	world_index = cell.worldspace_formid;
-	if (_llUtils()->GetValue("_worldspace_id")) {
-		sscanf(_llUtils()->GetValue("_worldspace_id"), "%i", &world_index);
-	}
-	world_index += (opt_load_index * 16777216);
-
-//	printf("Worldspace formid is %d\n", cell.worldspace_formid);
-
-	lod_min_x = 32 * (int) ((min_x - 31)/32);
-	lod_max_x = 32 * (int) (max_x / 32);
-	lod_min_y = 32 * (int) ((min_y - 31)/32);
-	lod_max_y = 32 * (int) (max_y / 32);
-
-	if (opt_debug) {
-		printf("\n\n");
-		printf("Cell Minimum and Maximum Limits:\n"
-		       "--------------------------------\n\n");
-		printf("Max X is %d, Min X is %d\n", max_x, min_x); 
-		printf("Max Y is %d, Min Y is %d\n", max_y, min_y);
-		printf("LOD X: from %d to %d\n", lod_min_x, lod_max_x);
-		printf("LOD Y: from %d to %d\n", lod_min_y, lod_max_y);
-		printf("--------------------------------\n\n");
-	}
-	printf("\n\n");
-
-	if (opt_tes_mode == TES_OBLIVION) {  // Oblivion's quads were only 32x32 cell quads.
-		quad_start = 32; 
-	} else {
-		quad_start = 4;              // Fallout3 / FalloutNV/Skyrim use 4x4, 8x8, 16x16 and 32x32 cells quads.
-	}
-
-	/****************************************************************************************
-	 * OBLIVION: WRLD_FORMID.32.16.32.bmp  (e.g. 60.32.16.32.bmp)
-      * FALLOUT3 & NV: textures/lod/WORLDSPACE/diffuse/WORLDSPACE.n.level[4,8,16,32].x-12.y24.dds
-	 * SKYRIM:  textures/landscape/terrain/WORLDSPACE.[4,8,16,32].-12.24.dds
-	 ***************************************************************************************/
-
-	if (!opt_lod2 || opt_full_map) {
- 	    for (quad = quad_start; quad <= quad_max; quad = quad * 2) {
-			for (i = lod_min_y; i <= lod_max_y; i+=quad) {
-				for (j = lod_min_x; j <= lod_max_x; j+=quad) {
-					/*********************************
-					 ** Generate LOD Quads of Normals.
-					 ********************************/
-					if (opt_normals) {
-
-						if (opt_tes_mode == TES_OBLIVION) {
-							sprintf_s(lod_bmpname, 64, "%d.%.2d.%.2d.%.2d_fn.bmp", world_index, j, i, quad);
-						} else if (opt_tes_mode == TES_FALLOUT3 || opt_tes_mode == TES_FALLOUTNV) {
-							sprintf_s(lod_bmpname, 64, "%s.n.level%d.x%d.y%d.bmp", worldspace_lc, quad, j, i);
-						} else {
-							sprintf_s(lod_bmpname, 64, "%s.%d.%d.%d_n.bmp", worldspace_lc, quad, j, i);
-						}
-						HumptyLOD(lod_bmpname, TMP_NORMAL_DIR, "normal", j, j+quad-1, i, i+quad-1, dsize, 1, 1, NORMALS);
-
-						if (!opt_no_dds) {
-							sprintf_s(dds_command, 128, "%s %s", DDS_CONVERTOR, lod_bmpname);
-							printf("Running External DDS Convertor on Normmal: %s\n", dds_command);
-							system(dds_command);
-
-							if (opt_tes_mode == TES_OBLIVION) {
-								sprintf_s(lod_ddsname, 64, "%d.%.2d.%.2d.%.2d_fn.dds", world_index, j, i, quad);
-								sprintf_s(dest_dir, 256, LOD_OUTPUT_DIR_OBLIVION_DOS);
-							} else if (opt_tes_mode == TES_FALLOUT3 || opt_tes_mode == TES_FALLOUTNV) {
-								sprintf_s(dest_dir, 256, LOD_OUTPUT_DIR_FALLOUT3_DOS, worldspace_lc);
-								strcat_s(dest_dir, 256, "\\normals");
-								sprintf_s(lod_ddsname, 64,  "%s.n.level%d.x%d.y%d.dds", worldspace_lc, quad, j, i);
-							} else {
-								sprintf_s(dest_dir, 256, LOD_OUTPUT_DIR_SKYRIM_DOS, worldspace_lc);
-								sprintf_s(lod_ddsname, 64, "%s.%d.%d.%d_n.dds", worldspace_lc, quad, j, i);
-							}
-
-							if (!opt_no_move) {
-								sprintf_s(dds_command, 128, "move %s %s\\%s", lod_ddsname, dest_dir, lod_ddsname);
-								printf("Moving Normal with %s\n", dds_command);
-								system(dds_command);
-							}
-						}
-
-						if (!opt_debug && !opt_no_dds) {
-							if (_unlink(lod_bmpname) == -1)
-								fprintf(stdout, "Could not delete normal bmp %s\n",lod_bmpname);
-						}
-					}
-
-					/***************************************
-					 ** Generate LOD Quads of Land Textures.
-					 **************************************/
-
-					if (opt_tes_mode == TES_OBLIVION) {
-						sprintf_s(lod_bmpname, 64, "%d.%.2d.%.2d.%.2d.bmp", world_index, j, i, quad);
-					} else if (opt_tes_mode == TES_FALLOUT3 || opt_tes_mode == TES_FALLOUTNV) {
-						sprintf_s(lod_bmpname, 64, "%s.n.level%d.x%d.y%d.bmp", worldspace_lc, quad, j, i);
-					} else {
-						sprintf_s(lod_bmpname, 64, "%s.%d.%d.%d.bmp", worldspace_lc, quad, j, i);
-					}
-
-					//CHANGE_IF
-					//Skyrim textures seem to be up-down flipped
-					if (!opt_no_colorlods) {
-						if (opt_tes_mode == TES_SKYRIM) 
-							HumptyLOD(lod_bmpname, TMP_TEX_DIR, "partial", j, j+quad-1, i, i+quad-1, dsize, 0, opt_q, TEXTURES);
-						else
-							HumptyLOD(lod_bmpname, TMP_TEX_DIR, "partial", j, j+quad-1, i, i+quad-1, dsize, 1, opt_q, TEXTURES);
-					}
-
-					if (!opt_no_dds && !opt_no_colorlods) {
-						// Windoze / DOS
-
-						sprintf_s(dds_command, 128, "%s %s", DDS_CONVERTOR, lod_bmpname);
-						printf("Running External DDS Convertor on Texture: %s\n", dds_command);
-						system(dds_command);
-
-						if (opt_tes_mode == TES_OBLIVION) {
-							sprintf_s(lod_ddsname, 64, "%d.%.2d.%.2d.%.2d.dds", world_index, j, i, quad);
-							sprintf_s(dest_dir, 256, LOD_OUTPUT_DIR_OBLIVION_DOS);
-						} else if (opt_tes_mode == TES_FALLOUT3 || opt_tes_mode == TES_FALLOUTNV) {
-							sprintf_s(dest_dir, 256, LOD_OUTPUT_DIR_FALLOUT3_DOS, worldspace_lc);
-							sprintf_s(lod_ddsname, 64, "%s.n.level%d.x%d.y%d.dds", worldspace_lc, quad, j, i);
-							strcat_s(dest_dir, 256, "\\diffuse");
-						} else {
-							sprintf_s(dest_dir, 256, LOD_OUTPUT_DIR_SKYRIM_DOS, worldspace_lc);
-							sprintf_s(lod_ddsname, 64, "%s.%d.%d.%d.dds", worldspace_lc, quad, j, i);
-						}
-
-						if (!opt_no_move) {
-							sprintf_s(dds_command, 128, "move %s %s\\%s", lod_ddsname, dest_dir, lod_ddsname);
-							printf("Moving Texture with %s\n", dds_command);
-							system(dds_command);
-						}
-
-						// Unix
-						/*
-						sprintf(dds_command, "mv %s %s/%s", lod_ddsname, dest_dir, lod_ddsname);
-						system(dds_command);
-						*/
-
-						if (!opt_debug && !opt_no_dds) {
-							if (_unlink(lod_bmpname) == -1)
-								fprintf(stdout, "Could not delete lof bmp %s\n",lod_bmpname);
-						}
-	
-					}
-				}
-			}
-		}
-	}
-
-	if (opt_full_map) {
-		char filename[1000];
-		char filename1[1000];
-		char filename2[1000];
-		if (opt_install_dir)
-			sprintf_s(filename2,1000,"%s\\%sMap.dds",opt_install_dir,worldspace);
-		sprintf_s(filename,1000,"%sMap.bmp",worldspace);
-		sprintf_s(filename1,1000,"%sMap.dds",worldspace);
-		remove (filename);		
-		
-		printf("Generating a complete map of the terrain called %s\n", filename);
-		HumptyLOD(filename, TMP_TEX_DIR, "partial", min_x, max_x, min_y, max_y, dsize, opt_flip, opt_q, TEXTURES);
-		sprintf_s(dds_command, 128, "%s %s", DDS_CONVERTOR, filename);
-		if (!opt_no_dds) {
-			remove (filename1);
-			printf("Running External DDS Convertor on Texture: %s\n", dds_command);
-			system(dds_command);
-		}
-		
-		if (opt_install_dir) {
-			remove (filename2);
-			if ((rename (filename1, filename2)) != 0) {
-				printf("Could not move %s to %s",filename1,filename2);
-			}						
-		}
-	}
-
-	if (opt_normals && opt_full_map) {
-		sprintf_s(full_lod_map, 128, FULL_LOD_NORMAL_MAP, worldspace);
-		HumptyLOD(full_lod_map, TMP_NORMAL_DIR, "normal", min_x, max_x, min_y, max_y, dsize, 0, 1, NORMALS);
-	}
-	return 0; //CHANGE_IF
-}
-
-int TES4qLOD::HumptyLOD(char *_lod_filename, char *_tmp_bmp_dir, char *_fprefix, 
-	int _lmin_x, int _lmax_x, int _lmin_y, int _lmax_y, int _dsize, int _invert, int _qual, int _mode) {
-		//reads the partials and generates the final bmü
-	int i, j, k, m;
-	int c;
-
-	int default_colour;
-
-	int x, y;
-	int x_range, y_range;
-//	int tx ;//, ty;
-//	int cy;
-//	int sz, s1, s2; //, s3;
-	int normal_rgb = 0x007D7DF8; //125 + (256*125) + (256*248); // 0x7D7DF800; // Default flat plain normals (blue).
-	int quad_found = 0;
-//	int global_height_offset;
-	int col_offset = 0,
-	    row_sum = 0;
-	int m1 = 0,
-	    m2 = 0;
-//	int t;
-	short int sint = 0;
-	int lint = 0;
-
-	int lod_x_min = 0, lod_y_min = 0,
-	    lod_x_max = 0, lod_y_max = 0;
-
-	char tmp_int[5];
-
-//	char cell_name[256];
-	char tex_data[32000];
-
-//	char land_data[32000];
-//	char vnml_data[16384];
-//	char vhgt_data[16384];
-
-	char //cell_filename[64],
-	     land_filename[64];
-	     
-	FILE *fp_o,
-//	     *fp_cell,
-	     *fp_land;
-
-	// Recalculate min and max x and y values.
-
-	if ((fp_o = fopen(_lod_filename, "wb")) == 0) { //CHANGE_IF (fixed typo)
-		fprintf(stderr, "Cannot create a new exported bmp file (%s): %s\n",
-			_lod_filename, strerror(errno));
-		exit(1);
-	}
-
-	x_range = _lmax_x - _lmin_x + 1;
-	y_range = _lmax_y - _lmin_y + 1;
-
-	printf("Generating new BMP output file called: %s (Size %dx%d)\n", _lod_filename, x_range*_dsize*_qual, y_range*_dsize*_qual);
-
-	WriteBMPHeader(fp_o, _dsize*_qual*x_range, _dsize*_qual*y_range, 24);
-
-	/****************************************************************
-	 ** Look for the default texture (FormID equivalent 00000000)
-	 ** Then fill initially fill the image with this texture colour.
-	 ***************************************************************/
-
-	default_colour = 0;
-	for (i = 0; i < lod_ltex.count; i++) {
-		if (lod_ltex.formid[i] == 0) {
-			memcpy(&default_colour, lod_ltex.rgb[i], 3);
-			break;
-		}
-	}
-
-	fseek(fp_o, 54, SEEK_SET);
-		
-	for (y = 0; y < y_range; y++) {
-		for (x = 0; x < x_range; x++) {
-			if (_mode == TEXTURES) {
-				sprintf_s(land_filename, 64, "%s/partial.%d.%d.bmp", _tmp_bmp_dir, x+_lmin_x, y+_lmin_y);
-			} else {
-				sprintf_s(land_filename, 64, "%s/normal.%d.%d.bmp", _tmp_bmp_dir, x+_lmin_x, y+_lmin_y);
-			}
-			
-			if ((fp_land = fopen(land_filename, "rb")) == 0) {
-				for (k = 0; k < _dsize; k++) {
-					for (i = 0; i < _qual; i++) {
-						if (!_invert) {
-							fseek(fp_o, 54+(y*_qual*_qual*_dsize*_dsize*x_range*3) 
-								+ (3*x*_qual*_dsize) + (3*i*_qual*x_range*_dsize) + (k*_qual*3*_qual*x_range*_dsize), SEEK_SET);
-						} else {
-							fseek(fp_o, 54+((y_range-y-1)*_qual*_qual*_dsize*_dsize*x_range*3) + (3*x*_qual*_dsize) + 
-								(3*(_qual-i-1)*_qual*x_range*_dsize) + ((_dsize-k-1)*_qual*3*_qual*x_range*_dsize), SEEK_SET);
-						}
-						for (m = 0; m < _dsize; m++) {
-							for (j = 0; j < _qual; j++) {
-								if (_mode == NORMALS) {
-									fwrite(&normal_rgb, 3, 1, fp_o);
-								} else {
-									fwrite(&lod_ltex.rgb[0][i][j], 3, 1, fp_o);
-								}
-							}
-						}
-					}
-				}
-				continue;
-			} else {
-				fseek(fp_land, 54, SEEK_SET);
-				if (!_invert) {
-					for (k = 0; k < _dsize; k++) {
-						for (i = 0; i < _qual; i++) {
-							fseek(fp_o, 54+(y*_qual*_qual*_dsize*_dsize*x_range*3) + (3*x*_qual*_dsize) + 
-								(3*i*_qual*x_range*_dsize) + (k*_qual*3*_qual*x_range*_dsize), SEEK_SET);
-							fread(tex_data, 3*_dsize*_qual, 1, fp_land);
-							fwrite(tex_data, 3*_dsize*_qual, 1, fp_o);
-						}
-					}
-				} else {
-					for (k = 0; k < _dsize; k++) {
-						for (i = (_qual) - 1; i >= 0; i--) {
-							fseek(fp_o, 54+((y_range-y-1)*_qual*_qual*_dsize*_dsize*x_range*3) + (3*x*_qual*_dsize) + 
-								(3*(_qual-i-1)*_qual*x_range*_dsize) + ((_dsize-k-1)*_qual*3*_qual*x_range*_dsize), SEEK_SET);
-							fread(tex_data, 3*_dsize*_qual, 1, fp_land);
-							fwrite(tex_data, 3*_dsize*_qual, 1, fp_o);
-						}
-					}
-				}
-				fclose(fp_land);
-			}
-		}
-	}
-
-	fclose(fp_o);
 
 	return 0;
 }
@@ -2089,7 +1476,6 @@ int TES4qLOD::HumptyVWD() {
 		if ((fp_out = fopen(filename_out, "wb")) == 0) {
 			fprintf(stderr, "Unable to open temporary VWD file for reading (%s): %s\n",
 				filename_out, strerror(errno));
-			CleanUp();
 			exit(1);
 		}
 //		printf("Write DistantLOD file %d of %d: %s\n", i+1, cleanup_list_count, filename_out);
