@@ -6,7 +6,7 @@ Moreover, a configuration file (multi purpose batch file) with a command list al
 
 Author
 ======
-Ingo Froehlich aka. gruftikus@nexusmods
+gruftikus@nexusmods, @github, ....
 
 Why?
 ====
@@ -46,20 +46,20 @@ Features
 
 4. For debugging and better visibility nif files with textures and ps (postscript) files can be produced.
 
-5. Tes4ll can (optionally) also call Lightwaves TES4qLOD(http://projectmanager.f2s.com/morrowind/TES4qLOD.html), so that the meshes are always consistent with the texture set. Since tes4ll v4, TES4qLOD has been fully integrated.
+5. Tes4ll can (optionally) also create textures via Lightwaves TES4qLOD(http://projectmanager.f2s.com/morrowind/TES4qLOD.html), so that the meshes are always consistent with the texture set. Since tes4ll v4, TES4qLOD has been fully integrated.
 
 6. Tes4ll can produce normal maps, also with the "faked terrain shadow" option.
 
 
 Details of operation
 ====================
-The main idea of the program is based on different steps which are executed one after the other (see script example, for a detailed description of the commands see MANUAL.txt).
+The main idea of the program is based on different steps which are executed one after the other (see script example, for a detailed description of the commands see https://github.com/Gruftikus/tes4ll/wiki).
 
 In the FIRST STEP, deterministic vertex points are set by commands. The most simple case is the placement of single vertices. Other examples are the contour setter or the panorama view.
 
 In the SECOND STEP, random vertex points are produced and compared to density functions by using the Monte-Carlo method (see link below for more explanation). This works (explained only sketchy) as follows: the program scatters a lot of random (x,y) points on the heightmap. For each of this points another random number is generated between 0 and the maximum of the density (the ceiling). If the random number if below the local density, the vertex point is taken to the final list, otherwise it is re-sampled. As a consequence, the density of the vertex points in the final list represents the value of the density function. One should note that, this density function can be defined by the user by combining the basic algorithms. The distance to the next neightbor is taken into account to avoid local clustering.
 
-The ceiling has a certain cut-off, to avoid infinity computing times.
+The ceiling has a certain cut-off, to avoid infinite computing times.
 
 In the THIRD STEP the vertex points are triangulated, i.e. the points are connected to triangles. The usual method to do so is the Delaunay triangulation.
 
@@ -69,26 +69,11 @@ In STEP 5, the mesh is furthermore divided into the final LOD meshed (the "quads
 
 In STEP 6, the triangles are written and (optionally) stitched together in triangle strips (see links below). 
 
-The syntax of the batch file
-============================
-A full reference manual can be obtained via this link:
-https://github.com/Gruftikus/tes4ll/blob/master/REFERENCE_MANUAL-tes4ll.pdf?raw=true
-
 Source code
 ===========
-The source code should be freely available from Github (https://github.com/Gruftikus/tes4ll.git). You can check out the repository and compile tes4ll from scratch. In order to do so, the following steps have to be done in addition:
+The source code should be freely available from Github (https://github.com/Gruftikus/tes4ll.git). You can check out the repository and compile tes4ll from scratch. In order to do so, you also need the Landscape and Heightmap Editing Tool and Library (https://github.com/Gruftikus/lltool). Please follow the instructions there for all external packages.
 
-Make a directory "externals" in tes4ll.
-
-Download niflib, and unpack its source code to tes4ll/externals/niflib.
-
-Download "triangle" from http://www.cs.cmu.edu/~quake/triangle.html, and unpack the source code to tes4ll/externals/triangle. You can also choose a Delaunay code of your choice, in this case you have to adapt the section MAKE_TRIANGULATION in tes4ll.cpp
-
-Download zlib, unpack the source code to tes4ll/externals/zlib.
-
-Download "dirent.h" from somewhere (just search the internet), and put it to tes4ll/externals/.
-
-Disclaimer: tes4ll started as a private project, and was later merged with other code. Therefore it contains c++ classes, but also a lot of procedural stuff. Most of the things have been done quick and dirty. You have been warned!
+For tes4ll the niflib library is required in addition. Make a directory "externals" in tes4ll. Download niflib, and unpack its source code to tes4ll/externals/niflib.
 
 
 Version and changelog
