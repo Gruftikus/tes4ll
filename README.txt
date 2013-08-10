@@ -93,47 +93,61 @@ Disclaimer: tes4ll started as a private project, and was later merged with other
 
 Version and changelog
 =====================
-Version 1:    Initial version.
+Version 1 (2 Oct 2011):    
+              Initial version.
 
-Version 1.01: 3GB flag for larger worldspaces, 
+Version 1.01 (9 Oct 2011): 
+              3GB flag for larger worldspaces, 
               Crash fixed which appeared when nif meshes were empty.
 
-Version 1.10: Added option for the pedestals.
+Version 1.10 (12 Oct 2011): 
+              Added option for the pedestals.
               Re-calibrated the x,y-position of the bitmap.
               Removed distance keeper for the contour to the grid.
 
-Version 1.20: Added option for the data files.
+Version 1.20 (15 Oct 2011): 
+              Added option for the data files.
               First data files for some segments (north of Weye, 
               way to Cheydinhal)
               Data file for UL Rolling Hills.
 
-Version 1.21: Fixed bug in SetMaxPointsPerQuad.
+Version 1.21 (16 Oct 2011): 
+              Fixed bug.
 
-Version 2.00: Support for different wordspaces.
+Version 2.00 (30 Oct 2011): 
+              Support for different wordspaces.
               Call TESAnnwyn now internally.
               Support for flags.
 
-Version 2.10: Added option for tri shapes.
+Version 2.10 (1 Nov 2011): 
+              Added option for tri shapes.
 
-Version 2.20: Added wall remover (BreakAtGrid).
+Version 2.20 (6 Nov 2011): 
+              Added wall remover.
 
-Version 2.30: Decreased memory usage by a factor of 2.
+Version 2.30 (22 Nov 2011): 
+              Decreased memory usage by a factor of 2.
               Decoupled "hardcoded" TESAnnwyn and moved its call to 
               the batch file. Added TES4qLOD call to the list of 
               commands.
 
-Version 3.00: Changed a lot here and there to make tes4ll compatible
+Version 3.00 (13 Jan 2012): 
+              Changed a lot here and there to make tes4ll compatible
               with MPGUI.
 
-Version 3.01: Fixed missing quotation marks stripping in 
-              -installdirectory.
+Version 3.01 (14 Jan 2012): 
+              Fixed missing quotation marks stripping in 
+              installdirectory.
 
-Version 3.10: First release of the normal map version.
+Version 3.10 (2 Feb 2012): 
+              First release of the normal map version.
 
-Version 4.00: Integration of Lightwaves TES4qLOD, and partly
+Version 4.00 (29 Sep 2012): 
+              Integration of Lightwaves TES4qLOD, and partly
               rewritten tes4ll. Got rid of the TESAnnwyn dependency.
 
-Version 4.10: Added the feature to define polygons, and to stencil
+Version 4.10 (29 Dec 2012): 
+              Added the feature to define polygons, and to stencil
               polygons. Added break lines. Made a lot of code cleanup.
               Improved the speed of the vertex placement by a factor
               of 5-10. Added a remover for hidden triangles.
