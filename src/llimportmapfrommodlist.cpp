@@ -23,7 +23,7 @@ int llImportMapFromModlist::RegisterOptions(void) {
 	RegisterValue("-name",  &mapname);
 	RegisterValue("-water", &watername);
 
-	RegisterFlag ("-z",     &opt_center);
+	RegisterFlag ("-center", &opt_center);
 
 	RegisterValue("-dimX",  &opt_size_x);
 	RegisterValue("-dimY",  &opt_size_y);

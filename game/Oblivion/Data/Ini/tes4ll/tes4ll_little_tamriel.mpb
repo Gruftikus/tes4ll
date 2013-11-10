@@ -1,7 +1,7 @@
 [tes4ll]
 
 ParseModList -cd
-ImportMapFromModList -dimX=128 -dimY=128 -z
+ImportMapFromModList -dimX=128 -dimY=128 -center
 ;;ExportMap -depth=24 -filename="map.bmp"  ;;in case we want to check the heightmap
 
 ; ****************************
@@ -10,12 +10,10 @@ ImportMapFromModList -dimX=128 -dimY=128 -z
 
 SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\myworld"
 @makecolormap {
-	CreateMap -name=terraincolor -widthx=$(128*32*2) -widthy=$(128*32*2) -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
-	Tes4qlod -a -dimX=128 -dimY=128 -z -colormap=terraincolor -q=2
-	ExportMap -map=terraincolor -depth=24 -filename="color.bmp" -FlipY
+	CreateMap -name=terraincolor -widthx=$(128*32) -widthy=$(128*32) -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
+	Tes4qlod -a -dimX=128 -dimY=128 -z -colormap=terraincolor
+	ExportMapToDDS -map=terraincolor -format=dxt1 -filename="$_worldspace&Map.dds" -FlipY
 }
-
-exit
 
 @makewatermap {
 	CreateMap -name=watercolor -widthx=$(128*32) -widthy=$(128*32) -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
@@ -32,8 +30,10 @@ exit
 ; ****************************
 
 SelectAll
-@makenormalmap CreateNormalMap -name="_normalmap"
-@makenormalmap ExportMap -depth=24 -filename="$_worldspace$Map_n.bmp" -compress
+@makenormalmap {
+	CreateNormalMap -name="_normalmap"
+	ExportMapToDDS -format=dxt1 -filename="$_worldspace&Map_n.dds" -FlipY
+}
 
 
 ; ****************************
@@ -86,7 +86,7 @@ StencilPolygon
 
 SelectAll 
 
-ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -scale=0.01 -filename="Tamriel.nif"  ; -makeninode
+ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -scale=0.01 -filename="Tamriel.nif"  
 
 
 @end

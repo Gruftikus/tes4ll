@@ -11,6 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\libbsa\src\genericbsa.cpp" />
+    <ClCompile Include="..\libbsa\src\helpers.cpp" />
+    <ClCompile Include="..\libbsa\src\libbsa.cpp" />
+    <ClCompile Include="..\libbsa\src\tes3bsa.cpp" />
+    <ClCompile Include="..\libbsa\src\tes4bsa.cpp" />
     <ClCompile Include="..\lltool\externals\crunch\crnlib\crnlib.cpp" />
     <ClCompile Include="..\lltool\externals\crunch\crnlib\crn_arealist.cpp" />
     <ClCompile Include="..\lltool\externals\crunch\crnlib\crn_assert.cpp" />
@@ -95,6 +100,7 @@
     <ClCompile Include="..\lltool\externals\mtparser\MTParserLib\MTUnicodeANSIDefs.cpp" />
     <ClCompile Include="..\lltool\externals\resampler\resampler.cpp" />
     <ClCompile Include="..\lltool\externals\triangle\triangle.cc" />
+    <ClCompile Include="..\lltool\src\llactivatefractionofvertices.cpp" />
     <ClCompile Include="..\lltool\src\llactivatevisiblevertices.cpp" />
     <ClCompile Include="..\lltool\src\lladddiscontinuitygrid.cpp" />
     <ClCompile Include="..\lltool\src\lladddiscontinuityline.cpp" />
@@ -122,9 +128,11 @@
     <ClCompile Include="..\lltool\src\llexportmeshtoobj.cpp" />
     <ClCompile Include="..\lltool\src\llexportmeshtops.cpp" />
     <ClCompile Include="..\lltool\src\llexportmeshtoVRML.cpp" />
+    <ClCompile Include="..\lltool\src\llfileiterator.cpp" />
     <ClCompile Include="..\lltool\src\llfillcolormap.cpp" />
     <ClCompile Include="..\lltool\src\llfilter.cpp" />
     <ClCompile Include="..\lltool\src\llimportmap.cpp" />
+    <ClCompile Include="..\lltool\src\llimportmapfromdds.cpp" />
     <ClCompile Include="..\lltool\src\llinactivateallvertices.cpp" />
     <ClCompile Include="..\lltool\src\lllinelist.cpp" />
     <ClCompile Include="..\lltool\src\lllogger.cpp" />
@@ -132,6 +140,7 @@
     <ClCompile Include="..\lltool\src\llmap.cpp" />
     <ClCompile Include="..\lltool\src\llmaplist.cpp" />
     <ClCompile Include="..\lltool\src\llmapworker.cpp" />
+    <ClCompile Include="..\lltool\src\llmkdir.cpp" />
     <ClCompile Include="..\lltool\src\llpanorama.cpp" />
     <ClCompile Include="..\lltool\src\llpointlist.cpp" />
     <ClCompile Include="..\lltool\src\llpolygonlist.cpp" />
@@ -140,6 +149,8 @@
     <ClCompile Include="..\lltool\src\llreaddatafile.cpp" />
     <ClCompile Include="..\lltool\src\llreadpolygondatafile.cpp" />
     <ClCompile Include="..\lltool\src\llremoveinactivetriangles.cpp" />
+    <ClCompile Include="..\lltool\src\llremoveinactivevertices.cpp" />
+    <ClCompile Include="..\lltool\src\llremovetriangulation.cpp" />
     <ClCompile Include="..\lltool\src\llscalemap.cpp" />
     <ClCompile Include="..\lltool\src\llselectall.cpp" />
     <ClCompile Include="..\lltool\src\llselectrec.cpp" />
@@ -722,6 +733,13 @@
     <ClCompile Include="src\tes4qlod.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\libbsa\src\error.h" />
+    <ClInclude Include="..\libbsa\src\genericbsa.h" />
+    <ClInclude Include="..\libbsa\src\helpers.h" />
+    <ClInclude Include="..\libbsa\src\libbsa.h" />
+    <ClInclude Include="..\libbsa\src\streams.h" />
+    <ClInclude Include="..\libbsa\src\tes3bsa.h" />
+    <ClInclude Include="..\libbsa\src\tes4bsa.h" />
     <ClInclude Include="..\lltool\externals\crunch\crnlib\crn_arealist.h" />
     <ClInclude Include="..\lltool\externals\crunch\crnlib\crn_assert.h" />
     <ClInclude Include="..\lltool\externals\crunch\crnlib\crn_buffer_stream.h" />
@@ -841,6 +859,7 @@
     <ClInclude Include="..\lltool\externals\mtparser\MTParserLib\MTUnicodeANSIDefs.h" />
     <ClInclude Include="..\lltool\externals\resampler\resampler.h" />
     <ClInclude Include="..\lltool\externals\triangle\triangle.h" />
+    <ClInclude Include="..\lltool\include\llactivatefractionofvertices.h" />
     <ClInclude Include="..\lltool\include\llactivatevisiblevertices.h" />
     <ClInclude Include="..\lltool\include\lladddiscontinuitygrid.h" />
     <ClInclude Include="..\lltool\include\lladddiscontinuityline.h" />
@@ -869,9 +888,11 @@
     <ClInclude Include="..\lltool\include\llexportmeshtoobj.h" />
     <ClInclude Include="..\lltool\include\llexportmeshtops.h" />
     <ClInclude Include="..\lltool\include\llexportmeshtoVRML.h" />
+    <ClInclude Include="..\lltool\include\llfileiterator.h" />
     <ClInclude Include="..\lltool\include\llfillcolormap.h" />
     <ClInclude Include="..\lltool\include\llfilter.h" />
     <ClInclude Include="..\lltool\include\llimportmap.h" />
+    <ClInclude Include="..\lltool\include\llimportmapfromdds.h" />
     <ClInclude Include="..\lltool\include\llinactivateallvertices.h" />
     <ClInclude Include="..\lltool\include\lllinelist.h" />
     <ClInclude Include="..\lltool\include\lllogger.h" />
@@ -879,6 +900,7 @@
     <ClInclude Include="..\lltool\include\llmap.h" />
     <ClInclude Include="..\lltool\include\llmaplist.h" />
     <ClInclude Include="..\lltool\include\llmapworker.h" />
+    <ClInclude Include="..\lltool\include\llmkdir.h" />
     <ClInclude Include="..\lltool\include\llpanorama.h" />
     <ClInclude Include="..\lltool\include\llpointlist.h" />
     <ClInclude Include="..\lltool\include\llpolygonlist.h" />
@@ -887,6 +909,8 @@
     <ClInclude Include="..\lltool\include\llreaddatafile.h" />
     <ClInclude Include="..\lltool\include\llreadpolygondatafile.h" />
     <ClInclude Include="..\lltool\include\llremoveinactivetriangles.h" />
+    <ClInclude Include="..\lltool\include\llremoveinactivevertices.h" />
+    <ClInclude Include="..\lltool\include\llremovetriangulation.h" />
     <ClInclude Include="..\lltool\include\llscalemap.h" />
     <ClInclude Include="..\lltool\include\llselectall.h" />
     <ClInclude Include="..\lltool\include\llselectrec.h" />
@@ -1525,12 +1549,14 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;NIFLIB_STATIC_LINK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;NIFLIB_STATIC_LINK;LIBBSA_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <ExceptionHandling>Async</ExceptionHandling>
+      <AdditionalIncludeDirectories>..\boost;externals\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <Link>
       <TargetMachine>MachineX86</TargetMachine>
@@ -1542,6 +1568,7 @@
       <AdditionalDependencies>Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <StackReserveSize>10000000</StackReserveSize>
       <GenerateMapFile>true</GenerateMapFile>
+      <AdditionalLibraryDirectories>..\boost\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

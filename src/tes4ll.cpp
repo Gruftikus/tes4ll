@@ -10,6 +10,8 @@
 //#include <windowsx.h>
 //#include <d3d9.h>
 
+//boost: b2 runtime-link=static
+
 #define REAL double
 #include "../../lltool/externals/triangle/triangle.h"
 #include "../../lltool/include/llcreateworkers.h"
@@ -47,8 +49,7 @@ int main(int argc, char **argv) {
 
 	char *list_string = NULL;
 
-	_llUtils()->SetValue("_worldspace",    "Tamriel");
-
+	_llUtils()->SetValue("_worldspace", "Tamriel");
 
     //******************
     //read the arguments
