@@ -2190,6 +2190,9 @@
     <ClCompile Include="..\lltool\externals\crunch\crnlib\crn_timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\llbsaiterator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lltool\include\llsetpath.h">
@@ -4506,6 +4509,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\lltool\externals\crunch\crnlib\crn_winhdr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llbsaiterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

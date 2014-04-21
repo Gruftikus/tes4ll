@@ -44,16 +44,31 @@ SetFlag -name=tes4qlod_flag_D -value=""
 SetFlag -name=tes4qlod_flag_B -value="" 
 @c_none SetFlag -name=tes4qlod_flag_B -value="-B"
 
+
 @tes4qlod_cache {
-	FileIterator -directory="textures\\landscape" -pattern="*.dds" -recursive {
-		Echo -text="**** Converting $_filename to cache bitmap"
-		ImportMapFromDDS -filename=$_filename -even -name=test -replacemap
-		ScaleMap -sizeX=4 -sizeY=4 -map=test 
-		SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp"
-		SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\Oblivion" -num=1
-		MkDir -path=$newname -hasfilename
-		ExportMap -filename=$newname -map=test
+	FileIterator -pattern="*.bsa" {
+		BsaIterator -bsafile=$_filename -regex="textures\\\\landscape\\\\.*\\.dds" { 
+			ImportMapFromDDS -even -name=test -replacemap 
+			ScaleMap -sizeX=4 -sizeY=4 -map=test 
+			SetFlag -name=newname -value=$_bsafilename -replace=".dds" -with=".bmp"
+			SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\Oblivion" -num=1
+			MkDir -path=$newname -hasfilename
+			ExportMap -filename=$newname -map=test
+		}
 	}
+
+	{ 
+		FileIterator -directory="textures\\landscape" -pattern="*.dds" -recursive {
+			Echo -text="**** Converting $_filename to cache bitmap"
+			ImportMapFromDDS -filename=$_filename -even -name=test -replacemap
+			ScaleMap -sizeX=4 -sizeY=4 -map=test 
+			SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp"
+			SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\Oblivion" -num=1
+			MkDir -path=$newname -hasfilename
+			ExportMap -filename=$newname -map=test
+		}
+	}
+	
 }
 
 @tes4qlod {
@@ -352,7 +367,7 @@ GUIEnable -name=flagnm_compression
 ## The final button. Once the button is clicked, the flag "exec_tes4ll" is set for one single run of this section
 GUIButton -name=exec_tes4ll -text="Click me if you are ready" -vdist=30
 GUIEnable -name=exec_tes4ll
-@!makenormalmaps @!tes4qlod @!makemeshes @!writeout GUIDisable -name=exec_tes4ll
+@!makenormalmaps @!tes4qlod @!tes4qlod_cache @!makemeshes @!writeout GUIDisable -name=exec_tes4ll
 
 
 @exec_tes4ll @!overwritelods GUIMessageBox -title="Hint" -text="You have not selected the option to overwrite the original files. Do not forget to copy your files by hand to the appropriate place (or stop the process, and check the \"overwrite\" option)"

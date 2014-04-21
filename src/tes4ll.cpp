@@ -20,6 +20,7 @@
 #include "../include/llexportmeshtonif.h"
 #include "../include/llimportmapfrommodlist.h"
 #include "../include/tes4qlod.h"
+#include "../include/llbsaiterator.h"
 
 void usage(void) {
 
@@ -127,6 +128,7 @@ int main(int argc, char **argv) {
 	batch->RegisterWorker(new llExportMeshToNif());
 	batch->RegisterWorker(new llImportMapFromModlist());
 	batch->RegisterWorker(new TES4qLOD());
+	batch->RegisterWorker(new llBsaIterator());
 
 
 	//******************
