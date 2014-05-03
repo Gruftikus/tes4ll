@@ -71,10 +71,9 @@ In STEP 6, the triangles are written and (optionally) stitched together in trian
 
 Source code
 ===========
-The source code should be freely available from Github (https://github.com/Gruftikus/tes4ll.git). You can check out the repository and compile tes4ll from scratch. In order to do so, you also need the Landscape and Heightmap Editing Tool and Library (https://github.com/Gruftikus/lltool). Please follow the instructions there for all external packages.
+The source code should be freely available from Github (https://github.com/Gruftikus/tes4ll.git). You can check out the repository and compile tes4ll from scratch. Please follow the instructions on Github.
 
-For tes4ll the niflib library is required in addition. Make a directory "externals" in tes4ll. Download niflib, and unpack its source code to tes4ll/externals/niflib.
-
+tes4ll is based on the Landscape and Heightmap Editing Tool and Library (https://github.com/Gruftikus/lltool). 
 
 Version and changelog
 =====================
