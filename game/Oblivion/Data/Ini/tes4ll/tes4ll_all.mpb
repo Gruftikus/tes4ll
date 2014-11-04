@@ -202,10 +202,10 @@ SetFlag -name="_mindistance" -value=256
 SelectAll
 SetFlag -name="_mindistance" -value=128 
 
-ContourLine -x=4096 -y=4096 -z=0 -offsetx=0 -offsety=0             
+;ContourLine -x=4096 -y=4096 -z=0 -offsetx=0 -offsety=0             
 
-ContourLine -x=512 -y=512 -z=100 -offsetx=0 -offsety=0 -findmax                  
-ContourLine -x=512 -y=512 -z=-100 -offsetx=256 -offsety=256 -findmin   
+;ContourLine -x=512 -y=512 -z=100 -offsetx=0 -offsety=0 -findmax                  
+;ContourLine -x=512 -y=512 -z=-100 -offsetx=256 -offsety=256 -findmin   
          
 SetFlag -name="_mindistance" -value=256 ;;; CS uses 1/16th of a cell = 256
 ; ============================
@@ -234,6 +234,7 @@ MakeDerivatives -map="_heightmap_filtered" $use16bit
 ; ============================
 SelectAll
 
+;AlgConst
 AlgFirstOrder -add=0.2
 @!small_world AlgSecondOrder -add=0.5 
 @small_world AlgSecondOrder -add=1

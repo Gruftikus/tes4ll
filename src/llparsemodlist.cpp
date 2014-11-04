@@ -36,7 +36,7 @@ int llParseModList::Exec(void) {
 	//seek for game dir, if not yet set by user
 	if (!_llUtils()->IsEnabled("_gamedir")) {
 		if( RegOpenKeyEx(    HKEY_LOCAL_MACHINE, 
-			"SOFTWARE\\Bethesda Softworks\\Oblivion",0, 
+			"SOFTWARE\\Bethesda Softworks\\Oblivion", 0, 
 			KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
 				size1 = 1023;
 				RegQueryValueEx( keyHandle, "Installed Path", NULL, &Type, 

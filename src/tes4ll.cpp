@@ -156,5 +156,7 @@ int main(int argc, char **argv) {
 	_llUtils()->SetValue("_dds_tool",      "s3tc.exe");
 	_llUtils()->SetValue("_worldspace_id", "60");
 
+	_llUtils()->SetValue("_density_threshold", "95");
+
 	return batch->Loop();
 }
