@@ -16,6 +16,20 @@
     <ClCompile Include="..\libbsa\src\libbsa.cpp" />
     <ClCompile Include="..\libbsa\src\tes3bsa.cpp" />
     <ClCompile Include="..\libbsa\src\tes4bsa.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\ANN.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\bd_fix_rad_search.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\bd_pr_search.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\bd_search.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\bd_tree.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\brute.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\kd_dump.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\kd_fix_rad_search.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\kd_pr_search.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\kd_search.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\kd_split.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\kd_tree.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\kd_util.cpp" />
+    <ClCompile Include="..\lltool\externals\ann\src\perf.cpp" />
     <ClCompile Include="..\lltool\externals\crunch\crnlib\crnlib.cpp" />
     <ClCompile Include="..\lltool\externals\crunch\crnlib\crn_arealist.cpp" />
     <ClCompile Include="..\lltool\externals\crunch\crnlib\crn_assert.cpp" />
@@ -746,6 +760,18 @@
     <ClInclude Include="..\libbsa\src\streams.h" />
     <ClInclude Include="..\libbsa\src\tes3bsa.h" />
     <ClInclude Include="..\libbsa\src\tes4bsa.h" />
+    <ClInclude Include="..\lltool\externals\ann\include\ANN\ANN.h" />
+    <ClInclude Include="..\lltool\externals\ann\include\ANN\ANNperf.h" />
+    <ClInclude Include="..\lltool\externals\ann\include\ANN\ANNx.h" />
+    <ClInclude Include="..\lltool\externals\ann\src\bd_tree.h" />
+    <ClInclude Include="..\lltool\externals\ann\src\kd_fix_rad_search.h" />
+    <ClInclude Include="..\lltool\externals\ann\src\kd_pr_search.h" />
+    <ClInclude Include="..\lltool\externals\ann\src\kd_search.h" />
+    <ClInclude Include="..\lltool\externals\ann\src\kd_split.h" />
+    <ClInclude Include="..\lltool\externals\ann\src\kd_tree.h" />
+    <ClInclude Include="..\lltool\externals\ann\src\kd_util.h" />
+    <ClInclude Include="..\lltool\externals\ann\src\pr_queue.h" />
+    <ClInclude Include="..\lltool\externals\ann\src\pr_queue_k.h" />
     <ClInclude Include="..\lltool\externals\crunch\crnlib\crn_arealist.h" />
     <ClInclude Include="..\lltool\externals\crunch\crnlib\crn_assert.h" />
     <ClInclude Include="..\lltool\externals\crunch\crnlib\crn_atomics.h" />
@@ -1565,13 +1591,13 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;NIFLIB_STATIC_LINK;LIBBSA_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;NIFLIB_STATIC_LINK;LIBBSA_STATIC;DLL_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <ExceptionHandling>Async</ExceptionHandling>
-      <AdditionalIncludeDirectories>..\boost;externals\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\boost;..\lltool\externals\ann\include;externals\zlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
     </ClCompile>
     <Link>

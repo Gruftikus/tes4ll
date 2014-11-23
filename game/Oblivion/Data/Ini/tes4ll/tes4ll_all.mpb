@@ -125,6 +125,7 @@ SetHeight -min -z=$minheight -usegameunits
 
 @!overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\"
 @overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD"
+MkDir -path=$_install_dir
 
 SetFlag -name="opt_useshapes" -value=""
 @ultimate      SetFlag -name="opt_useshapes" -value="-useshapes"
@@ -136,8 +137,6 @@ SetFlag -name="opt_useshapes" -value=""
 ; With the console command "tdt" coordinates of critical points 
 ; can be obtained and added in this section:
 ; ============================
-
-
 @usedatafiles ReadDataFile -filename=ini\tes4ll\RumareCoastLine.dat
 @usedatafiles ReadDataFile -filename=ini\tes4ll\WeyeNorth_FortEmpire.dat
 @usedatafiles ReadDataFile -filename=ini\tes4ll\WeyeWaynet.dat
@@ -148,8 +147,6 @@ SetFlag -name="opt_useshapes" -value=""
 @usedatafiles ReadDataFile -filename=ini\tes4ll\FortUrasekToAleswell.dat
 
 @xulRollingHills_EV.esp @usedatafiles ReadDataFile -filename=ini\tes4ll\UL_RollingHills.dat
-
-
 ; ============================
 
 
@@ -186,26 +183,16 @@ SetFlag -name="_mindistance" -value=256
 ; Improve the coast line (optional)
 ; Comment the following lines, if the contour is not
 ; wanted.
-; The quality is much better if the minimum distance is reduced
-;
-; Syntax: ContourLine -x= -y= -z= -offsetx= -offsety 
-;         [-setmin] [-setmax]
-;         x,y are the grid pattern. If the contour line (at z)
-;         is bypassed, a linear interpolation is done to find (roughly)
-;         the contour point.
-;         setmin and setmax are optional flags which sets the vertices
-;         at the grid (x,y) in addition, for the lower and higher point, respectively.
-;         The offset(x,y) are the offset for the starting point
-;         Displaced offsets of the lower and upper contour lines
-;         produces a "zick-zack" line.
 ; ============================
 SelectAll
 SetFlag -name="_mindistance" -value=128 
 
-;ContourLine -x=4096 -y=4096 -z=0 -offsetx=0 -offsety=0             
-
-;ContourLine -x=512 -y=512 -z=100 -offsetx=0 -offsety=0 -findmax                  
-;ContourLine -x=512 -y=512 -z=-100 -offsetx=256 -offsety=256 -findmin   
+@contour {
+	@!contour_grid SetFlag -name="contour_grid" -value=4
+	ContourLine -x=4096 -y=4096 -z=0 -offsetx=0 -offsety=0             
+	ContourLine -x=512 -y=512 -z=100 -offsetx=0 -offsety=0 -findmax -minmaxgrid=$contour_grid          
+	ContourLine -x=512 -y=512 -z=-100 -offsetx=256 -offsety=256 -findmin -minmaxgrid=$contour_grid  
+}
          
 SetFlag -name="_mindistance" -value=256 ;;; CS uses 1/16th of a cell = 256
 ; ============================
@@ -216,9 +203,6 @@ SetFlag -name="_mindistance" -value=256 ;;; CS uses 1/16th of a cell = 256
 ; Step 5: 
 ; Smooth the heighmap
 ; Avoids that the random points are triggered by local fluctuations
-; Syntax: Filter -n=X
-; with X as the distance 
-; Computing time goes quadratically with X
 ; ============================
 @!small_world Filter -n=4    
 @small_world Filter -n=3
@@ -400,6 +384,22 @@ GUICheckBox -name=wallremover -text="Enable the cell grid boundary wall remover"
 GUIEnable -name=wallremover 
 @!makemeshes GUIDisable -name=wallremover 
 
+## A checkbox for a basic question:
+GUICheckBox -name=contour -text="Enable the contour algorithm for coasts" -help="Enhances the coast line. Highly recommended" -select -width=0.30
+GUIEnable -name=contour 
+@!makemeshes GUIDisable -name=contour 
+## Add a drop down menu, first the parent:
+GUIDropDown -name=contour_grid_s -help="Select your resolution"  -width=0.70 -sameline
+## and now the items:
+GUIDropDownItem -parent=contour_grid_s -name=c3 -text="Coarse grid" 
+GUIDropDownItem -parent=contour_grid_s -name=c2 -text="Normal grid" -select
+GUIDropDownItem -parent=contour_grid_s -name=c1 -text="Fine grid" 
+GUIEnable -name=contour_grid_s
+@!makemeshes GUIDisable -name=contour_grid_s
+@c1 SetFlag -name=contour_grid -value="1"
+@c2 SetFlag -name=contour_grid -value="4"
+@c3 SetFlag -name=contour_grid -value="16"
+
 ##
 GUICheckBox -name=usedatafiles -text="Use Tamriel data files" -help="Use some hand-placed vertex points" -select
 GUIEnable -name=usedatafiles 
@@ -413,6 +413,8 @@ GUIEnable -name=usepanorama
 @!_worldspace=Tamriel GUIDisable -name=usepanorama -unselect
 @!_worldspace GUIEnable -name=usepanorama -select
 @!makemeshes GUIDisable -name=usepanorama 
+
+GUITextBox -text="Total resolution (number of vertex points per quad)" -name=tes4ll_text1 -vdist=10
 
 ## Add a drop down menu, first the parent:
 GUIDropDown -name=flag_res -vdist=5 -help="Select your resolution"

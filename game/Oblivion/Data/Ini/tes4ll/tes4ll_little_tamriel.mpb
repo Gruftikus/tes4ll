@@ -1,25 +1,39 @@
 [tes4ll]
 
 ParseModList -cd
-ImportMapFromModList -dimX=128 -dimY=128 -center
+ImportMapFromModList
 ;;ExportMap -depth=24 -filename="map.bmp"  ;;in case we want to check the heightmap
 
 ; ****************************
 ; Make color maps
 ; ****************************
 
+SetFlag -name="width_x"  -value=$($_x2-$_x1)
+SetFlag -name="width_y"  -value=$($_y2-$_y1)
+SetFlag -name="x_larger" -value=$($width_x>$width_y) -zerosuppression
+
+@x_larger {
+	SetFlag -name="width_y" -value=$width_x
+}
+@!x_larger {
+	SetFlag -name="width_x" -value=$width_y
+}
+
+
 SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\myworld"
 @makecolormap {
-	CreateMap -name=terraincolor -widthx=$(128*32) -widthy=$(128*32) -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
-	Tes4qlod -a -dimX=128 -dimY=128 -z -colormap=terraincolor
+	CreateMap -name=terraincolor -widthx=$($width_x/128) -widthy=$($width_y/128) -x1=$_x1 -y1=$_y1 -x2=$($_x1+$width_x) -y2=$($_y1+$width_y) -zscale=1 -rgb -even
+	Tes4qlod -a -z -colormap=terraincolor
+	ScaleMap -map=terraincolor -sizeX=4096 -sizeY=4096 
 	ExportMapToDDS -map=terraincolor -format=dxt1 -filename="$_worldspace&Map.dds" -FlipY
 }
 
 @makewatermap {
-	CreateMap -name=watercolor -widthx=$(128*32) -widthy=$(128*32) -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
+	CreateMap -name=watercolor -widthx=$($width_x/128) -widthy=$($width_y/128) -x1=$_x1 -y1=$_y1 -x2=$($_x1+$width_x) -y2=$($_y1+$width_y) -zscale=1 -rgb -even
 	CreateAlgCollection -name=blue
 	AlgLinear -alg=blue -zmin=-10000 -zmax=2000 -zminval=0 -zmaxval=1
 	FillColorMap -map=watercolor  -algblue=blue
+	ScaleMap -map=watercolor -sizeX=4096 -sizeY=4096 
 	ExportMapToDDS -filename="water.dds" -map="watercolor" -format=dxt1
 	ExportMap -depth=24 -filename="water.bmp" -map="watercolor" 
 }
@@ -40,13 +54,14 @@ SelectAll
 ; Make meshes 
 ; ****************************
 
-;;ExportMap -depth=24 -map="_watermap" -filename="$_worldspace&Water.bmp"
-SetGrid -x=4096 -y=4096 -map="_watermap" 
-AddDiscontinuityGrid -x=4096 -y=4096 -map="_watermap" 
-MakeTriangulation -map="_watermap" 
-StencilPolygon -map=_watermap
-ExportMeshToNif -useshapes -map="_watermap" -makeninode  -scale=0.01 -texname="textures\myworld\Water.dds" 
-
+@makewatermap {
+	;;ExportMap -depth=24 -map="_watermap" -filename="$_worldspace&Water.bmp"
+	SetGrid -x=4096 -y=4096 -map="_watermap" 
+	AddDiscontinuityGrid -x=4096 -y=4096 -map="_watermap" 
+	MakeTriangulation -map="_watermap" 
+	StencilPolygon -map=_watermap
+	ExportMeshToNif -useshapes -map="_watermap" -makeninode  -scale=0.01 -texname="textures\myworld\Water.dds" 
+}
 
 SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\myworld"
 
@@ -86,7 +101,7 @@ StencilPolygon
 
 SelectAll 
 
-ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -scale=0.01 -filename="Tamriel.nif"  
+ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -scale=0.01 -filename="Tamriel.nif" -texmap=terraincolor
 
 
 @end
@@ -97,13 +112,13 @@ ExportMeshToNif -useshapes -texname="textures\myworld\TamrielMap.dds" -scale=0.0
 
 GUIRequestVersion -value="1.22"
 
-@!tes4ll_doonce GUITab -help="Options for interior LOD generation" -text="Interior LODs" -name=tes4ll_gui
+@!tes4ll_doonce GUITab -help="Options for mesh generation" -text="Tamriel mesh" -name=tes4ll_gui
 
-@!tes4ll_doonce GUIConsoleEcho -text="Tes4ll batch file for generation of Immersive Interiors LODs loaded"
+@!tes4ll_doonce GUIConsoleEcho -text="Tes4ll batch file loaded"
 @!tes4ll_doonce GUIConsoleEcho -text="***** This will NOT generate the landscape LODs of exterior cells *****"
 SetFlag -name=tes4ll_doonce -hidden
 
-SetOption -noskipinfo ;avoid nasty skip messenges in loop mode
+SetOption -noskipinfo ;avoid nasty skip messages in loop mode
 
 
 ; ****************************
