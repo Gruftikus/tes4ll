@@ -18,10 +18,9 @@
 
 SetFlag -name="_quad_levels" -value=2
 
-@c_nconvert SetFlag -name="_dds_tool" -value="nconvert.exe -out dds"
-@c_dxt1     SetFlag -name="_dds_tool" -value="nvdxt -dxt1c -file"
-@c_8888     SetFlag -name="_dds_tool" -value="nvdxt -u8888 -file"
-@c_none     SetFlag -name="_dds_tool" -value=""
+SetFlag -name="dds_format" -value="DXT1"
+@c_dxt3 SetFlag -name="dds_format" -value="DXT3"
+@c_dxt5 SetFlag -name="dds_format" -value="DXT5"
 
 @!minheight SetFlag -name="minheight" -value="-2048"
 
@@ -31,21 +30,16 @@ ParseModList -cd    ;reads mod list from Plugins.txt (or from -l option) and set
 ; Make color maps
 ; ****************************
 
-@overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
 SetFlag -name=tes4qlod_flag_a -value="" 
 @option_blending SetFlag -name=tes4qlod_flag_a -value="-a"
-SetFlag -name=tes4qlod_flag_f -value=""
-@option_map SetFlag -name=tes4qlod_flag_f -value="-f"
-SetFlag -name=tes4qlod_flag_q -value="-q=1"
-@qlod2 SetFlag -name=tes4qlod_flag_q -value="-q=2"
-@qlod4 SetFlag -name=tes4qlod_flag_q -value="-q=4"
-SetFlag -name=tes4qlod_flag_D -value="" 
-@!overwritelods SetFlag -name=tes4qlod_flag_D -value="-D"
-SetFlag -name=tes4qlod_flag_B -value="" 
-@c_none SetFlag -name=tes4qlod_flag_B -value="-B"
+
+SetFlag -name=tes4qlod_flag_q -value="1"
+@qlod2 SetFlag -name=tes4qlod_flag_q -value="2"
+@qlod4 SetFlag -name=tes4qlod_flag_q -value="4"
 
 
 @tes4qlod_cache {
+	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
 	FileIterator -pattern="*.bsa" {
 		BsaIterator -bsafile=$_filename -regex="textures\\\\landscape\\\\.*\\.dds" { 
 			ImportMapFromDDS -even -name=test -replacemap 
@@ -68,43 +62,56 @@ SetFlag -name=tes4qlod_flag_B -value=""
 			ExportMap -filename=$newname -map=test
 		}
 	}
-	
 }
-
-@tes4qlod {
-	@option_silent Tes4qlod $tes4qlod_flag_q $tes4qlod_flag_f $tes4qlod_flag_a $tes4qlod_flag_D $tes4qlod_flag_B -silent
-	@!option_silent Tes4qlod $tes4qlod_flag_q $tes4qlod_flag_f $tes4qlod_flag_a $tes4qlod_flag_D $tes4qlod_flag_B
-}
-
-
-@!makemeshes @!makenormalmaps @!writeout Exit
-
-; ****************************
-; Generate heightmap
-; ****************************
 
 ImportMapFromModList
 SelectAll
-SetHeight -min -z=$minheight -usegameunits
+
+@tes4qlod {
+	SetFlag -name="option_silent_opt" -value=""
+	@option_silent SetFlag -name="option_silent_opt" -value="-silent"
+	SetFlag -name="width_x" -value=$(($_x2-$_x1)*$tes4qlod_flag_q/128)
+	SetFlag -name="width_y" -value=$(($_y2-$_y1)*$tes4qlod_flag_q/128)
+	CreateMap -name=terraincolor -widthx=$width_x -widthy=$width_y -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
+	Tes4qlod -colormap=terraincolor -q=$tes4qlod_flag_q $tes4qlod_flag_a $option_silent_opt
+	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	@option_map ExportMap -map=terraincolor -filename="$_worldspace&Map.bmp" -FlipY
+	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
+	SetFlag -name=_flag_format -value="02.0" 
+	QuadIterator -level=0 {		
+		@!c_none ExportMapToDDS -map=terraincolor -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32.dds" -format=$dds_format
+		@c_none  ExportMap      -map=terraincolor -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32.bmp" 
+	}
+}
 
 ; ****************************
 ; Make normal maps
 ; ****************************
 
 @makenormalmaps {
+	SelectAll
 	CopyMap -name="_heightmap_tmp"
 	@2048  ScaleMap -map="_heightmap_tmp" -factor=2
 	@512   ScaleMap -map="_heightmap_tmp" -factor=0.5
 	@!lodshadows CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -boost=$z_val
 	@lodshadows  CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -shadows -northboost=$z_val
-	@!overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	@option_map ExportMap -map=_normalmap -filename="$_worldspace&Normalmap.bmp" -FlipY
 	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
+	SetFlag -name=_flag_format -value="02.0" 
 	QuadIterator -level=0 {
-		SetFlag -name=_flag_format -value="02.0" 
-		ExportMap -depth=24 -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32.bmp" -compress
+		@!c_none ExportMapToDDS -map=_normalmap -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32_fn.dds" -format=$dds_format
+		@c_none  ExportMap      -map=_normalmap -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32_fn.bmp" 
 	}
 }
 
+@!makemeshes @!writeout Exit
+
+; ****************************
+; Generate heightmap
+; ****************************
+
+SetHeight -min -z=$minheight -usegameunits
 
 ; ****************************
 ; Generate optional heightmap
@@ -337,12 +344,10 @@ GUICheckBox -name=writeout -text="Write heightmap as a 32-bit bmp file" -vdist=5
 
 GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
 
-GUIDropDown -name=flagnm_compression -vdist=5 -help="dds compression tool. The tool must be present in the Data directory."
-GUIDropDownItem -parent=flagnm_compression -name=c_s3tc -text="Use S3TC.exe for DDS generation" -select
-GUIDropDownItem -parent=flagnm_compression -name=c_nconvert -text="Use nconvert.exe for DDS generation" 
-GUIDropDownItem -parent=flagnm_compression -name=c_dxt1 -text="Use nvdxt with DDS DXT1 compression" 
-GUIDropDownItem -parent=flagnm_compression -name=c_8888 -text="Use nvdxt with uncompressed 8:8:8:8 DDS" 
-
+GUIDropDown -name=flagnm_compression -vdist=5 -help="dds compression format."
+GUIDropDownItem -parent=flagnm_compression -name=c_dxt1 -text="Use DDS DXT1 compression" 
+GUIDropDownItem -parent=flagnm_compression -name=c_dxt3 -text="Use DDS DXT3 compression" 
+GUIDropDownItem -parent=flagnm_compression -name=c_dxt5 -text="Use DDS DXT5 compression" -select
 GUIDropDownItem -parent=flagnm_compression -name=c_none -text="<None> (needs other tool to convert bmp to dds)" 
 GUIEnable -name=flagnm_compression
 @!makenormalmaps @!tes4qlod GUIDisable -name=flagnm_compression

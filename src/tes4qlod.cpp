@@ -1139,6 +1139,7 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 					colormap->SetRed  (posx, posy, vimage[y+opt_q*i][x+opt_q*j][2]);
 					colormap->SetGreen(posx, posy, vimage[y+opt_q*i][x+opt_q*j][1]);
 					colormap->SetBlue (posx, posy, vimage[y+opt_q*i][x+opt_q*j][0]);
+					colormap->SetAlpha(posx, posy, 255);
 				}
 			}
 		}
