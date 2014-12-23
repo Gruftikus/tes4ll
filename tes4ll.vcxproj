@@ -154,6 +154,7 @@
     <ClCompile Include="..\lltool\src\llimportmapfromdds.cpp" />
     <ClCompile Include="..\lltool\src\llinactivateallvertices.cpp" />
     <ClCompile Include="..\lltool\src\lllinelist.cpp" />
+    <ClCompile Include="..\lltool\src\lllogfile.cpp" />
     <ClCompile Include="..\lltool\src\lllogger.cpp" />
     <ClCompile Include="..\lltool\src\llmakederivatives.cpp" />
     <ClCompile Include="..\lltool\src\llmap.cpp" />
@@ -933,6 +934,7 @@
     <ClInclude Include="..\lltool\include\llimportmapfromdds.h" />
     <ClInclude Include="..\lltool\include\llinactivateallvertices.h" />
     <ClInclude Include="..\lltool\include\lllinelist.h" />
+    <ClInclude Include="..\lltool\include\lllogfile.h" />
     <ClInclude Include="..\lltool\include\lllogger.h" />
     <ClInclude Include="..\lltool\include\llmakederivatives.h" />
     <ClInclude Include="..\lltool\include\llmap.h" />

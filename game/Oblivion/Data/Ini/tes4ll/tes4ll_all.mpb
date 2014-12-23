@@ -1,4 +1,5 @@
 [tes4ll]
+@logfile LogFile -filename=$logfile
 
 ; ============================
 ; Optional pedestal walls
@@ -16,6 +17,8 @@
 ; SetFlag -name="use16bit" -value="-use16bit"
 ; ============================
 
+ParseModList -cd    ;reads mod list from Plugins.txt (or from -l option) and set the flags
+
 SetFlag -name="_quad_levels" -value=2
 
 SetFlag -name="dds_format" -value="DXT1"
@@ -24,19 +27,9 @@ SetFlag -name="dds_format" -value="DXT1"
 
 @!minheight SetFlag -name="minheight" -value="-2048"
 
-ParseModList -cd    ;reads mod list from Plugins.txt (or from -l option) and set the flags
-
 ; ****************************
 ; Make color maps
 ; ****************************
-
-SetFlag -name=tes4qlod_flag_a -value="" 
-@option_blending SetFlag -name=tes4qlod_flag_a -value="-a"
-
-SetFlag -name=tes4qlod_flag_q -value="1"
-@qlod2 SetFlag -name=tes4qlod_flag_q -value="2"
-@qlod4 SetFlag -name=tes4qlod_flag_q -value="4"
-
 
 @tes4qlod_cache {
 	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
@@ -63,6 +56,15 @@ SetFlag -name=tes4qlod_flag_q -value="1"
 		}
 	}
 }
+
+@!makemeshes @!writeout @!tes4qlod @!makenormalmaps Exit
+
+SetFlag -name=tes4qlod_flag_a -value="" 
+@option_blending SetFlag -name=tes4qlod_flag_a -value="-a"
+
+SetFlag -name=tes4qlod_flag_q -value="1"
+@qlod2 SetFlag -name=tes4qlod_flag_q -value="2"
+@qlod4 SetFlag -name=tes4qlod_flag_q -value="4"
 
 ImportMapFromModList
 SelectAll
@@ -105,14 +107,6 @@ SelectAll
 	}
 }
 
-@!makemeshes @!writeout Exit
-
-; ****************************
-; Generate heightmap
-; ****************************
-
-SetHeight -min -z=$minheight -usegameunits
-
 ; ****************************
 ; Generate optional heightmap
 ; ****************************
@@ -123,12 +117,13 @@ SetHeight -min -z=$minheight -usegameunits
 	ExportMap -depth=32 -filename="$_worldspace.bmp" 
 }
 
-
 ; ****************************
 ; Make meshes 
 ; ****************************
 
 @!makemeshes Exit
+
+SetHeight -min -z=$minheight -usegameunits
 
 @!overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\"
 @overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD"
