@@ -7,9 +7,7 @@ Requirements
 ============
 None.
 
-But this is not true: 
-
-* If you want to use a different dds tool (by default an internal dds converter is used), you have to download such a tool. E.g. nconvert: http://www.xnview.com/de/nconvert.html or nvdxt: http://developer.nvidia.com/content/legacy-texture-tools
+But this is not true:
 
 * If you need a GUI, use MPGUI (http://oblivion.nexusmods.com/mods/41447).
 
@@ -18,7 +16,7 @@ Installation
 ============
 Unpack the tes4ll 7z-archive and move the content into the data directory of Oblivion. When asked, merge the ini-directory of tes4ll into your ini.
 
-After this procedure you should have one executable in your Oblivion data directory (tes4ll.exe), several windows bat-files (tes4ll_*.bat), and the files which came with TES4qLOD (see Readme-TES4qLOD.rtf)
+After this procedure you should have one executable in your Oblivion data directory (tes4ll.exe), several windows bat-files (*.bat), and the bitmap cache files which came with TES4qLOD
 
 
 Uninstallation
@@ -40,19 +38,21 @@ At the moment, 3 versions are supported:
 
 This overwrites your LOD files (hey, did you made a backup?)
 
-The generation can take some time (10-20 minutes). In particular, after calling the Delaunay Triangulation part it seems that the program does not continue. Please have some patience.
+The generation can take some time. Please have some patience.
 
-2. Tes4ll is compatible to my MPGUI. In order to use the GUI, you first must install MPGUI. After installation, you can either double-click on one of the *.mpb files in ini\tes4ll, or start MPGUI and open one of the files. With MPGUI you can save you complete configuration of you want. For details of operation, please open the help documents of MPGUI.
+2. Tes4ll is compatible to MPGUI. In order to use the GUI, you first must install MPGUI. After installation, you can either double-click on one of the *.mpb files in ini\tes4ll, or start MPGUI and open one of the files. With MPGUI you can save you complete configuration of you want. For details of operation, please open the help documents of MPGUI.
 
 
 Normalmaps
 ==========
-Tes4ll can also produce normalmaps. Use tes4ll_normalmaps.bat for this purpose. Change the "1.0" in z_val=1.0 to 2-0 or 4.0 if you want to have more contrast. Add "lodshadows" in the flag list, if you would like to have the "terrain shadows" (see http://oblivion.nexusmods.com/mods/41243).
+Tes4ll can also produce normalmaps. Use tes4ll_normalmaps.bat for this purpose. Change the "1.0" in z_val=1.0 to 2-0 or 4.0 if you want to have more contrast. Add "lodshadows" in the flag list in tes4ll_normalmaps.bat, if you would like to have the "terrain shadows" (see http://oblivion.nexusmods.com/mods/41243).
 
 
 TES4qLOD
 ========
-In order to enable the optional call of tes4qlod, add the flags "tes4qlod,qlod1,option_blending" to the list of flags (the argument list after the '-f') in one of the windows bat-files mentioned above. 
+TES4qLOD uses some 4x4 bitmaps ("cache") which are located in Data\tes4qlod_tex. There are already many textures included for Vanilla and a lot of landscape mods. It is possible to re-generate the entire cache with "tes4ll_tes4qlod_cache.bat". Don't be surprised, the output in the shell is quite long.
+
+In order to enable the optional call of tes4qlod, add the flags "tes4qlod qlod1 option_blending" to the list of flags in one of the windows bat-files mentioned above. 
 
 You can also use tes4ll_tes4qlod.bat. This bat-file produces only the color maps in 1024x1024 resolution. If you want 2048x2048 or 4096x4096, change "qlod1" to "qlod2" or "qlod4", respectively.
 

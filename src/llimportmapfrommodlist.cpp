@@ -73,8 +73,11 @@ int llImportMapFromModlist::Exec(void) {
 	float x2 = (TES4qLOD::max_x + 1)*(*_llUtils()->GetValueF("_cellsize_x"));
 	float y2 = (TES4qLOD::max_y + 1)*(*_llUtils()->GetValueF("_cellsize_y"));
 
-	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32+1, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32+1);
+	float defaultheight = 0;
+	if (_llUtils()->GetValue("_defaultheight")) defaultheight = *_llUtils()->GetValueF("_defaultheight");
+	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32+1, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32+1, 0, defaultheight);
 	heightmap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
+	
 	llMap *watermap = new llMap(TES4qLOD::max_x - TES4qLOD::min_x + 1, TES4qLOD::max_y - TES4qLOD::min_y + 1);
 	watermap->SetEven();
 	watermap->SetCoordSystem(x1, y1, x2, y2, 1.0f);

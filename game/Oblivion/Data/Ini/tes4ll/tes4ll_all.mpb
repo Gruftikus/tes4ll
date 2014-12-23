@@ -46,7 +46,6 @@ SetFlag -name="dds_format" -value="DXT1"
 
 	{ 
 		FileIterator -directory="textures\\landscape" -pattern="*.dds" -recursive {
-			Echo -text="**** Converting $_filename to cache bitmap"
 			ImportMapFromDDS -filename=$_filename -even -name=test -replacemap
 			ScaleMap -sizeX=4 -sizeY=4 -map=test 
 			SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp"

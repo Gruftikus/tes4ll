@@ -43,14 +43,28 @@ int main(int argc, char **argv) {
 	llUtils    *utils = _llUtils();
 	llCommands *batch = new llCommands();
 	
+	//Oblivion std-values:
+	_llUtils()->SetValue("_mindistance", "256");
+	_llUtils()->SetValue("_cellsize_x",  "4096");
+	_llUtils()->SetValue("_cellsize_y",  "4096");
+
+	_llUtils()->SetValue("_quadsize_x",  "131072");
+	_llUtils()->SetValue("_quadsize_y",  "131072");
+	_llUtils()->SetValue("_quad_levels", "1");
+
+	_llUtils()->SetValue("_dds_tool",      "s3tc.exe");
+	_llUtils()->SetValue("_worldspace_id", "60");
+	_llUtils()->SetValue("_worldspace",    "Tamriel");
+
+	_llUtils()->SetValue("_density_threshold", "95");
+
+
 	std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@github" << std::endl;
-	std::cout << "V5.01, xx.xx.2013" << std::endl;
+	std::cout << "V4.99, 23.12.2014" << std::endl;
     std::cout << "***********************" << std::endl;
 
 	char *list_string = NULL;
-
-	_llUtils()->SetValue("_worldspace", "Tamriel");
 
     //******************
     //read the arguments
@@ -90,16 +104,16 @@ int main(int argc, char **argv) {
 				strcpy_s(my_flag_list,strlen(ptr)+1,ptr);
 				ptr = strtok_int(NULL, ',', &saveptr1);
 				utils->AddFlag(my_flag_list);
-				mesg->WriteNextLine(-LOG_INFO,"[Opt -f] Flag: %s",my_flag_list);
+				mesg->WriteNextLine(-LOG_INFO, "Flag: %s", my_flag_list);
 			}
 			i++;
 		} else if (strcmp(argv[i],"-l")==0) {
 			list_string = argv[i+1];
-			mesg->WriteNextLine(-LOG_INFO, "[Opt -l] Mod list: %s", list_string); 
+			mesg->WriteNextLine(-LOG_INFO, "Mod list: %s", list_string); 
 			i++;
 		} else if (strcmp(argv[i],"-w")==0) {
 			utils->SetValue("_worldspace", argv[i+1]);
-			mesg->WriteNextLine(-LOG_INFO, "[Opt -w] Worldspace: %s", utils->GetValue("_worldspace"));
+			mesg->WriteNextLine(-LOG_INFO, "Worldspace: %s", utils->GetValue("_worldspace"));
 		} else if (argv[i][0] != '[') {
 			char *my_flag_list = new char[strlen(argv[i])+2];
 			strcpy_s(my_flag_list, strlen(argv[i])+1, argv[i]);
@@ -111,7 +125,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (batchname) 
-		mesg->WriteNextLine(-LOG_INFO, "[Opt] Batchfile: %s", batchname); 
+		mesg->WriteNextLine(-LOG_INFO, "Batchfile: %s", batchname); 
 	else
 		mesg->WriteNextLine(-LOG_INFO, "No batchfile, will read from stdin (type @end for compilation)"); 
 
@@ -143,20 +157,6 @@ int main(int argc, char **argv) {
 		batch->ReadCache();
 		batch->CompileScript(0);
 	}
-
-	//Oblivion std-values:
-	_llUtils()->SetValue("_mindistance", "256");
-	_llUtils()->SetValue("_cellsize_x",  "4096");
-	_llUtils()->SetValue("_cellsize_y",  "4096");
-
-	_llUtils()->SetValue("_quadsize_x",  "131072");
-	_llUtils()->SetValue("_quadsize_y",  "131072");
-	_llUtils()->SetValue("_quad_levels", "1");
-
-	_llUtils()->SetValue("_dds_tool",      "s3tc.exe");
-	_llUtils()->SetValue("_worldspace_id", "60");
-
-	_llUtils()->SetValue("_density_threshold", "95");
 
 	return batch->Loop();
 }
