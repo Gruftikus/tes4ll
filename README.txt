@@ -137,6 +137,10 @@ Version 4.10 (29 Dec 2012):
               of 5-10. Added a remover for hidden triangles.
               
 
+
+Version 5.00 (27 Dec 2014): 
+              Complete rewrite
+
 Literature
 ==========
 * http://en.wikipedia.org/wiki/Monte_Carlo_method
@@ -159,6 +163,10 @@ This program uses the following 3rd party source code:
 * bmp file reader: written by P. Pourke
 * Triangle: by J. R. Shewchuk (see reference above)
 * TES4qLOD by Lightwave (taken from http://projectmanager.f2s.com/morrowind/TES4qLOD.html)
+* An extensible math expression parser with plug-ins (MTParser) by Mathieu Jacques
+* imageresampler, a C++ class for separable filtering 2D image resampling by Rich Geldreich.
+* crunch/crnlib, for dds file generation.
+* ANN, Approximate Nearest Neighbor Searching by David M. Mount and Sunil Arya
 
 License
 =======
