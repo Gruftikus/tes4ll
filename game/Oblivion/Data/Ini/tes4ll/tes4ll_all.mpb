@@ -15,6 +15,7 @@
 ; enable this only if the tes4ll task exceeds 3GB 
 ; and you have a crash
 ; SetFlag -name="use16bit" -value="-use16bit"
+@use16bitopt SetFlag -name="use16bit" -value="-use16bit"
 ; ============================
 
 ParseModList -cd    ;reads mod list from Plugins.txt (or from -l option) and set the flags
@@ -66,6 +67,9 @@ SetFlag -name=tes4qlod_flag_q -value="1"
 @qlod4 SetFlag -name=tes4qlod_flag_q -value="4"
 
 ImportMapFromModList
+SetFlag -name="large_ws" -value=$($_nquads>100) -zerosuppression
+@large_ws SetFlag -name="use16bit" -value="-use16bit"
+
 SelectAll
 
 @tes4qlod {
@@ -80,8 +84,8 @@ SelectAll
 	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
 	SetFlag -name=_flag_format -value="02.0" 
 	QuadIterator -level=0 {		
-		@!c_none ExportMapToDDS -map=terraincolor -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32.dds" -format=$dds_format
-		@c_none  ExportMap      -map=terraincolor -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32.bmp" 
+		@!c_none ExportMapToDDS -map=terraincolor -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32.dds" -format=$dds_format
+		@c_none  ExportMap      -map=terraincolor -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32.bmp" 
 	}
 }
 
@@ -101,8 +105,8 @@ SelectAll
 	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
 	SetFlag -name=_flag_format -value="02.0" 
 	QuadIterator -level=0 {
-		@!c_none ExportMapToDDS -map=_normalmap -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32_fn.dds" -format=$dds_format
-		@c_none  ExportMap      -map=_normalmap -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32_fn.bmp" 
+		@!c_none ExportMapToDDS -map=_normalmap -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32_fn.dds" -format=$dds_format
+		@c_none  ExportMap      -map=_normalmap -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32_fn.bmp" 
 	}
 }
 
@@ -286,7 +290,7 @@ SplitAtGrid -x=4096 -y=4096
 SetFlag -name=_flag_format -value="02.0" 
 
 QuadIterator -level=0 {
-	ExportMeshToNif -filename="$_worldspace_id.$($_quad_x * 32).$(32 * $_quad_y).32.nif" $opt_useshapes $createpedestals
+	ExportMeshToNif -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32.nif" $opt_useshapes $createpedestals
 }
 
 ; ============================
@@ -327,9 +331,9 @@ GUICheckBox -name=overwritelods -text="Overwrite the original files (please make
 GUIEnable -name=overwritelods 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=overwritelods 
 
-GUICheckBox -name=use16bit -text="Use 16 bit derivative matrices" -help="Only slightly more unprecise, but saves 2x memory. Use this for large worlds like Onras heightmaps of Tamriel"
-GUIEnable -name=use16bit 
-@!makemeshes GUIDisable -name=use16bit 
+GUICheckBox -name=use16bitopt -text="Use 16 bit derivative matrices" -help="Only slightly more unprecise, but saves 2x memory. Use this for large worlds like Onras heightmaps of Tamriel"
+GUIEnable -name=use16bitopt 
+@!makemeshes GUIDisable -name=use16bitopt
 
 GUITextBox -text="Minimum height" -name=min_height_intro -width=0.30 -vdist=10 
 GUITextBox -text="-2048" -name=minheight -input -sameline -width=0.70 -help="Set a mimimum value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."

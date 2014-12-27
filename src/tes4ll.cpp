@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 	_llUtils()->SetValue("_quad_levels", "1");
 
 	_llUtils()->SetValue("_dds_tool",      "s3tc.exe");
-	_llUtils()->SetValue("_worldspace_id", "60");
+	_llUtils()->SetValue("_worldspaceid",  "60");
 	_llUtils()->SetValue("_worldspace",    "Tamriel");
 
 	_llUtils()->SetValue("_density_threshold", "95");
@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
 
 	std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@github" << std::endl;
-	std::cout << "V4.99, 23.12.2014" << std::endl;
+	std::cout << "V5.00, 27.12.2014" << std::endl;
     std::cout << "***********************" << std::endl;
 
 	char *list_string = NULL;
