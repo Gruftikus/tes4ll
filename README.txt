@@ -136,8 +136,6 @@ Version 4.10 (29 Dec 2012):
               Improved the speed of the vertex placement by a factor
               of 5-10. Added a remover for hidden triangles.
               
-
-
 Version 5.00 (27 Dec 2014): 
               Complete rewrite
 
