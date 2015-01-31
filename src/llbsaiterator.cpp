@@ -49,7 +49,7 @@ int llBsaIterator::Exec(void) {
 			sprintf(path, "%s\\%s", directory, regexp);
 		else
 			sprintf(path, "%s", regexp);
-		std::cout << path << std::endl;
+		//std::cout << path << std::endl;
 		ret = bsa_get_assets(bh, path, &assetPaths, &numAssets);
 		if (ret != LIBBSA_OK){
 			_llLogger()->WriteNextLine(-LOG_ERROR, "bsa_get_assets(...) failed! Return code: %i", ret);
@@ -70,9 +70,10 @@ int llBsaIterator::Exec(void) {
 	uint8_t* data;
 	size_t   size;
 	uint32_t ret = bsa_extract_asset_to_memory (bh, assetPaths[position], &data, &size);
-	_llUtils()->SetValue("_bsafilename", assetPaths[position]);
-	//std::cout << assetPaths[position] << std::endl;
-
+	_llUtils()->DeleteValue("_bsafilename");
+	_llUtils()->SetValue("_bsafilename", _llUtils()->NewString(assetPaths[position]));
+	//_llLogger()->WriteNextLine(-LOG_INFO, "asset: %s", assetPaths[position]);
+	
 	if (ret != LIBBSA_OK) {
 		_llLogger()->WriteNextLine(-LOG_ERROR, "bsa_extract_asset_to_memory(...) failed! Asset: %s, return code: %i", assetPaths[position], ret);
 		return 0;
