@@ -138,6 +138,10 @@ Version 4.10 (29 Dec 2012):
               
 Version 5.00 (27 Dec 2014): 
               Complete rewrite
+			  
+Version 5.01 (02 Feb 2015): 
+              Bugfixes for skipped texture generation and fatal error in 
+			  write	procedure
 
 Literature
 ==========

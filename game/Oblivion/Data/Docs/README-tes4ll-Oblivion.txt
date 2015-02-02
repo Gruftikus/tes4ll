@@ -92,7 +92,7 @@ Rerun tes4ll - and the additional vertices should cure the problem.
 
 Credits
 =======
-Thanks to all users for testing and suggestions, in particular Auryga and Supierce for testing the program.
+Thanks to all users for testing and suggestions, in particular Auryga, Supierce and llde for testing the program.
 
 
 License

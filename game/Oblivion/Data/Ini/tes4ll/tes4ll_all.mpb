@@ -67,6 +67,7 @@ SetFlag -name=tes4qlod_flag_q -value="1"
 @qlod4 SetFlag -name=tes4qlod_flag_q -value="4"
 
 ImportMapFromModList
+
 SetFlag -name="large_ws" -value=$($_nquads>100) -zerosuppression
 @large_ws SetFlag -name="use16bit" -value="-use16bit"
 
