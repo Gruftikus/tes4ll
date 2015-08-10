@@ -2238,6 +2238,9 @@
     <ClCompile Include="..\lltool\src\lllogfile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\lltool\src\llcopyfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lltool\include\llsetpath.h">
@@ -4596,6 +4599,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\lltool\include\lllogfile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\llcopyfile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

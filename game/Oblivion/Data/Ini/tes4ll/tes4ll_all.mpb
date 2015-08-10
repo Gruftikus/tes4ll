@@ -27,6 +27,7 @@ SetFlag -name="dds_format" -value="DXT1"
 @c_dxt5 SetFlag -name="dds_format" -value="DXT5"
 
 @!minheight SetFlag -name="minheight" -value="-2048"
+SetFlag -name="_defaultheight" -value=$minheight
 
 ; ****************************
 ; Make color maps
@@ -143,6 +144,7 @@ SetFlag -name="opt_useshapes" -value=""
 ; With the console command "tdt" coordinates of critical points 
 ; can be obtained and added in this section:
 ; ============================
+SetFlag -name="_mindistance" -value=128 
 @usedatafiles ReadDataFile -filename=ini\tes4ll\RumareCoastLine.dat
 @usedatafiles ReadDataFile -filename=ini\tes4ll\WeyeNorth_FortEmpire.dat
 @usedatafiles ReadDataFile -filename=ini\tes4ll\WeyeWaynet.dat

@@ -135,6 +135,7 @@
     <ClCompile Include="..\lltool\src\llalgslope.cpp" />
     <ClCompile Include="..\lltool\src\llalgstripe.cpp" />
     <ClCompile Include="..\lltool\src\llcommands.cpp" />
+    <ClCompile Include="..\lltool\src\llcopyfile.cpp" />
     <ClCompile Include="..\lltool\src\llcopymap.cpp" />
     <ClCompile Include="..\lltool\src\llcreatemap.cpp" />
     <ClCompile Include="..\lltool\src\llcreatenormalmap.cpp" />
@@ -914,6 +915,7 @@
     <ClInclude Include="..\lltool\include\llalgslope.h" />
     <ClInclude Include="..\lltool\include\llalgstripe.h" />
     <ClInclude Include="..\lltool\include\llcommands.h" />
+    <ClInclude Include="..\lltool\include\llcopyfile.h" />
     <ClInclude Include="..\lltool\include\llcopymap.h" />
     <ClInclude Include="..\lltool\include\llcreatemap.h" />
     <ClInclude Include="..\lltool\include\llcreatenormalmap.h" />
@@ -1573,7 +1575,7 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

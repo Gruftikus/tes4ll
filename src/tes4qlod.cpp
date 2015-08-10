@@ -919,11 +919,11 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 			for (y = 0; y < 33; y++) {
 				start_height += decomp[pos + 6 + 4 + y*33];
 				float running_height = start_height;
-				for (x = 1; x < 33; x++) {
+				for (x = 0; x < 33; x++) {
 					running_height += decomp[pos+6+x+4+y*33];
 					if (map) {
-						map->SetElementRaw((cell.current_x * 32 + x - x_cell *32 - 1), 
-							(cell.current_y * 32 + y - y_cell *32 - 1), running_height);
+						map->SetElementRaw((cell.current_x * 32 + x - x_cell *32 /* - 1 */), 
+							(cell.current_y * 32 + y - y_cell *32 /* - 1 */), running_height);
 					}
 				}
 			}
