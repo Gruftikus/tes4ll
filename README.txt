@@ -77,10 +77,10 @@ tes4ll is based on the Landscape and Heightmap Editing Tool and Library (https:/
 
 Version and changelog
 =====================
-Version 1 (2 Oct 2011):    
+Version 1 (02 Oct 2011):    
               Initial version.
 
-Version 1.01 (9 Oct 2011): 
+Version 1.01 (09 Oct 2011): 
               3GB flag for larger worldspaces, 
               Crash fixed which appeared when nif meshes were empty.
 
@@ -103,10 +103,10 @@ Version 2.00 (30 Oct 2011):
               Call TESAnnwyn now internally.
               Support for flags.
 
-Version 2.10 (1 Nov 2011): 
+Version 2.10 (01 Nov 2011): 
               Added option for tri shapes.
 
-Version 2.20 (6 Nov 2011): 
+Version 2.20 (06 Nov 2011): 
               Added wall remover.
 
 Version 2.30 (22 Nov 2011): 
@@ -123,7 +123,7 @@ Version 3.01 (14 Jan 2012):
               Fixed missing quotation marks stripping in 
               installdirectory.
 
-Version 3.10 (2 Feb 2012): 
+Version 3.10 (02 Feb 2012): 
               First release of the normal map version.
 
 Version 4.00 (29 Sep 2012): 
@@ -142,6 +142,9 @@ Version 5.00 (27 Dec 2014):
 Version 5.01 (02 Feb 2015): 
               Bugfixes for skipped texture generation and fatal error in 
 			  write	procedure
+			  
+Version 5.02 (10 Aug 2015): 
+              Bugfixes			  
 
 Literature
 ==========
