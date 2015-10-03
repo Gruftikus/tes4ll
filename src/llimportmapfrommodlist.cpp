@@ -49,7 +49,7 @@ int llImportMapFromModlist::Exec(void) {
 	tes4qlod->RegisterOptions();
 	tes4qlod->CheckFlag("-x");
 	tes4qlod->CheckFlag("-silent");
-	if (Used("-z")) tes4qlod->CheckFlag("-z");
+	if (Used("-center")) tes4qlod->CheckFlag("-z");
 	if (Used("-dimX")) {
 		sprintf_s(dummy, 100, "%i", opt_size_x);
 		tes4qlod->SetValue("-dimX", dummy);
@@ -116,7 +116,7 @@ int llImportMapFromModlist::Exec(void) {
 	tes4qlod->CheckFlag("-silent");
 	tes4qlod->CheckFlag("-M");
 	tes4qlod->CheckFlag("-AddKeepout");
-	if (Used("-z")) tes4qlod->CheckFlag("-z");
+	if (Used("-center")) tes4qlod->CheckFlag("-z");
 	if (Used("-dimX")) {
 		sprintf_s(dummy, 100, "%i", opt_size_x);
 		tes4qlod->SetValue("-dimX", dummy);

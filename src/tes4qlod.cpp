@@ -292,7 +292,7 @@ int TES4qLOD::Exec(void) {
 			min_y -= (opt_size_y - (max_y - min_y))/2;
 		max_y = min_y + opt_size_y - 1;
 	}
-
+	
 	//keepout polygons
 	if (opt_keepout && opt_read_heightmap) {
 		llPolygonList *polygons  = _llMapList()->GetPolygonList(mapname);
@@ -747,6 +747,8 @@ int TES4qLOD::Process4CELLData(char *_r, int _size) {
 		pos += 6 + nsize;
 	}
 	 
+	if (waterlevel > 100000.f || waterlevel < -100000.f) has_water = 0;
+
 	//if (has_water) {
 		//printf("found water %f %i %i\n", waterlevel, cell.current_x, cell.current_y);
 	//}

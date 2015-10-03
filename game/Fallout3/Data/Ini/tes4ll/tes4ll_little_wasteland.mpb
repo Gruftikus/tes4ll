@@ -1,0 +1,154 @@
+[tes4ll]
+
+SetFlag -name=_gamedir -value=$_gamedir -replace="\\Data" -with="" -num=1  ;;correct MPGUI bug
+echo -text="$_gamedir"
+ParseModList -cd
+ImportMapFromModList -dimX=80 -dimY=80 -center
+ExportMap -depth=24 -filename="map.bmp"  ;;in case we want to check the heightmap
+
+; ****************************
+; Make color maps
+; ****************************
+
+SetFlag -name="width_x"  -value=$($_x2-$_x1)
+SetFlag -name="width_y"  -value=$($_y2-$_y1)
+SetFlag -name="x_larger" -value=$($width_x>$width_y) -zerosuppression
+
+@x_larger {
+	SetFlag -name="width_y" -value=$width_x
+}
+@!x_larger {
+	SetFlag -name="width_x" -value=$width_y
+}
+
+
+SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\myworld"
+MkDir -path=$_install_dir
+@makecolormap {
+	CreateMap -name=terraincolor -widthx=$($width_x/128) -widthy=$($width_y/128) -x1=$_x1 -y1=$_y1 -x2=$($_x1+$width_x) -y2=$($_y1+$width_y) -zscale=1 -rgb -even
+	Tes4qlod -a -z -colormap=terraincolor
+	ScaleMap -map=terraincolor -sizeX=4096 -sizeY=4096 
+	ExportMapToDDS -map=terraincolor -format=dxt1 -filename="$_worldspace&Map.dds" -FlipY
+}
+
+@makewatermap {
+	CreateMap -name=watercolor -widthx=$($width_x/128) -widthy=$($width_y/128) -x1=$_x1 -y1=$_y1 -x2=$($_x1+$width_x) -y2=$($_y1+$width_y) -zscale=1 -rgb -even
+	CreateAlgCollection -name=blue
+	AlgConst -alg=blue -add=0.5
+	FillColorMap -map=watercolor  -algblue=blue
+	ScaleMap -map=watercolor -sizeX=4096 -sizeY=4096 
+	ExportMapToDDS -filename="water.dds" -map="watercolor" -format=dxt1
+	ExportMap -depth=24 -filename="water.bmp" -map="watercolor" 
+}
+
+
+; ****************************
+; Make normal maps
+; ****************************
+
+SelectAll
+@makenormalmap {
+	CreateMap -name=_normalmap -widthx=$($width_x/128) -widthy=$($width_y/128) -x1=$_x1 -y1=$_y1 -x2=$($_x1+$width_x) -y2=$($_y1+$width_y) -zscale=1 -rgb -even
+	CreateNormalMap -name="_normalmap"
+	ScaleMap -map=_normalmap -sizeX=4096 -sizeY=4096 
+	ExportMapToDDS -map=_normalmap -format=dxt1 -filename="$_worldspace&Map_n.dds" -FlipY
+}
+
+
+; ****************************
+; Make meshes 
+; ****************************
+
+@makewatermap {
+	;;ExportMap -depth=24 -map="_watermap" -filename="$_worldspace&Water.bmp"
+	SetGrid -x=4096 -y=4096 -map="_watermap" 
+	AddDiscontinuityGrid -x=4096 -y=4096 -map="_watermap" 
+	MakeTriangulation -map="_watermap" 
+	StencilPolygon -map=_watermap
+	ExportMeshToNif -useshapes -map="_watermap" -makeninode  -scale=0.01 -texname="textures\myworld\Water.dds" 
+}
+
+SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\myworld"
+MkDir -path=$_install_dir
+
+;;SetGridBorder -x=4096 -y=4096 -zmin=0
+;;SetGridBorder -x=16384 -y=16384
+;;SetGrid -x=16384 -y=16384
+
+;;SetFlag -name="_mindistance" -value=128 
+;;ContourLine -x=4096 -y=4096 -z=0 -offsetx=0 -offsety=0          
+;;;;ContourLine -x=1024 -y=1024 -z=100 -offsetx=0 -offsety=0 -findmax                  
+;;ContourLine -x=1024 -y=1024 -z=-100 -offsetx=512 -offsety=512 -findmin   
+
+SetFlag -name="_mindistance" -value=256
+Filter -n=4
+MakeDerivatives -map="_heightmap_filtered"
+
+AlgFirstOrder  -add=0.2
+AlgSecondOrder -add=0.5 
+
+;;AlgPeakFinder  -multiply=1 -radius=4096 -scanradius=8192 -lowest=4000 -insideval=1 -outsideval=0.5
+AlgSecondOrder -multiply=1
+
+; Switch off sampling below the shore line:
+AlgLayer -multiply=1 -minz=-999999 -zmax=10 -outsideval=1 -insideval=0
+; ============================
+
+
+SelectAll 
+
+;;SetGrid -x=4096 -y=4096
+SetAlgVertices -n=25000 -max
+
+SelectAll 
+MakeTriangulation
+
+;;StencilPolygon 
+
+SelectAll 
+
+
+@makecolormap  ExportMeshToNif -useshapes -texname="textures\myworld\WastelandMap.dds" -scale=0.01 -filename="Wasteland.nif" -texmap=terraincolor
+@!makecolormap ExportMeshToNif -useshapes -texname="textures\myworld\WastelandMap.dds" -scale=0.01 -filename="Wasteland.nif"
+
+
+@end
+
+; ****************************
+[mpgui]
+; ****************************
+
+GUIRequestVersion -value="1.22"
+
+@!tes4ll_doonce GUITab -help="Options for mesh generation" -text="Wasteland mesh" -name=tes4ll_gui
+
+@!tes4ll_doonce GUIConsoleEcho -text="Tes4ll batch file loaded"
+@!tes4ll_doonce GUIConsoleEcho -text="***** This will NOT generate the landscape LODs of exterior cells *****"
+SetFlag -name=tes4ll_doonce -hidden
+
+SetOption -noskipinfo ;avoid nasty skip messages in loop mode
+
+
+; ****************************
+[tes4ll_gui]
+; ****************************
+
+GUIDisable -name=tab_ws
+
+GUIDisable -name=tes4ll_gui
+@_modlist GUIEnable -name=tes4ll_gui
+@_modlist="" GUIDisable -name=tes4ll_gui
+
+GUICheckBox -name=makenormalmap -text="Make normal maps" -help="Select this if you want to generate the normal map"
+
+GUICheckBox -name=makecolormap -text="Make color map (calls build-in TES4qLOD)" -help="Select this if you want to generate the color map with TES4qLOD"
+
+GUICheckBox -name=makewatermap -text="Make color map for water plane" 
+
+
+## The final button. Once the button is clicked, the flag "exec_tes4ll" is set for one single run of this section
+GUIButton -name=exec_tes4ll -text="Click me if you are ready" -vdist=30
+
+
+@exec_tes4ll GUIExec -exe="tes4ll.exe -w Wasteland -f \"$_flaglist\" -l \"$_modlist\" \"_gamedir=$_gamedir\" _gamemode=Fallout3 stdin" -dumpbatch
+
