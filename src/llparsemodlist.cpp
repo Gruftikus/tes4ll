@@ -33,10 +33,20 @@ int llParseModList::Exec(void) {
 	DWORD size1;
 	DWORD Type;
 
+	char *gamekey = "SOFTWARE\\Bethesda Softworks\\Oblivion";
+	if (_llUtils()->IsEnabled("_gamemode")) {
+		if (_stricmp(_llUtils()->GetValue("_gamemode"), "Fallout3") == 0) 
+			gamekey = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\fallout3";
+		if (_stricmp(_llUtils()->GetValue("_gamemode"), "Falloutnv") == 0) 
+			gamekey = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\falloutnv";
+		if (_stricmp(_llUtils()->GetValue("_gamemode"), "Skyrim") == 0) 
+			gamekey = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\skyrim";
+	}
+	//std::cout << _llUtils()->GetValue("_gamemode") << ":" << gamekey << std::endl;
+
 	//seek for game dir, if not yet set by user
 	if (!_llUtils()->IsEnabled("_gamedir")) {
-		if( RegOpenKeyEx(    HKEY_LOCAL_MACHINE, 
-			"SOFTWARE\\Bethesda Softworks\\Oblivion", 0, 
+		if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, gamekey, 0, 
 			KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
 				size1 = 1023;
 				RegQueryValueEx( keyHandle, "Installed Path", NULL, &Type, 
@@ -46,8 +56,18 @@ int llParseModList::Exec(void) {
 				_llLogger()->WriteNextLine(-LOG_INFO, "Game path is: %s", oblivion_path);
 				_llUtils()->SetValue("_gamedir", oblivion_path);
 		} else {
-			_llLogger()->WriteNextLine(LOG_WARNING, "Game not installed, I will use the working directory.");
-			_llUtils()->SetValue("_gamedir", ".");
+			if (_llUtils()->IsEnabled("_gamemode"))
+			_llLogger()->WriteNextLine(LOG_WARNING, "Game '%s' not installed, I will use the working directory.", 
+				_llUtils()->GetValue("_gamemode"));
+			else
+				_llLogger()->WriteNextLine(LOG_WARNING, "Oblivion not installed, I will use the working directory.");
+			TCHAR dir[1000];
+			GetCurrentDirectory(1000, dir);
+			if ((strlen(dir) > 4) && _stricmp(dir+strlen(dir)-4, "data")==0)
+				dir[strlen(dir)-4] = '\0';
+			if ((strlen(dir) > 15) && _stricmp(dir+strlen(dir)-15, "data\\ini\\tes4ll")==0)
+				dir[strlen(dir)-15] = '\0';
+			_llUtils()->SetValue("_gamedir", dir); 
 			//DumpExit();
 		}
 		RegCloseKey(keyHandle);
@@ -91,6 +111,14 @@ int llParseModList::Exec(void) {
 
 		char listname[2000];
 		sprintf_s(listname,2000,"%s\\Oblivion\\plugins.txt\0", oblivion_app_path);
+		if (_llUtils()->IsEnabled("_gamemode")) {
+			if (_stricmp(_llUtils()->GetValue("_gamemode"), "Fallout3") == 0) 
+				sprintf_s(listname,2000,"%s\\Fallout3\\plugins.txt\0", oblivion_app_path);
+			if (_stricmp(_llUtils()->GetValue("_gamemode"), "FalloutNV") == 0) 
+				sprintf_s(listname,2000,"%s\\FalloutNV\\plugins.txt\0", oblivion_app_path);
+			if (_stricmp(_llUtils()->GetValue("_gamemode"), "Skyrim") == 0) 
+				sprintf_s(listname,2000,"%s\\skyrim\\plugins.txt\0", oblivion_app_path);
+		}
 
 		FILE *fesplist = NULL;    
 		if (fopen_s(&fesplist,listname,"r")) {

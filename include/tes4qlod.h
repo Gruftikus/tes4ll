@@ -60,6 +60,7 @@ protected:
 	struct {
 		int count;
 		int formid[2048];
+		int txst_formid[2048];
 		char rgb[2048][4][4][3]; // 2048 sets of 2x2 arrays (containing 3 RGB bytes).
 	} lod_ltex;
 

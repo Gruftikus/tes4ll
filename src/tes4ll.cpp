@@ -44,6 +44,8 @@ int main(int argc, char **argv) {
 	llCommands *batch = new llCommands();
 	
 	//Oblivion std-values:
+	_llUtils()->SetValue("_gamemode", "Oblivion");
+
 	_llUtils()->SetValue("_mindistance", "256");
 	_llUtils()->SetValue("_cellsize_x",  "4096");
 	_llUtils()->SetValue("_cellsize_y",  "4096");

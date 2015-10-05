@@ -1,0 +1,319 @@
+[tes4ll]
+@logfile LogFile -filename=$logfile
+
+; ============================
+; Optional pedestal walls
+; Requires more triangles!
+; Enable this only if you want to exchange or overwrite single quads
+; Not required if you rerun tes4ll after landscape changes
+; Read the manual for more info
+; SetFlag -name="createpedestals" -value="-createpedestals"
+; ============================
+
+; ============================
+; Optional 16 bit matrices (no 32-bit floats)
+; enable this only if the tes4ll task exceeds 3GB 
+; and you have a crash
+; SetFlag -name="use16bit" -value="-use16bit"
+@use16bitopt SetFlag -name="use16bit" -value="-use16bit"
+; ============================
+
+ParseModList -cd    ;reads mod list from Plugins.txt (or from -l option) and set the flags
+
+SetFlag -name="_quad_levels" -value=2
+
+SetFlag -name="dds_format" -value="DXT1"
+@c_dxt3 SetFlag -name="dds_format" -value="DXT3"
+@c_dxt5 SetFlag -name="dds_format" -value="DXT5"
+
+@!minheight SetFlag -name="minheight" -value="-2048"
+SetFlag -name="_defaultheight" -value=$minheight
+
+; ****************************
+; Make color maps
+; ****************************
+
+@tes4qlod_cache {
+	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	FileIterator -pattern="*.bsa" {
+		BsaIterator -bsafile=$_filename -regex="textures\\\\landscape\\\\.*\\.dds" { 
+			ImportMapFromDDS -even -name=test -replacemap 
+			ScaleMap -sizeX=4 -sizeY=4 -map=test 
+			SetFlag -name=newname -value=$_bsafilename -replace=".dds" -with=".bmp"
+			SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\Fallout3" -num=1
+			MkDir -path=$newname -hasfilename
+			ExportMap -filename=$newname -map=test
+		}
+	}
+
+	{ 
+		FileIterator -directory="textures\\landscape" -pattern="*.dds" -recursive {
+			ImportMapFromDDS -filename=$_filename -even -name=test -replacemap
+			ScaleMap -sizeX=4 -sizeY=4 -map=test 
+			SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp"
+			SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\Fallout3" -num=1
+			MkDir -path=$newname -hasfilename
+			ExportMap -filename=$newname -map=test
+		}
+	}
+}
+
+@!makemeshes @!writeout @!tes4qlod @!makenormalmaps Exit
+
+
+; ============================
+
+@end
+
+; ****************************
+[mpgui]
+; ****************************
+
+GUIRequestVersion -value="1.22"
+
+@!tes4ll_doonce GUITab -help="Options for mesh generation" -text="LOD Meshes" -name=tes4ll_gui
+@!tes4ll_doonce GUITab -help="Normalmaps" -text="Normal Maps" -name=tes4llnm_gui
+@!tes4ll_doonce GUITab -help="Options for Lightwave's TES4qLOD" -name="tes4qlod_gui" -text="Color Maps" 
+@!tes4ll_doonce GUITab -help="Start process here" -name="final_gui" -text="Start Process" 
+
+@!tes4ll_doonce GUIConsoleEcho -text="Tes4ll batch file for Tamriel loaded"
+SetFlag -name=tes4ll_doonce -hidden
+
+SetOption -noskipinfo ;avoid nasty skip messenges in loop mode
+
+; ****************************
+[final_gui]
+; ****************************
+
+## makes sure that tab is disabled if no worldspace is selected:
+GUIEnable -name=final_gui
+@!_worldspace GUIDisable -name=final_gui
+
+GUITextBox -text="If you have selected all previous options, you can continue here..." -name=final_gui_intro -vdist=10
+
+
+GUITextBox -text="General options" -name=tes4ll_text2 -vdist=10
+
+## A checkbox for a basic question:
+GUICheckBox -name=overwritelods -text="Overwrite the original files (please make a backup before checking this option)" -help="You have to check this option if tes4ll should place the new files in the LOD directories."
+GUIEnable -name=overwritelods 
+@!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=overwritelods 
+
+GUICheckBox -name=use16bitopt -text="Use 16 bit derivative matrices" -help="Only slightly more unprecise, but saves 2x memory. Use this for large worlds like Onras heightmaps of Tamriel"
+GUIEnable -name=use16bitopt 
+@!makemeshes GUIDisable -name=use16bitopt
+
+GUITextBox -text="Minimum height" -name=min_height_intro -width=0.30 -vdist=10 
+GUITextBox -text="-2048" -name=minheight -input -sameline -width=0.70 -help="Set a mimimum value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
+
+GUICheckBox -name=writeout -text="Write heightmap as a 32-bit bmp file" -vdist=5
+
+GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
+
+GUIDropDown -name=flagnm_compression -vdist=5 -help="dds compression format."
+GUIDropDownItem -parent=flagnm_compression -name=c_dxt1 -text="Use DDS DXT1 compression" 
+GUIDropDownItem -parent=flagnm_compression -name=c_dxt3 -text="Use DDS DXT3 compression" 
+GUIDropDownItem -parent=flagnm_compression -name=c_dxt5 -text="Use DDS DXT5 compression" -select
+GUIDropDownItem -parent=flagnm_compression -name=c_none -text="<None> (needs other tool to convert bmp to dds)" 
+GUIEnable -name=flagnm_compression
+@!makenormalmaps @!tes4qlod GUIDisable -name=flagnm_compression
+
+
+
+## The final button. Once the button is clicked, the flag "exec_tes4ll" is set for one single run of this section
+GUIButton -name=exec_tes4ll -text="Click me if you are ready" -vdist=30
+GUIEnable -name=exec_tes4ll
+@!makenormalmaps @!tes4qlod @!tes4qlod_cache @!makemeshes @!writeout GUIDisable -name=exec_tes4ll
+
+
+@exec_tes4ll @!overwritelods GUIMessageBox -title="Hint" -text="You have not selected the option to overwrite the original files. Do not forget to copy your files by hand to the appropriate place (or stop the process, and check the \"overwrite\" option)"
+@exec_tes4ll @_worldspace GUIExec -exe="tes4ll.exe -f \"$_flaglist\" -w $_worldspace -l \"$_modlist\" stdin" -dumpbatch
+
+
+; ****************************
+[tes4ll_gui]
+; ****************************
+
+## makes sure that tab is disabled if no worldspace is selected:
+GUIEnable -name=tes4ll_gui
+@!_worldspace GUIDisable -name=tes4ll_gui 
+
+GUITextBox -text="Select options for LOD mesh generation..." -name=tes4ll_gui_intro -vdist=10
+
+## A checkbox for a basic question:
+GUICheckBox -name=makemeshes -text="Make LOD meshes" -help="Check this if you want to create the LOD meshes" -select
+
+GUITextBox -text="Options for vertices placement" -name=tes4ll_text1 -vdist=10
+
+## A checkbox for a basic question:
+GUICheckBox -name=nicer_mountains -text="Enable peak finder algorithm" -help="Enhances the quality of the mountains" -select
+GUIEnable -name=nicer_mountains 
+@!makemeshes GUIDisable -name=nicer_mountains 
+
+## A checkbox for a basic question:
+GUICheckBox -name=wallremover -text="Enable the cell grid boundary wall remover" -help="Enhances the near to far grid transition. Highly recommended" -select
+GUIEnable -name=wallremover 
+@!makemeshes GUIDisable -name=wallremover 
+
+## A checkbox for a basic question:
+GUICheckBox -name=contour -text="Enable the contour algorithm for coasts" -help="Enhances the coast line. Highly recommended" -select -width=0.30
+GUIEnable -name=contour 
+@!makemeshes GUIDisable -name=contour 
+## Add a drop down menu, first the parent:
+GUIDropDown -name=contour_grid_s -help="Select your resolution"  -width=0.70 -sameline
+## and now the items:
+GUIDropDownItem -parent=contour_grid_s -name=c3 -text="Coarse grid" 
+GUIDropDownItem -parent=contour_grid_s -name=c2 -text="Normal grid" -select
+GUIDropDownItem -parent=contour_grid_s -name=c1 -text="Fine grid" 
+GUIEnable -name=contour_grid_s
+@!makemeshes GUIDisable -name=contour_grid_s
+@c1 SetFlag -name=contour_grid -value="1"
+@c2 SetFlag -name=contour_grid -value="4"
+@c3 SetFlag -name=contour_grid -value="16"
+
+##
+GUICheckBox -name=usedatafiles -text="Use Tamriel data files" -help="Use some hand-placed vertex points" -select
+GUIEnable -name=usedatafiles 
+@!_worldspace=Tamriel GUIDisable -name=usedatafiles -unselect
+@!_worldspace GUIEnable -name=usedatafiles -select
+@!makemeshes GUIDisable -name=usedatafiles 
+
+##
+GUICheckBox -name=usepanorama -text="Use Tamriel panorama points" -select
+GUIEnable -name=usepanorama
+@!_worldspace=Tamriel GUIDisable -name=usepanorama -unselect
+@!_worldspace GUIEnable -name=usepanorama -select
+@!makemeshes GUIDisable -name=usepanorama 
+
+GUITextBox -text="Total resolution (number of vertex points per quad)" -name=tes4ll_text1 -vdist=10
+
+## Add a drop down menu, first the parent:
+GUIDropDown -name=flag_res -vdist=5 -help="Select your resolution"
+## and now the items:
+GUIDropDownItem -parent=flag_res -name=mid_res -text="Mid Resolution " -select
+GUIDropDownItem -parent=flag_res -name=high_res -text="High Resolution" 
+GUIDropDownItem -parent=flag_res -name=ultimate -text="Ultimate Resolution" 
+GUIEnable -name=flag_res 
+@!makemeshes GUIDisable -name=flag_res 
+
+
+GUITextBox -text="Mesh options" -name=tes4ll_text3 -vdist=20
+
+## A checkbox for a basic question:
+GUICheckBox -name=useshapes -text="Use shapes instead of strips" -help="Faster generation, but needs more graphics card performance" 
+GUIEnable -name=useshapes 
+@ultimate GUIDisable -name=useshapes -select
+@!makemeshes GUIDisable -name=useshapes 
+
+GUICheckBox -name=small_world -text="Use small world setup" -help="Try to further enhance the settings. Use this option only for small worldspaces which have about 2-4 quads" 
+GUIEnable -name=small_world 
+@!makemeshes GUIDisable -name=small_world
+@_worldspace=Tamriel GUIDisable -name=small_world -unselect
+
+
+; ****************************
+[tes4llnm_gui]
+; ****************************
+
+## makes sure that tab is disabled if no worldspace is selected:
+GUIEnable -name=tes4llnm_gui
+@!_worldspace GUIDisable -name=tes4llnm_gui 
+
+GUITextBox -text="Select options for normal maps generation..." -name=tes4llnm_gui_intro -vdist=10
+
+
+## A checkbox for a basic question:
+GUICheckBox -name=makenormalmaps -text="Make normal maps" -help="Select this if you want to generate the normal maps"
+
+###--------------------------------------------------------------
+GUITextBox -text="Graphics options" -name=tes4llnm_text3 -vdist=10
+
+GUIDropDown -name=flagnm_resnormal -vdist=5 -help="Select your texture resolution"
+GUIDropDownItem -parent=flagnm_resnormal -name=512 -text="512x512"
+GUIDropDownItem -parent=flagnm_resnormal -name=1024 -text="1024x1024" -select
+GUIDropDownItem -parent=flagnm_resnormal -name=2048 -text="2048x2048" 
+GUIEnable -name=flagnm_resnormal
+@!makenormalmaps GUIDisable -name=flagnm_resnormal 
+
+GUICheckBox -name=lodshadows -text="Fake shadows (can take a while)" -help="Tweaks the normap maps such to obtain the impression of landscape shadows" -vdist=5
+GUIEnable -name=lodshadows
+@!makenormalmaps GUIDisable -name=lodshadows 
+
+GUITextBox -text="z-Boost for non-faked normals" -name=tes4llnm_text3a -vdist=10
+
+GUIDropDown -name=flagnm_zboost -vdist=5 -help="Boost factor for z"
+GUIDropDownItem -parent=flagnm_zboost -name=z1 -text="Factor 1 (undistorted)" 
+GUIDropDownItem -parent=flagnm_zboost -name=z2 -text="Factor 2 (more contrast)" -select
+GUIDropDownItem -parent=flagnm_zboost -name=z4 -text="Factor 4 (even more contrast)"
+GUIEnable -name=flagnm_zboost
+@lodshadows GUIDisable -name=flagnm_zboost
+@!makenormalmaps GUIDisable -name=flagnm_zboost 
+
+@z1 SetFlag -name=z_val -value="1"
+@z2 SetFlag -name=z_val -value="2"
+@z4 SetFlag -name=z_val -value="4"
+
+
+; ****************************
+[tes4qlod_gui]
+; ****************************
+
+## makes sure that tab is disabled if no worldspace is selected:
+GUIEnable -name=tes4qlod_gui
+@!_worldspace GUIDisable -name=tes4qlod_gui
+
+GUITextBox -text="Select options for color maps generation..." -name=tes4qlod_gui_intro -vdist=10
+
+GUICheckBox -name=tes4qlod_cache -text="Regenerate texture cache" -help="Always required if started first time"
+
+## A checkbox for a basic question:
+GUICheckBox -name=tes4qlod -text="Make color maps (calls build-in TES4qLOD)" -help="Select this if you want to generate the color maps with TES4qLOD"
+
+## Just some info:
+GUITextBox -text="Please select what TES4qLOD should do" -name=tes4qlod_into -vdist=10
+
+GUITextBox -text="Select resolution per quad:" -name=tes4qlod_into2 -vdist=10
+
+## Add a drop down menu, first the parent:
+GUIDropDown -name=tes4qlod_resolution -help="Select the resolution for a single quad (N.B. Vanilla has 512x512)" -vdist=3
+## and now the items:
+GUIDropDownItem -parent=tes4qlod_resolution -name=qlod1 -text="1024x1024 pixel [recommended]" -select
+GUIDropDownItem -parent=tes4qlod_resolution -name=qlod2 -text="2048x2048 pixel" 
+GUIDropDownItem -parent=tes4qlod_resolution -name=qlod4 -text="4096x4096 pixel" 
+GUIEnable -name=tes4qlod_resolution
+@!tes4qlod GUIDisable -name=tes4qlod_resolution
+
+
+
+GUITextBox -text="Options:" -name=tes4qlod_into3 -vdist=10
+
+## New blending flag
+GUICheckBox -name=option_blending -text="Use layer blending" -help="Uses the opacity of the different layers for alpha blending" -select
+GUIEnable -name=option_blending
+@!tes4qlod GUIDisable -name=option_blending
+
+
+## A flag about the total map:
+GUICheckBox -name=option_map -text="Create full map of wordspace" -help="Creates a full map of your worldspace"
+GUIEnable -name=option_map
+@!tes4qlod GUIDisable -name=option_map
+
+
+## Verbosity option of tes4qlod:
+GUICheckBox -name=option_silent -text="Silent TES4qLOD" -help="Disables all the text output of tes4qlod"
+GUIEnable -name=option_silent
+@!tes4qlod GUIDisable -name=option_silent
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -76,16 +76,16 @@ int llBsaIterator::Exec(void) {
 	
 	if (ret != LIBBSA_OK) {
 		_llLogger()->WriteNextLine(-LOG_ERROR, "bsa_extract_asset_to_memory(...) failed! Asset: %s, return code: %i", assetPaths[position], ret);
-		return 0;
-	} 
+	} else {
 
-	if (_llUtils()->size) {
-		_llUtils()->size = 0;
-		delete _llUtils()->data;
+		if (_llUtils()->size) {
+			_llUtils()->size = 0;
+			delete _llUtils()->data;
+		}
+
+		_llUtils()->data = data;
+		_llUtils()->size = size;
 	}
-
-	_llUtils()->data = data;
-	_llUtils()->size = size;
 
 	position++;
 

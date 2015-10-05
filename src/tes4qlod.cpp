@@ -1,4 +1,3 @@
-
 #include "../include/tes4qlod.h"
 #include "../../lltool/include/llutils.h"
 #include "../../lltool/include/llmapworker.h"
@@ -530,7 +529,7 @@ int TES4qLOD::ExportTES4LandT4QLOD(char *_input_esp_filename) {
 		} else if (strncmp(s, "LAND", 4) == 0) {
 			total_land++;
 			Process4LANDData(r, size);
-		} else if (opt_lod_tex && (strncmp(s, "LTEX", 4) == 0)) { // || strncmp(s, "TXST", 4) == 0))  {
+		} else if (opt_lod_tex && ((strncmp(s, "LTEX", 4) == 0) || strncmp(s, "TXST", 4) == 0))  {
 		//else if ((strncmp(s, "LTEX", 4) == 0)) { // || strncmp(s, "TXST", 4) == 0))  {
 			Add4LTEXData(r, size);
 		} else if (strncmp(s, "GRUP", 4) == 0) {
@@ -563,11 +562,12 @@ int TES4qLOD::Add4LTEXData(char *_r, int _size) {
 	**	nicer file).
 	*********************************************************************/
 
-	int  i;
+	int  i, ii;
 	int  p, j, k, t;
 	int  nsize;
 	int  pos = 0;
 	int  formid = 0;
+	int  txst_formid = 0;
 	int  rgb[3];
 //	char tmp_int[5];
 
@@ -576,6 +576,7 @@ int TES4qLOD::Add4LTEXData(char *_r, int _size) {
 	memcpy(&formid, _r + 12, 4);
 
 	pos += tes_rec_offset;
+	int ltex = 1;
 
 	while (pos < _size) {
 		nsize = 0;
@@ -583,12 +584,18 @@ int TES4qLOD::Add4LTEXData(char *_r, int _size) {
 
 		if (strncmp("ICON", _r + pos, 4) == 0) {
 			memcpy(fname, _r + pos + 6, nsize);
+		} else if (strncmp("TNAM", _r + pos, 4) == 0) {
+			memcpy(&txst_formid, _r + pos + 6, 4);
 		} else if (strncmp("TX00", _r + pos, 4) == 0) {
+			ltex = 0;
 			if (opt_tes_mode == TES_SKYRIM) {
 				memcpy(fname, _r + pos + 6, nsize - 4);
 				fname[nsize - 4] = '\0';
 				strcat_s(fname, 512, ".dds");
-			}
+			} else if (opt_tes_mode == TES_FALLOUTNV) {
+				memcpy(fname, _r + pos + 6, nsize);
+				//std::cout << fname << std::endl;
+			} 
 		} else if (strncmp("EDID", _r + pos, 4) == 0) {
 			if (opt_tes_mode == TES_SKYRIM) {
 				memcpy(fname, _r + pos + 7, nsize - 1);
@@ -601,6 +608,12 @@ int TES4qLOD::Add4LTEXData(char *_r, int _size) {
 		pos += 6 + nsize;
 	}
 
+	char *myfname = fname;
+	if (!ltex) {
+		if (strlen(fname)>8 && strnicmp(fname, "landscape", 9)) return 0;
+		myfname = fname + 10;
+	} 
+
 	/***************************************************************************
 	 ** Disabled, but useful to generating that initial DAT file for a new game.
 	{
@@ -610,8 +623,8 @@ int TES4qLOD::Add4LTEXData(char *_r, int _size) {
 	}
 	***************************************************************************/
 
-	if (fname[0] == '\0') {
-		printf("??? This is really weird. I found an LTEX record in your ESM/ESP file with no texture filename associated with it!! Ignoring ...\n");
+	if (myfname[0] == '\0') {
+		printf("??? This is really weird. I found an LTEX/TXST record in your ESM/ESP file with no texture filename associated with it!! Ignoring ...\n");
 	}
 
 	for (i = 0; i < lod_ltex.count; i++) {
@@ -622,16 +635,35 @@ int TES4qLOD::Add4LTEXData(char *_r, int _size) {
 	if (i == lod_ltex.count) {
 		for (t = 0; t < ftex.count; t++) {
 			// printf("Comparing LTEX %s to %s\n", ftex.filename[i], fname);
-			if (_stricmp(ftex.filename[t], fname) == 0) {
+			if (_stricmp(ftex.filename[t], myfname) == 0) {
 				break;
 			}
 		}
-		if (t == ftex.count) {
+		if (txst_formid) {
+			//std::cout << "found txst for " << myfname << " with formid " << txst_formid << std::endl;
+			for (ii = 0; ii < lod_ltex.count; ii++) {
+				if (lod_ltex.formid[ii] == txst_formid) {
+					//std::cout << "found" << std::endl;
+					lod_ltex.formid[lod_ltex.count] = formid;
+					lod_ltex.txst_formid[lod_ltex.count] = txst_formid;
+					for (p = 0; p < 16; p++) {
+						for (k = 0; k < 3; k++) {
+							for (j = 0; j < 3; j++) {
+								lod_ltex.rgb[lod_ltex.count][p][j][0] = lod_ltex.rgb[ii][p][j][0];
+								lod_ltex.rgb[lod_ltex.count][p][j][1] = lod_ltex.rgb[ii][p][j][1];
+								lod_ltex.rgb[lod_ltex.count][p][j][2] = lod_ltex.rgb[ii][p][j][2];
+							}
+						}
+					}
+					lod_ltex.count++;
+				}
+			}
+		} else if (t == ftex.count) {
 			fprintf(stdout, "Unable to find the BMP version of the texture file %s in my textures directory (%s), but your mod file has an LTEX record that thinks it should exist. :-\\ \n",
-			fname, game_textures_filepath);
+			myfname, game_textures_filepath);
 		} else {
 			lod_ltex.formid[lod_ltex.count] = formid;
-			if (verbosity) printf("Texture %s: FormID: %d\n", fname, formid);
+			if (verbosity) printf("Texture %s: FormID: %d\n", myfname, formid);
 			for (p = 0; p < 16; p++) {
                                 i = (int) p/4;
                                 j = p - (4*i);
@@ -873,7 +905,7 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 
 	FILE *fp_land;
 
-	for (i=0;i<34;i++) for (j=0;j<34;j++) num_layer[i][j]=0;
+	for (i=0;i<34;i++) for (j=0;j<34;j++) num_layer[i][j]=-1;
 
 	if (strcmp(cell.worldspace_name, worldspace_lc) != 0) {
 		return 0;
@@ -954,8 +986,6 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 	 ** texture for each grid point (each FormID is 4 bytes).
 	 *********************************************************/
 
-	memset(&tex_opacity, 0, sizeof(tex_opacity));
-
 	memset(vtxt[0], 0, sizeof(vtxt));
 	for (i = 0; i < 34; i++) {
 		for (j = 0; j < 34; j++) {
@@ -964,10 +994,11 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 		}
 	}
 
+	int found_color = 0;
 	while (pos < decomp_size) {
 		nsize = (unsigned char) decomp[pos + 4] + 256 * ((unsigned char) decomp[pos+5]);
-
 		if (strncmp("ATXT", decomp+pos, 4) == 0) {
+			found_color = 1;
 			memcpy(atxt, decomp+pos+6, 4);
 			quad = decomp[pos+6+4];
 			layer = decomp[pos+6+6]; //Get layer number, IF
@@ -976,43 +1007,49 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 				layer = 7;
 			}
 		} else if (strncmp("BTXT", decomp+pos, 4) == 0) {
+			layer = -1;
+			found_color = 1;
 			memcpy(atxt, decomp+pos+6, 4);
 			quad = decomp[pos+6+4];
 
 			if (quad == 0) {
 				for (i = 0; i < 17 ; i++) {
 					for (j = 0; j < 17; j++) {
-						if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
+						//if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
 							memcpy(vtxt[0][i][j], atxt, 4);
 							tex_opacity[0][i][j] = 1.0;
-						} 
+							num_layer[i][j] = 0;
+						//} 
 					}
 				}
 			} else if (quad == 1) {
 				for (i = 0; i < 17; i++) {
 					for (j = 17; j < 34; j++) {
-						if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
+						//if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
 							memcpy(vtxt[0][i][j], atxt, 4);
 							tex_opacity[0][i][j] = 1.0;
-						}
+							num_layer[i][j] = 0;
+						//}
 					}
 				}
 			} else if (quad == 2) {
 				for (i = 17; i < 34 ; i++) {
 					for (j = 0; j < 17; j++) {
-						if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
+						//if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
 							memcpy(vtxt[0][i][j], atxt, 4);
 							tex_opacity[0][i][j] = 1.0;
-						}
+							num_layer[i][j] = 0;
+						//}
 					}
 				}
 			} else if (quad == 3) {
 				for (i = 17; i < 34; i++) {
 					for (j = 17; j < 34; j++) {
-						if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
+						//if (vtxt[0][i][j][0] == 0 && vtxt[0][i][j][1] == 0 && vtxt[0][i][j][2] == 0 && vtxt[0][i][j][3] == 0) {
 							memcpy(vtxt[0][i][j], atxt, 4);
 							tex_opacity[0][i][j] = 1.0;
-						}
+							num_layer[i][j] = 0;
+						//}
 					}
 				}
 			}
@@ -1036,12 +1073,16 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 				memcpy(vtxt[layer+1][i][j], atxt, 4);
 				tex_opacity[layer+1][i][j] = vtxt_opacity;
 				num_layer[i][j] = layer + 1;
-
 			}
 		}
 
 		pos += 6 + nsize;
 	}
+
+	//if (!found_color) {
+		//free(decomp);
+		//return 0;	
+	//}
 
 	/* Create an RGB image in memory. The TES4 texture array is 34x34. We discard the 'frame', leaving 
 	* a 32x32 image. Looks fine in game. What the precise 'correct' behaviour should be, I don't know.
@@ -1056,13 +1097,22 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 	for (i = 1; i < 33; i++) {
 		for (j = 1; j < 33; j++) {
 			for (y = 0; y < opt_q; y++) { //Clean additional layers
-					for (x = 0; x < opt_q; x++) {
-						add_tex_opacity[y+opt_q*i][x+opt_q*j] = 0.f;
-						for (m = 0; m < 3; m++) {
-							add_rgb[y+opt_q*i][x+opt_q*j][m] = 0;
-						}
+				for (x = 0; x < opt_q; x++) {
+					add_tex_opacity[y+opt_q*i][x+opt_q*j] = 0.f;
+					for (m = 0; m < 3; m++) {
+						add_rgb[y+opt_q*i][x+opt_q*j][m] = 0;
 					}
+
+					unsigned int posx = colormap->GetRawX(128.0f * float(cell.current_x * 32)) + x + j * opt_q;
+					unsigned int posy = colormap->GetRawY(128.0f * float(cell.current_y * 32)) + y + i * opt_q;
+
+					unsigned char red, blue, green, alpha;
+					colormap->GetTupel(posx, posy, &blue, &green, &red, &alpha);
+					vimage[y+opt_q*i][x+opt_q*j][0] = blue;
+					vimage[y+opt_q*i][x+opt_q*j][1] = green;
+					vimage[y+opt_q*i][x+opt_q*j][2] = red;			
 				}
+			}
 			for (l=0; l<=num_layer[i][j]; l++) {
 				texture_matched = 0;
 				
@@ -1076,28 +1126,23 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 					if (texture_matched) {
 						for (y = 0; y < opt_q; y++) {
 							for (x = 0; x < opt_q; x++) {
-								if (l==0) {
-									memcpy(&vimage[y+opt_q*i][x+opt_q*j], &lod_ltex.rgb[k][y][x], 3);				
-									add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[0][i][j];	
+								if (l==0) {								
+									memcpy(&vimage[y+opt_q*i][x+opt_q*j], &lod_ltex.rgb[k][y][x], 3);	
+								} else if (l==1) {
+									add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[1][i][j];
+									//add_tex_opacity[y+opt_q*i][x+opt_q*j] = 1.0;
 									for (m = 0; m < 3; m++) {
 										add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
 									}
-									base_layer=opt_q*opt_q;
-								} else if (tex_opacity[l][i][j] && (base_layer)) {
-									for (m = 0; m < 3; m++) {
-										add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];	
-										add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
-									}
-									base_layer--;
-								} else if (tex_opacity[l][i][j] && (1)) {
+								} else {
 									if (opt_blending == 0) { //use Lightwaves "best win" method
 										if (tex_opacity[l][i][j] > add_tex_opacity[y+opt_q*i][x+opt_q*j]) {
 											for (m = 0; m < 3; m++) {
-												add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];	
+												add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];
 												add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
 											}
 										}
-									} else if (1) {
+									} else {
 										tex_opacity_b = (tex_opacity[l][i][j]);	
 										tex_opacity_a = add_tex_opacity[y+opt_q*i][x+opt_q*j];
 										tex_opacity_c = tex_opacity_a + (1.0f - tex_opacity_a)*tex_opacity_b;
@@ -1105,45 +1150,43 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 										for (m = 0; m < 3; m++) {
 											add_rgb[y+opt_q*i][x+opt_q*j][m] = (1.f/tex_opacity_c) * (
 												tex_opacity_a*add_rgb[y+opt_q*i][x+opt_q*j][m] + (1.f - tex_opacity_a)*
-												tex_opacity_b*((float) (unsigned char) lod_ltex.rgb[k][y][x][m])
-												);
+												tex_opacity_b*((float) (unsigned char) lod_ltex.rgb[k][y][x][m]));
 										}
-									} else if (0) { //Only for testing, ignored for the time being, IF
-										for (m = 0; m < 3; m++) {
-											tex_opacity_c = add_rgb[y+opt_q*i][x+opt_q*j][m];
-											add_rgb[y+opt_q*i][x+opt_q*j][m] = tex_opacity[l][i][j]*((float) (unsigned char) lod_ltex.rgb[k][y][x][m])
-												+ (1.0 - tex_opacity[l][i][j])*tex_opacity_c;
-										}
-									}
+									} 
 								}
 							}
 						}
 						k = lod_ltex.count;
 					}
-				}
+				} // for k
+				//if (!texture_matched) {
+					//printf("%x %x %x %x\n", vtxt[l][i][j][3],vtxt[l][i][j][2],vtxt[l][i][j][1],vtxt[l][i][j][0]);
+				//}
 			}
-			for (y = 0; y < opt_q; y++) {
-				for (x = 0; x < opt_q; x++) {
-					for (m = 0; m < 3; m++) {
-						if (opt_blending) {
-							vimage[y+opt_q*i][x+opt_q*j][m] = 
-							(unsigned char) (((float) (unsigned char) vimage[y+opt_q*i][x+opt_q*j][m]) * (1.f - add_tex_opacity[y+opt_q*i][x+opt_q*j]) 
-							+ (add_rgb[y+opt_q*i][x+opt_q*j][m]) * add_tex_opacity[y+opt_q*i][x+opt_q*j]);
-						} else {
-							if (add_tex_opacity[y+opt_q*i][x+opt_q*j] > 0.5)
-								vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) add_rgb[y+opt_q*i][x+opt_q*j][m];
+			//if (num_layer[i][j] > -1) {
+				for (y = 0; y < opt_q; y++) {
+					for (x = 0; x < opt_q; x++) {
+						for (m = 0; m < 3; m++) {
+							if (opt_blending) {
+								vimage[y+opt_q*i][x+opt_q*j][m] = 
+									(unsigned char) (((float) (unsigned char) vimage[y+opt_q*i][x+opt_q*j][m]) * (1.f - add_tex_opacity[y+opt_q*i][x+opt_q*j]) 
+									+ (add_rgb[y+opt_q*i][x+opt_q*j][m]) * add_tex_opacity[y+opt_q*i][x+opt_q*j]);
+							} else {
+								if (add_tex_opacity[y+opt_q*i][x+opt_q*j] > 0.5)
+									vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) add_rgb[y+opt_q*i][x+opt_q*j][m];
+							}
+							if (!opt_no_vclr) vimage[y+opt_q*i][x+opt_q*j][m] = 
+								(unsigned char) ((float) (unsigned char) vimage[y+opt_q*i][x+opt_q*j][m] * ((float) (unsigned char) vclr[i][j][2-m]/ 255.0f));									
 						}
-						//vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) add_rgb[y+opt_q*i][x+opt_q*j][m];
-						if (!opt_no_vclr) vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) ((float) (unsigned char) vimage[y+opt_q*i][x+opt_q*j][m] * ((float) (unsigned char) vclr[i][j][2-m]/ 255.0f));									
+						unsigned int posx = colormap->GetRawX(128.0f * float(cell.current_x * 32)) + x + j * opt_q;
+						unsigned int posy = colormap->GetRawY(128.0f * float(cell.current_y * 32)) + y + i * opt_q;
+						colormap->SetRed  (posx, posy, vimage[y+opt_q*i][x+opt_q*j][2]);
+						colormap->SetGreen(posx, posy, vimage[y+opt_q*i][x+opt_q*j][1]);
+						colormap->SetBlue (posx, posy, vimage[y+opt_q*i][x+opt_q*j][0]);
+						colormap->SetAlpha(posx, posy, 255);
 					}
-					unsigned int posx = colormap->GetRawX(128.0f * float(cell.current_x * 32)) + x + j * opt_q;
-					unsigned int posy = colormap->GetRawY(128.0f * float(cell.current_y * 32)) + y + i * opt_q;
-					colormap->SetRed  (posx, posy, vimage[y+opt_q*i][x+opt_q*j][2]);
-					colormap->SetGreen(posx, posy, vimage[y+opt_q*i][x+opt_q*j][1]);
-					colormap->SetBlue (posx, posy, vimage[y+opt_q*i][x+opt_q*j][0]);
-					colormap->SetAlpha(posx, posy, 255);
 				}
-			}
+			//}
 		}
 	}
 
