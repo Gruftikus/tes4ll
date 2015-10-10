@@ -1143,6 +1143,7 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 											}
 										}
 									} else {
+										//https://en.wikipedia.org/wiki/Alpha_compositing
 										tex_opacity_b = (tex_opacity[l][i][j]);	
 										tex_opacity_a = add_tex_opacity[y+opt_q*i][x+opt_q*j];
 										tex_opacity_c = tex_opacity_a + (1.0f - tex_opacity_a)*tex_opacity_b;

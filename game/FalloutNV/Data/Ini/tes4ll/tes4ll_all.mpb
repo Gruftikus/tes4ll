@@ -61,6 +61,65 @@ SetFlag -name="_defaultheight" -value=$minheight
 @!makemeshes @!writeout @!tes4qlod @!makenormalmaps Exit
 
 
+ImportMapFromModList
+
+
+; ****************************
+; Make meshes 
+; ****************************
+
+@!makemeshes Exit
+
+SetHeight -min -z=$minheight -usegameunits
+
+@!overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD\$_worldspace"
+MkDir -path=$_install_dir
+
+
+; ============================
+; Smooth the heighmap
+; Avoids that the random points are triggered by local fluctuations
+; ============================
+Filter -n=4    
+MakeDerivatives -map="_heightmap_filtered" $use16bit
+; ============================
+
+AlgFirstOrder -add=0.2
+AlgSecondOrder -add=0.5 
+
+; ============================
+; Set the random points
+; ============================
+SelectAll
+SetFlag -name="n" -value=1000
+QuadIterator -level=0 {
+	Echo -text="Filling quad $_quad_x&,$_quad_y with vertices"
+	SetAlgVertices -n=$n -max
+}
+; ============================
+
+
+; ============================
+SelectAll
+MakeTriangulation
+SelectAll
+;;SplitAtGrid -x=4096 -y=4096
+; ============================
+
+SelectAll
+SetFlag -name=_flag_format -value="01.0" 
+
+QuadIterator -level=0 {
+	ExportBS -useshapes $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_quad_x * 32).$(32 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_quad_x * 32).$(32 * $_quad_y).dds" 
+	;;ExportMeshToNif -filename="test_$_worldspace.level32.x$($_quad_x * 32).$(32 * $_quad_y).nif" -useshapes $createpedestals
+	ExportBS -filename="test_$_worldspace.level32.x$($_quad_x * 32).y$(32 * $_quad_y).nif" -writeonly
+}
+
+
+SelectAll
+
+
 ; ============================
 
 @end
@@ -127,7 +186,7 @@ GUIEnable -name=exec_tes4ll
 
 
 @exec_tes4ll @!overwritelods GUIMessageBox -title="Hint" -text="You have not selected the option to overwrite the original files. Do not forget to copy your files by hand to the appropriate place (or stop the process, and check the \"overwrite\" option)"
-@exec_tes4ll @_worldspace GUIExec -exe="tes4ll.exe -f \"$_flaglist\" -w $_worldspace -l \"$_modlist\" stdin" -dumpbatch
+@exec_tes4ll @_worldspace GUIExec -exe="tes4ll.exe -f \"$_flaglist\" -w $_worldspace -l \"$_modlist\" _gamemode=FalloutNV stdin" -dumpbatch
 
 
 ; ****************************

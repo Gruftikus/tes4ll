@@ -1,0 +1,29 @@
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+[_Autoload]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+LogFile                   -value="$_workdir\mpgui.log"
+
+## 1, 3, 4 reserved for Morrowind, Fallout 3 and FalloutNV
+
+AddGame              -n=2 -name=Oblivion
+SetGamePluginFile    -n=2 -value="$_appdata\Oblivion\plugins.txt"
+SetGameSearchPattern -n=2 -value="oblivion"
+SetGameStdWorldspace -n=2 -value="Tamriel"
+
+AddGame              -n=4 -name=FalloutNV
+SetGamePluginFile    -n=4 -value="$_appdata\FalloutNV\plugins.txt"
+SetGameSearchPattern -n=4 -value="Fallout New Vegas"
+SetGameStdWorldspace -n=4 -value="WastelandNV"
+
+AddGame              -n=5 -name=Skyrim
+SetGamePluginFile    -n=5 -value="$_appdata\Skyrim\plugins.txt"
+SetGameSearchPattern -n=5 -value="skyrim"
+SetGameStdWorldspace -n=5 -value="Tamriel"
+
+SetPath                   -value="$_workdir\ini\mpgui\"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+GUIConsoleEcho -text="Autoload batch file loaded"
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

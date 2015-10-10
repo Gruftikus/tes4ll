@@ -748,6 +748,7 @@
     <ClCompile Include="externals\zlib\uncompr.c" />
     <ClCompile Include="externals\zlib\zutil.c" />
     <ClCompile Include="src\llbsaiterator.cpp" />
+    <ClCompile Include="src\llexportbs.cpp" />
     <ClCompile Include="src\llexportmeshtonif.cpp" />
     <ClCompile Include="src\llimportmapfrommodlist.cpp" />
     <ClCompile Include="src\llparsemodlist.cpp" />
@@ -1538,6 +1539,7 @@
     <ClInclude Include="externals\zlib\zlib.h" />
     <ClInclude Include="externals\zlib\zutil.h" />
     <ClInclude Include="include\llbsaiterator.h" />
+    <ClInclude Include="include\llexportbs.h" />
     <ClInclude Include="include\llexportmeshtonif.h" />
     <ClInclude Include="include\llimportmapfrommodlist.h" />
     <ClInclude Include="include\llparsemodlist.h" />

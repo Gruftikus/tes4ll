@@ -14,8 +14,9 @@ class llExportMeshToNif : public llExportMeshToObj {
 protected:
 
 	int useshapes;
-
 	int makeninode;
+
+	char *texset1, *texset2;
 
 	static Niflib::NiNode *ninode_ptr;
 
