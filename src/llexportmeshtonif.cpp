@@ -66,8 +66,6 @@ int llExportMeshToNif::Exec(void) {
 
 	int num_triangles = newtriangles->GetN();
     std::vector<Triangle> t(num_triangles);
-	newpoints->Resize();
-	newpoints->Translation(trans_x, trans_y, trans_z);
 
 	NiAVObjectRef myavobj;
 

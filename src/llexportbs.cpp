@@ -2,7 +2,8 @@
 
 #include "../../lltool/include/llmaplist.h"
 
-//#include "../../niflib/include/obj/NiTexturingProperty.h"
+#include "../../niflib/include/obj/BSMultiBoundAABB.h"
+#include "../../niflib/include/obj/BSMultiBound.h"
 
 //constructor
 llExportBS::llExportBS() : llExportMeshToNif() {
@@ -49,6 +50,14 @@ int llExportBS::Exec(void) {
 	if (!writeonly) {
 		//exporting base mesh:
 		llExportMeshToNif::Exec();
+
+		BSMultiBoundRef     mbnd = new BSMultiBound;
+		BSMultiBoundAABBRef aabb = new BSMultiBoundAABB;
+
+		aabb->SetAABB(Vector3((xmax + xmin)*0.5f, (ymax + ymin)*0.5f, (zmax + zmin)*0.5f), 
+			Vector3((xmax - xmin)*0.5f, (ymax - ymin)*0.5f, (zmax - zmin)*0.5f));
+		mbnd->SetData(aabb);
+		((BSMultiBoundNode*)ninode_ptr)->SetMultiBound(mbnd);
 	}
 
 	NifInfo info = NifInfo();
@@ -59,7 +68,6 @@ int llExportBS::Exec(void) {
 		sscanf(_llUtils()->GetValue("_nif_version"), "%u", &(info.version));
 
 	if (myfile) {
-		//std::cout << myfile << std::endl;
 		WriteNifTree(myfile, ninode_ptr, info);
 		ninode_ptr = NULL;
 	}

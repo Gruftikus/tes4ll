@@ -111,8 +111,7 @@ SelectAll
 SetFlag -name=_flag_format -value="01.0" 
 
 QuadIterator -level=0 {
-	ExportBS -useshapes $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_quad_x * 32).$(32 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_quad_x * 32).$(32 * $_quad_y).dds" 
-	;;ExportMeshToNif -filename="test_$_worldspace.level32.x$($_quad_x * 32).$(32 * $_quad_y).nif" -useshapes $createpedestals
+	ExportBS -useshapes $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -transx="$(-131072 * $_quad_x)" -transy="$(-131072 * $_quad_y)"
 	ExportBS -filename="test_$_worldspace.level32.x$($_quad_x * 32).y$(32 * $_quad_y).nif" -writeonly
 }
 
