@@ -45,6 +45,7 @@ int llExportBS::Exec(void) {
 
 	if (!ninode_ptr) {
 		ninode_ptr = new BSMultiBoundNode;
+		ninode_ptr->SetFlags(2062);
 	}
 
 	if (!writeonly) {
@@ -57,6 +58,7 @@ int llExportBS::Exec(void) {
 		aabb->SetAABB(Vector3((xmax + xmin)*0.5f, (ymax + ymin)*0.5f, (zmax + zmin)*0.5f), 
 			Vector3((xmax - xmin)*0.5f, (ymax - ymin)*0.5f, (zmax - zmin)*0.5f));
 		mbnd->SetData(aabb);
+
 		((BSMultiBoundNode*)ninode_ptr)->SetMultiBound(mbnd);
 	}
 
@@ -68,6 +70,7 @@ int llExportBS::Exec(void) {
 		sscanf(_llUtils()->GetValue("_nif_version"), "%u", &(info.version));
 
 	if (myfile) {
+		ninode_ptr->SetLocalTranslation(Vector3 (trans_x, trans_y, trans_z));
 		WriteNifTree(myfile, ninode_ptr, info);
 		ninode_ptr = NULL;
 	}

@@ -20,7 +20,7 @@
 
 ParseModList -cd    ;reads mod list from Plugins.txt (or from -l option) and set the flags
 
-SetFlag -name="_quad_levels" -value=2
+SetFlag -name="_quad_levels" -value=4
 
 SetFlag -name="dds_format" -value="DXT1"
 @c_dxt3 SetFlag -name="dds_format" -value="DXT3"
@@ -111,10 +111,14 @@ SelectAll
 SetFlag -name=_flag_format -value="01.0" 
 
 QuadIterator -level=0 {
-	ExportBS -useshapes $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -transx="$(-131072 * $_quad_x)" -transy="$(-131072 * $_quad_y)"
-	ExportBS -filename="test_$_worldspace.level32.x$($_quad_x * 32).y$(32 * $_quad_y).nif" -writeonly
+	ExportBS -useshapes $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -transx="$(-131072 * $_quad_x)" -transy="$(-131072 * $_quad_y)" 
+	ExportBS -filename="$_worldspace.level32.x$($_quad_x * 32).y$(32 * $_quad_y).nif" -writeonly -transx="$(131072 * $_quad_x)" -transy="$(131072 * $_quad_y)" 
 }
 
+QuadIterator -level=1 {
+	ExportBS -useshapes $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_quad_x * 16).y$(16 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_quad_x * 16).y$(16 * $_quad_y).dds" -transx="$(-65536 * $_quad_x)" -transy="$(-65536 * $_quad_y)" 
+	ExportBS -filename="$_worldspace.level16.x$($_quad_x * 16).y$(16 * $_quad_y).nif" -writeonly -transx="$(65536 * $_quad_x)" -transy="$(65536 * $_quad_y)"
+}
 
 SelectAll
 

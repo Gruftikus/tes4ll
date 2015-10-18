@@ -6,6 +6,7 @@
 #include "../../niflib/include/obj/NiSourceTexture.h"
 #include "../../niflib/include/obj/bsshadertextureset.h"
 #include "../../niflib/include/obj/BSShaderPPLightingProperty.h"
+#include "../../niflib/include/obj/NiAdditionalGeometryData.h"
 
 Niflib::NiNode *llExportMeshToNif::ninode_ptr = NULL;
 
@@ -67,7 +68,8 @@ int llExportMeshToNif::Exec(void) {
 	int num_triangles = newtriangles->GetN();
     std::vector<Triangle> t(num_triangles);
 
-	NiAVObjectRef myavobj;
+	NiAVObjectRef     myavobj;
+	NiGeometryDataRef mygeomobj;
 
 	if (useshapes) {
 
@@ -77,6 +79,7 @@ int llExportMeshToNif::Exec(void) {
 
 		NiTriShapeData   *node2_ptr = new NiTriShapeData();
 		NiTriShapeDataRef node2     = node2_ptr;
+		mygeomobj                   = node2_ptr;
 		
 		node_ptr->SetData(node2);
 		node_ptr->SetFlags(14);
@@ -115,6 +118,7 @@ int llExportMeshToNif::Exec(void) {
 
 		NiTriStripsData   *node2_ptr = new NiTriStripsData();
 		NiTriStripsDataRef node2     = node2_ptr;
+		mygeomobj                    = node2_ptr;
 
 		node_ptr->SetData(node2);
 		node_ptr->SetFlags(14);
@@ -160,6 +164,11 @@ int llExportMeshToNif::Exec(void) {
 		BSShaderTextureSetRef txst = txst_ptr;
 		shader->SetTextureSet(txst);
 		shader->SetShaderFlags(BSShaderFlags(0x3000));
+		shader->SetUnknownInt2(2);
+		shader->SetUnknownInt3(0);
+		shader->SetUnknownFloat2(0.f);
+		shader->SetUnknownFloat4(8.f);
+		shader->SetUnknownFloat5(1.f);
 		shader->SetEnvmapScale(1.0);
 
 		txst->SetTexture(0, texset1); // color
@@ -167,6 +176,61 @@ int llExportMeshToNif::Exec(void) {
 		for (int i=2; i<6; i++) txst->SetTexture(i, "");
 
 		myavobj->AddProperty(shader);
+	}
+
+	if (1) {
+
+		NiAdditionalGeometryDataRef geom = new NiAdditionalGeometryData();
+		geom->SetNumVertices(newpoints->GetN());
+		
+		std::vector<AdditionalDataInfo> info;
+		info.resize(1);
+		info[0].dataType = 1;
+		info[0].numChannelBytesPerElement = 4;
+		info[0].numTotalBytesPerElement = 4;
+		info[0].numChannelBytes = 4 * newpoints->GetN();
+		info[0].unknownByte1 = 2;
+
+		std::vector<AdditionalDataBlock> block;
+		block.resize(1);
+		block[0].hasData = true;
+		block[0].blockSize = 4 * newpoints->GetN();
+		block[0].numBlocks = 1;
+		
+		std::vector<int> data_size;
+		data_size.resize(1);
+		data_size[0] = 4;
+		block[0].dataSizes = data_size;
+		
+		vector<int> offsets;
+		offsets.resize(1);
+		offsets[0] = 0;
+		block[0].blockOffsets = offsets;
+
+		block[0].numData = 1;
+
+		std::vector<byte> data1;
+		data1.resize(4 * newpoints->GetN());
+		//fill data structure
+		for (int i=0; i<newpoints->GetN(); i++) {
+			byte value[4];
+			*(float*)value = newpoints->GetZ(i);
+			data1[i*4] = value[0];
+			data1[i*4+1] = value[1];
+			data1[i*4+2] = value[2];
+			data1[i*4+3] = value[3];
+		}
+
+		std::vector< vector<byte> > data2;
+		data2.resize(1);
+		data2[0] = data1;
+		block[0].data = data2;
+
+		geom->SetDataInfo(info);
+		geom->SetDataBlock(block);
+
+		mygeomobj->SetAdditionalGeometryData((AbstractAdditionalGeometryDataRef) geom);
+
 	}
 
 	if (ninode_ptr) {
