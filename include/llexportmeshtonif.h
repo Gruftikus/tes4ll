@@ -15,6 +15,7 @@ protected:
 
 	int useshapes;
 	int makeninode;
+	int addgeometrydata;
 
 	char *texset1, *texset2;
 

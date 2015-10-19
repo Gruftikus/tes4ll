@@ -20,6 +20,7 @@ int llExportMeshToNif::Prepare(void) {
 
 	useshapes  = 0;
 	makeninode = 0;
+	addgeometrydata = 0;
 
 	texset1 = NULL;
 	texset2 = NULL;
@@ -32,6 +33,7 @@ int llExportMeshToNif::RegisterOptions(void) {
 
 	RegisterFlag ("-useshapes",  &useshapes);
 	RegisterFlag ("-makeninode", &makeninode);
+	RegisterFlag ("-addgeometrydata", &addgeometrydata);
 
 	RegisterValue("-texset1", &texset1);
 	RegisterValue("-texset2", &texset2);
@@ -178,7 +180,7 @@ int llExportMeshToNif::Exec(void) {
 		myavobj->AddProperty(shader);
 	}
 
-	if (1) {
+	if (addgeometrydata) {
 
 		NiAdditionalGeometryDataRef geom = new NiAdditionalGeometryData();
 		geom->SetNumVertices(newpoints->GetN());

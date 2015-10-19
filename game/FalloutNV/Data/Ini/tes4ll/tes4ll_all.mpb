@@ -87,12 +87,14 @@ MakeDerivatives -map="_heightmap_filtered" $use16bit
 
 AlgFirstOrder -add=0.2
 AlgSecondOrder -add=0.5 
+AlgSecondOrder -multiply=1
 
 ; ============================
 ; Set the random points
 ; ============================
 SelectAll
-SetFlag -name="n" -value=1000
+SetFlag -name="_mindistance" -value=64 
+SetFlag -name="n" -value=64000
 QuadIterator -level=0 {
 	Echo -text="Filling quad $_quad_x&,$_quad_y with vertices"
 	SetAlgVertices -n=$n -max
@@ -110,6 +112,12 @@ SelectAll
 SelectAll
 SetFlag -name=_flag_format -value="01.0" 
 
+QuadIterator -level=3 {
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" 
+	ExportBS -filename="$_worldspace.level4.x$($_quad_x * 4).y$(4 * $_quad_y).nif" -writeonly -transx="$(16384 * $_quad_x)" -transy="$(16384 * $_quad_y)"
+}
+
+Exit
 QuadIterator -level=0 {
 	ExportBS -useshapes $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -transx="$(-131072 * $_quad_x)" -transy="$(-131072 * $_quad_y)" 
 	ExportBS -filename="$_worldspace.level32.x$($_quad_x * 32).y$(32 * $_quad_y).nif" -writeonly -transx="$(131072 * $_quad_x)" -transy="$(131072 * $_quad_y)" 
