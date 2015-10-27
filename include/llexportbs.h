@@ -8,7 +8,7 @@ class llExportBS : public llExportMeshToNif {
 
 protected:
 
-	int writeonly;
+	int writeonly, makebound;
 
 public:
 

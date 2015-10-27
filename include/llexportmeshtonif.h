@@ -14,10 +14,13 @@ class llExportMeshToNif : public llExportMeshToObj {
 protected:
 
 	int useshapes;
+	int segmented;
 	int makeninode;
 	int addgeometrydata;
 
 	char *texset1, *texset2;
+
+	float loc_trans_x, loc_trans_y, loc_trans_z;
 
 	static Niflib::NiNode *ninode_ptr;
 

@@ -76,6 +76,8 @@ SetHeight -min -z=$minheight -usegameunits
 @overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD\$_worldspace"
 MkDir -path=$_install_dir
 
+SetFlag -name="_mindistance" -value=64
+SetGrid -x=4096 -y=4096
 
 ; ============================
 ; Smooth the heighmap
@@ -86,8 +88,9 @@ MakeDerivatives -map="_heightmap_filtered" $use16bit
 ; ============================
 
 AlgFirstOrder -add=0.2
-AlgSecondOrder -add=0.5 
-AlgSecondOrder -multiply=1
+AlgSecondOrder -add=0.5
+AlgConst -add=0.2 
+AlgSecondOrder -multiply=0.5
 
 ; ============================
 ; Set the random points
@@ -95,6 +98,7 @@ AlgSecondOrder -multiply=1
 SelectAll
 SetFlag -name="_mindistance" -value=64 
 SetFlag -name="n" -value=64000
+;;SetFlag -name="n" -value=1000
 QuadIterator -level=0 {
 	Echo -text="Filling quad $_quad_x&,$_quad_y with vertices"
 	SetAlgVertices -n=$n -max
@@ -106,15 +110,25 @@ QuadIterator -level=0 {
 SelectAll
 MakeTriangulation
 SelectAll
-;;SplitAtGrid -x=4096 -y=4096
+SplitAtGrid -x=4096 -y=4096
+; ============================
+
+; ============================
+; Water Map
+; ============================
+SetGrid -x=4096 -y=4096 -map="_watermap" 
+AddDiscontinuityGrid -x=4096 -y=4096 -map="_watermap" 
+MakeTriangulation -map="_watermap" 
+StencilPolygon -map=_watermap
 ; ============================
 
 SelectAll
 SetFlag -name=_flag_format -value="01.0" 
 
 QuadIterator -level=3 {
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" 
-	ExportBS -filename="$_worldspace.level4.x$($_quad_x * 4).y$(4 * $_quad_y).nif" -writeonly -transx="$(16384 * $_quad_x)" -transy="$(16384 * $_quad_y)"
+	ExportBS -useshapes -segments=16 -map="_watermap" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)"
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -makebound
+	ExportBS -filename="$_worldspace.level4.x$($_quad_x * 4).y$(4 * $_quad_y).nif" -writeonly -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)"
 }
 
 Exit

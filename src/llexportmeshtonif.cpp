@@ -6,6 +6,7 @@
 #include "../../niflib/include/obj/NiSourceTexture.h"
 #include "../../niflib/include/obj/bsshadertextureset.h"
 #include "../../niflib/include/obj/BSShaderPPLightingProperty.h"
+#include "../../niflib/include/obj/BSSegmentedTriShape.h"
 #include "../../niflib/include/obj/NiAdditionalGeometryData.h"
 
 Niflib::NiNode *llExportMeshToNif::ninode_ptr = NULL;
@@ -20,10 +21,13 @@ int llExportMeshToNif::Prepare(void) {
 
 	useshapes  = 0;
 	makeninode = 0;
+	segmented  = 0;
 	addgeometrydata = 0;
 
 	texset1 = NULL;
 	texset2 = NULL;
+
+	loc_trans_x = loc_trans_y = loc_trans_z = 0;
 
 	return 1;
 }
@@ -34,9 +38,15 @@ int llExportMeshToNif::RegisterOptions(void) {
 	RegisterFlag ("-useshapes",  &useshapes);
 	RegisterFlag ("-makeninode", &makeninode);
 	RegisterFlag ("-addgeometrydata", &addgeometrydata);
-
+	
 	RegisterValue("-texset1", &texset1);
 	RegisterValue("-texset2", &texset2);
+
+	RegisterValue("-segments",  &segmented);
+
+	RegisterValue("-loc_transx", &loc_trans_x);
+	RegisterValue("-loc_transy", &loc_trans_y);
+	RegisterValue("-loc_transz", &loc_trans_z);
 
 	return 1;
 }
@@ -75,7 +85,17 @@ int llExportMeshToNif::Exec(void) {
 
 	if (useshapes) {
 
-		NiTriShape    *node_ptr = new NiTriShape;
+		NiTriShape    *node_ptr;
+		if (segmented) {
+			node_ptr = new BSSegmentedTriShape;
+			vector<BSSegment > segments;
+			segments.resize(segmented);
+			((BSSegmentedTriShape*)node_ptr)->numSegments = segmented;
+			((BSSegmentedTriShape*)node_ptr)->segment = segments;
+
+		} else {
+			node_ptr = new NiTriShape;
+		}
 		NiTriShapeRef  node     = node_ptr;
 		myavobj                 = node_ptr;
 
@@ -85,6 +105,7 @@ int llExportMeshToNif::Exec(void) {
 		
 		node_ptr->SetData(node2);
 		node_ptr->SetFlags(14);
+		node_ptr->SetLocalTranslation(Vector3 (loc_trans_x, loc_trans_y, loc_trans_z));
 
 		node2_ptr->SetVertices(reinterpret_cast<std::vector<Niflib::Vector3> & >(newpoints->GetVertices()));   
 		node2_ptr->SetTspaceFlag(16);
@@ -106,9 +127,6 @@ int llExportMeshToNif::Exec(void) {
 		_llLogger()->WriteNextLine(-LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
 			filename, newt.size(), newpoints->GetVertices().size());
 
-		NifInfo info = NifInfo();
-		info.version = 335544325;
-
 		if (ninode_ptr) 
 			ninode_ptr->AddChild(node_ptr);
 
@@ -124,6 +142,7 @@ int llExportMeshToNif::Exec(void) {
 
 		node_ptr->SetData(node2);
 		node_ptr->SetFlags(14);
+		node_ptr->SetLocalTranslation(Vector3 (loc_trans_x, loc_trans_y, loc_trans_z));
 
 		node2_ptr->SetVertices(reinterpret_cast<std::vector<Niflib::Vector3> & >(newpoints->GetVertices()));   
 		node2_ptr->SetTspaceFlag(16);

@@ -954,7 +954,8 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 				start_height += decomp[pos + 6 + 4 + y*33];
 				float running_height = start_height;
 				for (x = 0; x < 33; x++) {
-					running_height += decomp[pos+6+x+4+y*33];
+					if (x!=0)
+						running_height += decomp[pos+6+x+4+y*33];
 					if (map) {
 						map->SetElementRaw((cell.current_x * 32 + x - x_cell *32 /* - 1 */), 
 							(cell.current_y * 32 + y - y_cell *32 /* - 1 */), running_height);
@@ -1129,7 +1130,7 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 								if (l==0) {								
 									memcpy(&vimage[y+opt_q*i][x+opt_q*j], &lod_ltex.rgb[k][y][x], 3);	
 								} else if (l==1) {
-									add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[1][i][j];
+									add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];
 									//add_tex_opacity[y+opt_q*i][x+opt_q*j] = 1.0;
 									for (m = 0; m < 3; m++) {
 										add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
@@ -1148,10 +1149,12 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 										tex_opacity_a = add_tex_opacity[y+opt_q*i][x+opt_q*j];
 										tex_opacity_c = tex_opacity_a + (1.0f - tex_opacity_a)*tex_opacity_b;
 										add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity_c;
-										for (m = 0; m < 3; m++) {
-											add_rgb[y+opt_q*i][x+opt_q*j][m] = (1.f/tex_opacity_c) * (
-												tex_opacity_a*add_rgb[y+opt_q*i][x+opt_q*j][m] + (1.f - tex_opacity_a)*
-												tex_opacity_b*((float) (unsigned char) lod_ltex.rgb[k][y][x][m]));
+										if (tex_opacity_c) {
+											for (m = 0; m < 3; m++) {
+												add_rgb[y+opt_q*i][x+opt_q*j][m] = (1.f/tex_opacity_c) * (
+													tex_opacity_a*add_rgb[y+opt_q*i][x+opt_q*j][m] + (1.f - tex_opacity_a)*
+													tex_opacity_b*((float) (unsigned char) lod_ltex.rgb[k][y][x][m]));
+											}
 										}
 									} 
 								}

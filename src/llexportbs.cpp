@@ -13,7 +13,7 @@ llExportBS::llExportBS() : llExportMeshToNif() {
 int llExportBS::Prepare(void) {
 	if (!llExportMeshToNif::Prepare()) return 0;
 
-	writeonly = 0;
+	writeonly = makebound = 0;
 
 	return 1;
 }
@@ -22,6 +22,7 @@ int llExportBS::RegisterOptions(void) {
 	if (!llExportMeshToNif::RegisterOptions()) return 0;
 
 	RegisterFlag ("-writeonly",  &writeonly);
+	RegisterFlag ("-makebound",  &makebound);
 
 	return 1;
 }
@@ -51,7 +52,9 @@ int llExportBS::Exec(void) {
 	if (!writeonly) {
 		//exporting base mesh:
 		llExportMeshToNif::Exec();
+	}
 
+	if (makebound) {
 		BSMultiBoundRef     mbnd = new BSMultiBound;
 		BSMultiBoundAABBRef aabb = new BSMultiBoundAABB;
 
@@ -62,15 +65,14 @@ int llExportBS::Exec(void) {
 		((BSMultiBoundNode*)ninode_ptr)->SetMultiBound(mbnd);
 	}
 
-	NifInfo info = NifInfo();
-	info.version = 335675399;
-	info.userVersion = 11;
-	info.userVersion2 = 34;
-	if (_llUtils()->GetValue("_nif_version"))
-		sscanf(_llUtils()->GetValue("_nif_version"), "%u", &(info.version));
-
 	if (myfile) {
-		ninode_ptr->SetLocalTranslation(Vector3 (trans_x, trans_y, trans_z));
+		NifInfo info = NifInfo();
+		info.version = 335675399;
+		info.userVersion = 11;
+		info.userVersion2 = 34;
+		if (_llUtils()->GetValue("_nif_version"))
+			sscanf(_llUtils()->GetValue("_nif_version"), "%u", &(info.version));
+		ninode_ptr->SetLocalTranslation(Vector3 (loc_trans_x, loc_trans_y, loc_trans_z));
 		WriteNifTree(myfile, ninode_ptr, info);
 		ninode_ptr = NULL;
 	}
