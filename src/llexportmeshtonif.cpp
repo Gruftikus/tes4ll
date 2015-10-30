@@ -69,6 +69,13 @@ int llExportMeshToNif::Exec(void) {
 		filename = filename_tmp;
 	}
 
+	float cellsize_x = 0;
+	if (_llUtils()->GetValueF("_cellsize_x"))
+		cellsize_x = (float)(*_llUtils()->GetValueF("_cellsize_x"));
+	float cellsize_y = 0;
+	if (_llUtils()->GetValueF("_cellsize_y"))
+		cellsize_y = (float)(*_llUtils()->GetValueF("_cellsize_y"));
+
 	//Now the nif-specific part:
 
 	using namespace Niflib;
@@ -85,17 +92,16 @@ int llExportMeshToNif::Exec(void) {
 
 	if (useshapes) {
 
-		NiTriShape    *node_ptr;
-		if (segmented) {
-			node_ptr = new BSSegmentedTriShape;
-			vector<BSSegment > segments;
-			segments.resize(segmented);
-			((BSSegmentedTriShape*)node_ptr)->numSegments = segmented;
-			((BSSegmentedTriShape*)node_ptr)->segment = segments;
+		NiTriShape *node_ptr;
+		vector<BSSegment > segments;
+		segments.resize(segmented);
 
+		if (segmented) {
+			node_ptr = new BSSegmentedTriShape;	
 		} else {
 			node_ptr = new NiTriShape;
 		}
+
 		NiTriShapeRef  node     = node_ptr;
 		myavobj                 = node_ptr;
 
@@ -110,11 +116,38 @@ int llExportMeshToNif::Exec(void) {
 		node2_ptr->SetVertices(reinterpret_cast<std::vector<Niflib::Vector3> & >(newpoints->GetVertices()));   
 		node2_ptr->SetTspaceFlag(16);
 
+		int running_segment = 0, last_tri = 0, cell_x, cell_y;
 		for (int i=0; i<num_triangles; i++) {
+			if (segmented) {
+				int new_cell_x = (int)floor(newtriangles->GetTriangleCenterX(i)/cellsize_x);
+				int new_cell_y = (int)floor(newtriangles->GetTriangleCenterY(i)/cellsize_y);
+				if (i==0) {
+					cell_x = new_cell_x;
+					cell_y = new_cell_y;
+				} else {
+					if (cell_x != new_cell_x || cell_y != new_cell_y) {
+						cell_x = new_cell_x;
+						cell_y = new_cell_y;
+						if (running_segment < segmented) {
+							segments[running_segment].offset = 3*last_tri;
+							segments[running_segment].count = i - last_tri;
+							//std::cout << segments[running_segment].offset << ":" <<
+								//segments[running_segment].count << std::endl;
+						}
+						last_tri = i;
+						running_segment++;
+					}
+				}
+			}
 			t[i].v1 = newtriangles->GetPoint1(i);
 			t[i].v2 = newtriangles->GetPoint2(i);
 			t[i].v3 = newtriangles->GetPoint3(i);
 		}
+
+		if (segmented) {
+			((BSSegmentedTriShape*)node_ptr)->numSegments = segmented;
+			((BSSegmentedTriShape*)node_ptr)->segment = segments;
+		} 
 
 		node2_ptr->SetTriangles(t);
 		node2_ptr->SetUVSetCount(1);

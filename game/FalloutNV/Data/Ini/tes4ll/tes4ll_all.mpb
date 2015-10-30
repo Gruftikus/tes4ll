@@ -126,7 +126,7 @@ SelectAll
 SetFlag -name=_flag_format -value="01.0" 
 
 QuadIterator -level=3 {
-	ExportBS -useshapes -segments=16 -map="_watermap" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)"
+	ExportBS -useshapes -map="_watermap" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)" -sort -segments=16 
 	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -makebound
 	ExportBS -filename="$_worldspace.level4.x$($_quad_x * 4).y$(4 * $_quad_y).nif" -writeonly -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)"
 }
