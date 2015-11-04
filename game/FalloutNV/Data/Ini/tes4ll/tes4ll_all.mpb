@@ -1,14 +1,13 @@
 [tes4ll]
 @logfile LogFile -filename=$logfile
 
-; ============================
-; Optional pedestal walls
-; Requires more triangles!
-; Enable this only if you want to exchange or overwrite single quads
-; Not required if you rerun tes4ll after landscape changes
-; Read the manual for more info
-; SetFlag -name="createpedestals" -value="-createpedestals"
-; ============================
+SetFlag -name="createpedestals" -value="-createpedestals"
+
+;SetFlag -name="level3"
+;SetFlag -name="level2"
+;SetFlag -name="level1"
+;SetFlag -name="level0"
+
 
 ; ============================
 ; Optional 16 bit matrices (no 32-bit floats)
@@ -63,6 +62,58 @@ SetFlag -name="_defaultheight" -value=$minheight
 
 ImportMapFromModList
 
+; ****************************
+; Make normal maps
+; ****************************
+
+@makenormalmaps {
+	SelectAll
+	CopyMap -name="_heightmap_tmp"
+	ScaleMap -map="_heightmap_tmp" -factor=2
+	@!lodshadows CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -boost=$z_val
+	@lodshadows  CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -shadows -northboost=$z_val
+	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	@option_map ExportMap -map=_normalmap -filename="$_worldspace&Normalmap.bmp" -FlipY
+	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\Landscape\LOD\$_worldspace\normals"
+	SetFlag -name=_flag_format -value="01.0" 
+	@level3 {
+		QuadIterator -level=3 {
+			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).bmp" 
+		}
+	}
+	ScaleMap -map="_normalmap" -factor=0.5 -rgb
+	@level2 {
+		QuadIterator -level=2 {
+			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).bmp" 
+		}
+	}
+	ScaleMap -map="_normalmap" -factor=0.5 -rgb
+	@level1 {
+		QuadIterator -level=1 {
+			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).bmp" 
+		}
+	}
+	ScaleMap -map="_normalmap" -factor=0.5 -rgb
+	@level0 {
+		QuadIterator -level=0 {
+			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).bmp" 
+		}
+	}
+}
+
+; ****************************
+; Generate optional heightmap
+; ****************************
+
+@writeout {
+	SetFlag -name="_install_dir" -value="$_gamedir\Data"
+	SelectAll
+	ExportMap -depth=32 -filename="$_worldspace.bmp" 
+}
 
 ; ****************************
 ; Make meshes 
@@ -76,8 +127,17 @@ SetHeight -min -z=$minheight -usegameunits
 @overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD\$_worldspace"
 MkDir -path=$_install_dir
 
+; =============================
+; Water Map, needed in any case
+; =============================
+SetGrid -x=4096 -y=4096 -map="_watermap" 
+;SetGrid -x=2048 -y=2048 -map="_watermap" 
+AddDiscontinuityGrid -x=4096 -y=4096 -map="_watermap" 
+MakeTriangulation -map="_watermap" 
+StencilPolygon -map=_watermap
+; =============================
+
 SetFlag -name="_mindistance" -value=64
-SetGrid -x=4096 -y=4096
 
 ; ============================
 ; Smooth the heighmap
@@ -89,16 +149,27 @@ MakeDerivatives -map="_heightmap_filtered" $use16bit
 
 AlgFirstOrder -add=0.2
 AlgSecondOrder -add=0.5
-AlgConst -add=0.2 
+AlgConst -add=0.5 
 AlgSecondOrder -multiply=0.5
 
+@high_res SetFlag -name="_density_threshold" -value=97
+@ultimate SetFlag -name="_density_threshold" -value=99
+
+; ****************************
+; LEVEL 3 (=4 in filename)
+; ****************************
+@level3 {
+SetGrid -x=4096 -y=4096
 ; ============================
 ; Set the random points
 ; ============================
 SelectAll
-SetFlag -name="_mindistance" -value=64 
-SetFlag -name="n" -value=64000
-;;SetFlag -name="n" -value=1000
+SetFlag -name="_mindistance" -value=128 
+SetFlag -name="_mindistancegrid" -value=128 
+SetFlag -name="n" -value=48000
+@high_res SetFlag -name="n" -value=64000
+@ultimate SetFlag -name="n" -value=96000
+SetFlag -name=_flag_format -value="01.0" 
 QuadIterator -level=0 {
 	Echo -text="Filling quad $_quad_x&,$_quad_y with vertices"
 	SetAlgVertices -n=$n -max
@@ -109,41 +180,131 @@ QuadIterator -level=0 {
 ; ============================
 SelectAll
 MakeTriangulation
-SelectAll
 SplitAtGrid -x=4096 -y=4096
 ; ============================
-
-; ============================
-; Water Map
-; ============================
-SetGrid -x=4096 -y=4096 -map="_watermap" 
-AddDiscontinuityGrid -x=4096 -y=4096 -map="_watermap" 
-MakeTriangulation -map="_watermap" 
-StencilPolygon -map=_watermap
-; ============================
-
 SelectAll
 SetFlag -name=_flag_format -value="01.0" 
-
 QuadIterator -level=3 {
-	ExportBS -useshapes -map="_watermap" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)" -sort -segments=16 
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_quad_x * 4).y$(4 * $_quad_y).dds" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -makebound
-	ExportBS -filename="$_worldspace.level4.x$($_quad_x * 4).y$(4 * $_quad_y).nif" -writeonly -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)"
+	ExportBS -useshapes -map="_watermap" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)" -sort -segments=16 -no_uv $createpedestals 
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -makebound -transz="-100"
+	ExportBS -filename="$_worldspace.level4.x$($_quad_x * 4).y$($_quad_y * 4).nif" -writeonly -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)"
 }
 
-Exit
-QuadIterator -level=0 {
-	ExportBS -useshapes $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_quad_x * 32).y$(32 * $_quad_y).dds" -transx="$(-131072 * $_quad_x)" -transy="$(-131072 * $_quad_y)" 
-	ExportBS -filename="$_worldspace.level32.x$($_quad_x * 32).y$(32 * $_quad_y).nif" -writeonly -transx="$(131072 * $_quad_x)" -transy="$(131072 * $_quad_y)" 
+; ============================
+; Reset things for next level
+; ============================
+SelectAll
+RemoveTriangulation
+InactivateAllVertices
+RemoveInactiveVertices
 }
+
+; ****************************
+; LEVEL 2 (=8 in filename)
+; ****************************
+@level2 {
+SetGrid -x=32768 -y=32768
+SetFlag -name="_mindistance" -value=256 
+SetFlag -name="_mindistancegrid" -value=256 
+SetFlag -name="_cellsize_x" -value=32768 
+SetFlag -name="_cellsize_y" -value=32768
+SetFlag -name="n" -value=16000
+@high_res SetFlag -name="n" -value=32000
+@ultimate SetFlag -name="n" -value=64000
+SetFlag -name=_flag_format -value="01.0" 
+QuadIterator -level=0 {
+	Echo -text="Filling quad $_quad_x&,$_quad_y with vertices"
+	SetAlgVertices -n=$n -max
+}
+
+; ============================
+SelectAll
+MakeTriangulation
+; ============================
+
+QuadIterator -level=2 {
+	ExportBS -useshapes -map="_watermap" -transx="$(-32768 * $_quad_x)" -transy="$(-32768 * $_quad_y)" -loc_transx="$(32768 * $_quad_x)" -loc_transy="$(32768 * $_quad_y)" -sort -no_uv
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -transx="$(-32768 * $_quad_x)" -transy="$(-32768 * $_quad_y)" -makebound ;; -transz="500"
+	ExportBS -filename="$_worldspace.level8.x$($_quad_x * 8).y$($_quad_y * 8).nif" -writeonly -loc_transx="$(32768 * $_quad_x)" -loc_transy="$(32768 * $_quad_y)"
+}
+
+; ============================
+; Reset things for next level
+; ============================
+SelectAll
+RemoveTriangulation
+InactivateAllVertices
+RemoveInactiveVertices
+}
+
+; ****************************
+; LEVEL 1 (=16 in filename)
+; ****************************
+@level1 {
+SetGrid -x=65536 -y=65536 -stepx=4096 -stepy=4096 
+SetFlag -name="n" -value=4000
+@high_res SetFlag -name="n" -value=8000
+@ultimate SetFlag -name="n" -value=16000
+SetFlag -name="_mindistance" -value=512 
+SetFlag -name="_mindistancegrid" -value=512 
+SetFlag -name="_cellsize_x" -value=65536 
+SetFlag -name="_cellsize_y" -value=65536 
+SetFlag -name=_flag_format -value="01.0" 
+QuadIterator -level=0 {
+	Echo -text="Filling quad $_quad_x&,$_quad_y with vertices"
+	SetAlgVertices -n=$n -max
+}
+
+; ============================
+SelectAll
+MakeTriangulation
+; ============================
 
 QuadIterator -level=1 {
-	ExportBS -useshapes $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_quad_x * 16).y$(16 * $_quad_y).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_quad_x * 16).y$(16 * $_quad_y).dds" -transx="$(-65536 * $_quad_x)" -transy="$(-65536 * $_quad_y)" 
-	ExportBS -filename="$_worldspace.level16.x$($_quad_x * 16).y$(16 * $_quad_y).nif" -writeonly -transx="$(65536 * $_quad_x)" -transy="$(65536 * $_quad_y)"
+	ExportBS -useshapes -map="_watermap" -transx="$(-65536 * $_quad_x)" -transy="$(-65536 * $_quad_y)" -loc_transx="$(65536 * $_quad_x)" -loc_transy="$(65536 * $_quad_y)" -sort -no_uv
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -transx="$(-65536 * $_quad_x)" -transy="$(-65536 * $_quad_y)" -makebound ;; -transz="500"
+	ExportBS -filename="$_worldspace.level16.x$($_quad_x * 16).y$($_quad_y * 16).nif" -writeonly -loc_transx="$(65536 * $_quad_x)" -loc_transy="$(65536 * $_quad_y)"
 }
 
+; ============================
+; Reset things for next level
+; ============================
 SelectAll
+RemoveTriangulation
+InactivateAllVertices
+RemoveInactiveVertices
+}
 
+; ****************************
+; LEVEL 0 (=32 in filename)
+; ****************************
+@level0 {
+SetGrid -x=131072 -y=131072 -stepx=4096 -stepy=4096 
+SetFlag -name="n" -value=1000
+@high_res SetFlag -name="n" -value=2000
+@ultimate SetFlag -name="n" -value=4000
+SetFlag -name="_mindistance" -value=512 
+SetFlag -name="_mindistancegrid" -value=1024 
+SetFlag -name="_cellsize_x" -value=131072 
+SetFlag -name="_cellsize_y" -value=131072 
+SetFlag -name=_flag_format -value="01.0" 
+QuadIterator -level=0 {
+	Echo -text="Filling quad $_quad_x&,$_quad_y with vertices"
+	SetAlgVertices -n=$n -max
+}
+
+; ============================
+SelectAll
+MakeTriangulation
+SplitAtGrid -x=131072 -y=131072
+; ============================
+
+QuadIterator -level=0 {
+	ExportBS -useshapes -map="_watermap" -transx="$(-131072 * $_quad_x)" -transy="$(-131072 * $_quad_y)" -loc_transx="$(131072 * $_quad_x)" -loc_transy="$(131072 * $_quad_y)" -sort -no_uv
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -transx="$(-131072 * $_quad_x)" -transy="$(-131072 * $_quad_y)" -makebound 
+	ExportBS -filename="$_worldspace.level32.x$($_quad_x * 32).y$($_quad_y * 32).nif" -writeonly -loc_transx="$(131072 * $_quad_x)" -loc_transy="$(131072 * $_quad_y)"
+}
+}
 
 ; ============================
 
@@ -183,14 +344,24 @@ GUICheckBox -name=overwritelods -text="Overwrite the original files (please make
 GUIEnable -name=overwritelods 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=overwritelods 
 
-GUICheckBox -name=use16bitopt -text="Use 16 bit derivative matrices" -help="Only slightly more unprecise, but saves 2x memory. Use this for large worlds like Onras heightmaps of Tamriel"
-GUIEnable -name=use16bitopt 
-@!makemeshes GUIDisable -name=use16bitopt
+GUICheckBox -name=level3 -text="Generate level3 (innermost level)" -select
+GUIEnable -name=level3 
+@!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level3 
 
-GUITextBox -text="Minimum height" -name=min_height_intro -width=0.30 -vdist=10 
-GUITextBox -text="-2048" -name=minheight -input -sameline -width=0.70 -help="Set a mimimum value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
+GUICheckBox -name=level2 -text="Generate level2" -select
+GUIEnable -name=level2 
+@!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level2
 
-GUICheckBox -name=writeout -text="Write heightmap as a 32-bit bmp file" -vdist=5
+GUICheckBox -name=level1 -text="Generate level1" -select
+GUIEnable -name=level1 
+@!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level1
+
+GUICheckBox -name=level0 -text="Generate level0 (outermost level)" -select
+GUIEnable -name=level0 
+@!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level0
+
+;;GUITextBox -text="Minimum height" -name=min_height_intro -width=0.30 -vdist=10 
+;;GUITextBox -text="-2048" -name=minheight -input -sameline -width=0.70 -help="Set a mimimum value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
 
 GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
 
@@ -205,7 +376,7 @@ GUIEnable -name=flagnm_compression
 
 
 ## The final button. Once the button is clicked, the flag "exec_tes4ll" is set for one single run of this section
-GUIButton -name=exec_tes4ll -text="Click me if you are ready" -vdist=30
+GUIButton -name=exec_tes4ll -text="Start process" -vdist=30
 GUIEnable -name=exec_tes4ll
 @!makenormalmaps @!tes4qlod @!tes4qlod_cache @!makemeshes @!writeout GUIDisable -name=exec_tes4ll
 
@@ -229,71 +400,17 @@ GUICheckBox -name=makemeshes -text="Make LOD meshes" -help="Check this if you wa
 
 GUITextBox -text="Options for vertices placement" -name=tes4ll_text1 -vdist=10
 
-## A checkbox for a basic question:
-GUICheckBox -name=nicer_mountains -text="Enable peak finder algorithm" -help="Enhances the quality of the mountains" -select
-GUIEnable -name=nicer_mountains 
-@!makemeshes GUIDisable -name=nicer_mountains 
-
-## A checkbox for a basic question:
-GUICheckBox -name=wallremover -text="Enable the cell grid boundary wall remover" -help="Enhances the near to far grid transition. Highly recommended" -select
-GUIEnable -name=wallremover 
-@!makemeshes GUIDisable -name=wallremover 
-
-## A checkbox for a basic question:
-GUICheckBox -name=contour -text="Enable the contour algorithm for coasts" -help="Enhances the coast line. Highly recommended" -select -width=0.30
-GUIEnable -name=contour 
-@!makemeshes GUIDisable -name=contour 
-## Add a drop down menu, first the parent:
-GUIDropDown -name=contour_grid_s -help="Select your resolution"  -width=0.70 -sameline
-## and now the items:
-GUIDropDownItem -parent=contour_grid_s -name=c3 -text="Coarse grid" 
-GUIDropDownItem -parent=contour_grid_s -name=c2 -text="Normal grid" -select
-GUIDropDownItem -parent=contour_grid_s -name=c1 -text="Fine grid" 
-GUIEnable -name=contour_grid_s
-@!makemeshes GUIDisable -name=contour_grid_s
-@c1 SetFlag -name=contour_grid -value="1"
-@c2 SetFlag -name=contour_grid -value="4"
-@c3 SetFlag -name=contour_grid -value="16"
-
-##
-GUICheckBox -name=usedatafiles -text="Use Tamriel data files" -help="Use some hand-placed vertex points" -select
-GUIEnable -name=usedatafiles 
-@!_worldspace=Tamriel GUIDisable -name=usedatafiles -unselect
-@!_worldspace GUIEnable -name=usedatafiles -select
-@!makemeshes GUIDisable -name=usedatafiles 
-
-##
-GUICheckBox -name=usepanorama -text="Use Tamriel panorama points" -select
-GUIEnable -name=usepanorama
-@!_worldspace=Tamriel GUIDisable -name=usepanorama -unselect
-@!_worldspace GUIEnable -name=usepanorama -select
-@!makemeshes GUIDisable -name=usepanorama 
-
-GUITextBox -text="Total resolution (number of vertex points per quad)" -name=tes4ll_text1 -vdist=10
-
 ## Add a drop down menu, first the parent:
 GUIDropDown -name=flag_res -vdist=5 -help="Select your resolution"
 ## and now the items:
-GUIDropDownItem -parent=flag_res -name=mid_res -text="Mid Resolution " -select
+GUIDropDownItem -parent=flag_res -name=mid_res -text="Normal Resolution " -select
 GUIDropDownItem -parent=flag_res -name=high_res -text="High Resolution" 
 GUIDropDownItem -parent=flag_res -name=ultimate -text="Ultimate Resolution" 
 GUIEnable -name=flag_res 
 @!makemeshes GUIDisable -name=flag_res 
 
-
-GUITextBox -text="Mesh options" -name=tes4ll_text3 -vdist=20
-
-## A checkbox for a basic question:
-GUICheckBox -name=useshapes -text="Use shapes instead of strips" -help="Faster generation, but needs more graphics card performance" 
-GUIEnable -name=useshapes 
-@ultimate GUIDisable -name=useshapes -select
-@!makemeshes GUIDisable -name=useshapes 
-
-GUICheckBox -name=small_world -text="Use small world setup" -help="Try to further enhance the settings. Use this option only for small worldspaces which have about 2-4 quads" 
-GUIEnable -name=small_world 
-@!makemeshes GUIDisable -name=small_world
-@_worldspace=Tamriel GUIDisable -name=small_world -unselect
-
+GUITextBox -text="Other options" -name=tes4ll_text2 -vdist=10
+GUICheckBox -name=writeout -text="Write heightmap as a 32-bit bmp file" -vdist=5
 
 ; ****************************
 [tes4llnm_gui]
@@ -312,12 +429,12 @@ GUICheckBox -name=makenormalmaps -text="Make normal maps" -help="Select this if 
 ###--------------------------------------------------------------
 GUITextBox -text="Graphics options" -name=tes4llnm_text3 -vdist=10
 
-GUIDropDown -name=flagnm_resnormal -vdist=5 -help="Select your texture resolution"
-GUIDropDownItem -parent=flagnm_resnormal -name=512 -text="512x512"
-GUIDropDownItem -parent=flagnm_resnormal -name=1024 -text="1024x1024" -select
-GUIDropDownItem -parent=flagnm_resnormal -name=2048 -text="2048x2048" 
-GUIEnable -name=flagnm_resnormal
-@!makenormalmaps GUIDisable -name=flagnm_resnormal 
+;GUIDropDown -name=flagnm_resnormal -vdist=5 -help="Select your texture resolution"
+;GUIDropDownItem -parent=flagnm_resnormal -name=512 -text="512x512"
+;GUIDropDownItem -parent=flagnm_resnormal -name=1024 -text="1024x1024" -select
+;GUIDropDownItem -parent=flagnm_resnormal -name=2048 -text="2048x2048" 
+;GUIEnable -name=flagnm_resnormal
+;@!makenormalmaps GUIDisable -name=flagnm_resnormal 
 
 GUICheckBox -name=lodshadows -text="Fake shadows (can take a while)" -help="Tweaks the normap maps such to obtain the impression of landscape shadows" -vdist=5
 GUIEnable -name=lodshadows

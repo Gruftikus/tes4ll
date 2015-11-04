@@ -23,6 +23,7 @@ int llExportMeshToNif::Prepare(void) {
 	makeninode = 0;
 	segmented  = 0;
 	addgeometrydata = 0;
+	no_uv = 0;
 
 	texset1 = NULL;
 	texset2 = NULL;
@@ -38,6 +39,7 @@ int llExportMeshToNif::RegisterOptions(void) {
 	RegisterFlag ("-useshapes",  &useshapes);
 	RegisterFlag ("-makeninode", &makeninode);
 	RegisterFlag ("-addgeometrydata", &addgeometrydata);
+	RegisterFlag ("-no_uv", &no_uv);
 	
 	RegisterValue("-texset1", &texset1);
 	RegisterValue("-texset2", &texset2);
@@ -125,17 +127,18 @@ int llExportMeshToNif::Exec(void) {
 					cell_x = new_cell_x;
 					cell_y = new_cell_y;
 				} else {
+					segments[running_segment].offset = 3*last_tri;
+					segments[running_segment].count = i - last_tri + 1;
 					if (cell_x != new_cell_x || cell_y != new_cell_y) {
 						cell_x = new_cell_x;
 						cell_y = new_cell_y;
 						if (running_segment < segmented) {
-							segments[running_segment].offset = 3*last_tri;
 							segments[running_segment].count = i - last_tri;
+							last_tri = i;
+							running_segment++;	
 							//std::cout << segments[running_segment].offset << ":" <<
-								//segments[running_segment].count << std::endl;
+							//segments[running_segment].count << std::endl;
 						}
-						last_tri = i;
-						running_segment++;
 					}
 				}
 			}
@@ -150,8 +153,12 @@ int llExportMeshToNif::Exec(void) {
 		} 
 
 		node2_ptr->SetTriangles(t);
-		node2_ptr->SetUVSetCount(1);
-		node2_ptr->SetUVSet(0, reinterpret_cast<std::vector<Niflib::TexCoord> & >(newpoints->GetUV()));
+		if (no_uv) {
+			node2_ptr->SetUVSetCount(0);
+		} else {
+			node2_ptr->SetUVSetCount(1);
+			node2_ptr->SetUVSet(0, reinterpret_cast<std::vector<Niflib::TexCoord> & >(newpoints->GetUV()));
+		}
 
 		//int stripcount = node2_ptr->GetStripCount();
 
@@ -159,6 +166,11 @@ int llExportMeshToNif::Exec(void) {
 
 		_llLogger()->WriteNextLine(-LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
 			filename, newt.size(), newpoints->GetVertices().size());
+
+		//Vector3 center = node2_ptr->GetCenter();
+		//center.z -= 7000;
+		//node2_ptr->SetCenter(center);
+		//node2_ptr->SetRadius(15000);
 
 		if (ninode_ptr) 
 			ninode_ptr->AddChild(node_ptr);
@@ -184,8 +196,13 @@ int llExportMeshToNif::Exec(void) {
 		node2_ptr->SetStripCount(1);
 		node2_ptr->SetStrip(0, newtriangles->GetVertices());
 
-		node2_ptr->SetUVSetCount(1);
-		node2_ptr->SetUVSet(0, reinterpret_cast<std::vector<Niflib::TexCoord> & >(newpoints->GetUV()));
+		node2_ptr->SetTriangles(t);
+		if (no_uv) {
+			node2_ptr->SetUVSetCount(0);
+		} else {
+			node2_ptr->SetUVSetCount(1);
+			node2_ptr->SetUVSet(0, reinterpret_cast<std::vector<Niflib::TexCoord> & >(newpoints->GetUV()));
+		}
 
 		int stripcount = node2_ptr->GetStripCount();
 

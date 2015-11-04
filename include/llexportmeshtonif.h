@@ -17,6 +17,7 @@ protected:
 	int segmented;
 	int makeninode;
 	int addgeometrydata;
+	int no_uv;
 
 	char *texset1, *texset2;
 
