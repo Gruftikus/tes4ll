@@ -2,11 +2,16 @@
 @logfile LogFile -filename=$logfile
 
 SetFlag -name="createpedestals" -value="-createpedestals"
+@be_silent SetFlag -name="silent" -value="-silent"
 
 ;SetFlag -name="level3"
 ;SetFlag -name="level2"
 ;SetFlag -name="level1"
 ;SetFlag -name="level0"
+
+@!back_red   SetFlag -name="back_red"   -value="0.36"
+@!back_green SetFlag -name="back_green" -value="0.35"
+@!back_blue  SetFlag -name="back_blue"  -value="0.30"
 
 
 ; ============================
@@ -34,28 +39,51 @@ SetFlag -name="_defaultheight" -value=$minheight
 
 @tes4qlod_cache {
 	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
-	FileIterator -pattern="*.bsa" {
-		BsaIterator -bsafile=$_filename -regex="textures\\\\landscape\\\\.*\\.dds" { 
-			MatchRegEx -input=$_bsafilename -regex="textures\\\\landscape\\\\lod\\\\.*" -invert {
-				ImportMapFromDDS -even -name=test -replacemap 
-				ScaleMap -sizeX=4 -sizeY=4 -map=test 
-				SetFlag -name=newname -value=$_bsafilename -replace=".dds" -with=".bmp"
-				SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\FalloutNV" -num=1
-				MkDir -path=$newname -hasfilename
-				ExportMap -filename=$newname -map=test
+	
+	@bsa_last { 
+		FileIterator -directory="textures\\landscape" -pattern="*.dds" -recursive $silent {
+			MatchRegEx -input=$_filename -regex="textures\\\\landscape\\\\lod\\\\.*" -invert $silent {
+				MatchRegEx -input=$_filename -regex="textures\\\\landscape\\\\.*_n.dds" -invert $silent {
+					echo -text="Open texture file $_filename for compressing" $silent
+					ImportMapFromDDS -filename=$_filename -even -name=test -replacemap $silent
+					ScaleMap -sizeX=4 -sizeY=4 -map=test $silent
+					SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp" $silent
+					SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\FalloutNV" -num=1 $silent
+					MkDir -path=$newname -hasfilename $silent
+					ExportMap -filename=$newname -map=test
+				}
+			}
+		}
+	}
+	
+	FileIterator -pattern="*.bsa" $silent {
+		BsaIterator -bsafile=$_filename -regex="textures\\\\landscape\\\\.*\\.dds" $silent { 
+			MatchRegEx -input=$_bsafilename -regex="textures\\\\landscape\\\\lod\\\\.*" -invert $silent {
+				MatchRegEx -input=$_bsafilename -regex="textures\\\\landscape\\\\.*_n.dds" -invert $silent {
+					echo -text="Open BSA asset $_bsafilename for compressing" $silent
+					ImportMapFromDDS -even -name=test -replacemap $silent
+					ScaleMap -sizeX=4 -sizeY=4 -map=test $silent
+					SetFlag -name=newname -value=$_bsafilename -replace=".dds" -with=".bmp" $silent
+					SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\FalloutNV" -num=1 $silent
+					MkDir -path=$newname -hasfilename $silent
+					ExportMap -filename=$newname -map=test
+				}
 			}
 		}
 	}
 
-	{ 
-		FileIterator -directory="textures\\landscape" -pattern="*.dds" -recursive {
-			MatchRegEx -input=$_filename -regex="textures\\\\landscape\\\\lod\\\\.*" -invert {
-				ImportMapFromDDS -filename=$_filename -even -name=test -replacemap
-				ScaleMap -sizeX=4 -sizeY=4 -map=test 
-				SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp"
-				SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\FalloutNV" -num=1
-				MkDir -path=$newname -hasfilename
-				ExportMap -filename=$newname -map=test
+	@!bsa_last { 
+		FileIterator -directory="textures\\landscape" -pattern="*.dds" -recursive $silent {
+			MatchRegEx -input=$_filename -regex="textures\\\\landscape\\\\lod\\\\.*" -invert $silent {
+				MatchRegEx -input=$_filename -regex="textures\\\\landscape\\\\.*_n.dds" -invert $silent {
+					echo -text="Open texture file $_filename for compressing" $silent
+					ImportMapFromDDS -filename=$_filename -even -name=test -replacemap $silent
+					ScaleMap -sizeX=4 -sizeY=4 -map=test $silent
+					SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp" $silent
+					SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\FalloutNV" -num=1 $silent
+					MkDir -path=$newname -hasfilename $silent
+					ExportMap -filename=$newname -map=test
+				}
 			}
 		}
 	}
@@ -74,13 +102,12 @@ SelectAll
 	SetFlag -name="width_y" -value=$(($_y2-$_y1)*$tes4qlod_flag_q/128)
 	CreateMap -name=terraincolor -widthx=$width_x -widthy=$width_y -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
 	CreateAlgCollection -name=red
-	AlgConst -alg=red -add=0.36
+	AlgConst -alg=red -add="$back_red"
 	CreateAlgCollection -name=green
-	AlgConst -alg=green -add=0.35
+	AlgConst -alg=green -add="$back_green"
 	CreateAlgCollection -name=blue
-	AlgConst -alg=blue -add=0.30
+	AlgConst -alg=blue -add="$back_blue"
 	FillColorMap -map=terraincolor  -algblue=blue -alggreen=green -algred=red
-	;;ScaleMap -map="terraincolor" -factor=0.5 -rgb
 	Tes4qlod -colormap=terraincolor -q=$tes4qlod_flag_q -a $option_silent_opt
 	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
 	@option_map ExportMap -map=terraincolor -filename="$_worldspace&Map.bmp" -FlipY
@@ -427,7 +454,8 @@ GUIDropDownItem -parent=flagnm_compression -name=c_none -text="<None> (needs oth
 GUIEnable -name=flagnm_compression
 @!makenormalmaps @!tes4qlod GUIDisable -name=flagnm_compression
 
-
+GUICheckBox -name=be_silent -text="Less debug text" -select -vdist=10
+GUIEnable -name=be_silent
 
 ## The final button. Once the button is clicked, the flag "exec_tes4ll" is set for one single run of this section
 GUIButton -name=exec_tes4ll -text="Start process" -vdist=30
@@ -519,34 +547,19 @@ GUIEnable -name=tes4qlod_gui
 
 GUITextBox -text="Select options for color maps generation..." -name=tes4qlod_gui_intro -vdist=10
 
-GUICheckBox -name=tes4qlod_cache -text="Regenerate texture cache" -help="Always required if started first time"
-
-## A checkbox for a basic question:
 GUICheckBox -name=tes4qlod -text="Make color maps (calls build-in TES4qLOD)" -help="Select this if you want to generate the color maps with TES4qLOD"
 
-## Just some info:
-GUITextBox -text="Please select what TES4qLOD should do" -name=tes4qlod_into -vdist=10
-
-GUITextBox -text="Select resolution per quad:" -name=tes4qlod_into2 -vdist=10
+GUICheckBox -name=tes4qlod_cache -text="Regenerate texture cache" -help="Always required if started first time or new mods have been installed"
 
 ## Add a drop down menu, first the parent:
-GUIDropDown -name=tes4qlod_resolution -help="Select the resolution for a single quad (N.B. Vanilla has 512x512)" -vdist=3
+GUIDropDown -name=tes4qlod_cache_order -help="Select priorities" -vdist=3
 ## and now the items:
-GUIDropDownItem -parent=tes4qlod_resolution -name=qlod1 -text="1024x1024 pixel [recommended]" -select
-GUIDropDownItem -parent=tes4qlod_resolution -name=qlod2 -text="2048x2048 pixel" 
-GUIDropDownItem -parent=tes4qlod_resolution -name=qlod4 -text="4096x4096 pixel" 
-GUIEnable -name=tes4qlod_resolution
-@!tes4qlod GUIDisable -name=tes4qlod_resolution
-
-
+GUIDropDownItem -parent=tes4qlod_cache_order -name=bsa_first -text="Loose files override BSAs" -select
+GUIDropDownItem -parent=tes4qlod_cache_order -name=bsa_last -text="BSAs override loose files" 
+GUIEnable -name=tes4qlod_cache_order
+@!tes4qlod_cache GUIDisable -name=tes4qlod_cache_order
 
 GUITextBox -text="Options:" -name=tes4qlod_into3 -vdist=10
-
-## New blending flag
-GUICheckBox -name=option_blending -text="Use layer blending" -help="Uses the opacity of the different layers for alpha blending" -select
-GUIEnable -name=option_blending
-@!tes4qlod GUIDisable -name=option_blending
-
 
 ## A flag about the total map:
 GUICheckBox -name=option_map -text="Create full map of wordspace" -help="Creates a full map of your worldspace"
@@ -559,13 +572,22 @@ GUICheckBox -name=option_silent -text="Silent TES4qLOD" -help="Disables all the 
 GUIEnable -name=option_silent
 @!tes4qlod GUIDisable -name=option_silent
 
+GUITextBox -text="Background:" -name=tes4qlod_into4 -vdist=10
 
+GUITextBox -text="Red:" -name=back_red_intro -width=0.10 -vdist=10 
+GUITextBox -text="0.36" -name=back_red -input -sameline -width=0.30 -help="Red for the default background."
+GUIEnable -name=back_red
+@!tes4qlod GUIDisable -name=back_red
 
+GUITextBox -text="Green:" -name=back_green_intro -width=0.10 -vdist=10 
+GUITextBox -text="0.35" -name=back_green -input -sameline -width=0.30 -help="Green for the default background."
+GUIEnable -name=back_green
+@!tes4qlod GUIDisable -name=back_green
 
-
-
-
-
+GUITextBox -text="Blue:" -name=back_blue_intro -width=0.10 -vdist=10 
+GUITextBox -text="0.30" -name=back_blue -input -sameline -width=0.30 -help="Blue for the default background."
+GUIEnable -name=back_blue
+@!tes4qlod GUIDisable -name=back_blue
 
 
 

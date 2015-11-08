@@ -61,7 +61,7 @@ int llBsaIterator::Exec(void) {
 	}
 
 	if (!numAssets) {
-		_llLogger()->WriteNextLine(-LOG_WARNING, "No file found which matches the pattern");
+		_llLogger()->WriteNextLine(-LOG_INFO, "No file found which matches the pattern");
 		init_done     = 0;
 		repeat_worker = false;
 		return 0;
