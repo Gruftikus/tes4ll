@@ -2244,6 +2244,9 @@
     <ClCompile Include="src\llexportbs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\lltool\src\llmatchregex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lltool\include\llsetpath.h">
@@ -4608,6 +4611,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\llexportbs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\llmatchregex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

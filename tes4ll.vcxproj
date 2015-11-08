@@ -161,6 +161,7 @@
     <ClCompile Include="..\lltool\src\llmap.cpp" />
     <ClCompile Include="..\lltool\src\llmaplist.cpp" />
     <ClCompile Include="..\lltool\src\llmapworker.cpp" />
+    <ClCompile Include="..\lltool\src\llmatchregex.cpp" />
     <ClCompile Include="..\lltool\src\llmkdir.cpp" />
     <ClCompile Include="..\lltool\src\llpanorama.cpp" />
     <ClCompile Include="..\lltool\src\llpointlist.cpp" />
@@ -943,6 +944,7 @@
     <ClInclude Include="..\lltool\include\llmap.h" />
     <ClInclude Include="..\lltool\include\llmaplist.h" />
     <ClInclude Include="..\lltool\include\llmapworker.h" />
+    <ClInclude Include="..\lltool\include\llmatchregex.h" />
     <ClInclude Include="..\lltool\include\llmkdir.h" />
     <ClInclude Include="..\lltool\include\llpanorama.h" />
     <ClInclude Include="..\lltool\include\llpointlist.h" />

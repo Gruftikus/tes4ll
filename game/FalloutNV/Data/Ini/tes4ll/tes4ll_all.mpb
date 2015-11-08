@@ -36,31 +36,85 @@ SetFlag -name="_defaultheight" -value=$minheight
 	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
 	FileIterator -pattern="*.bsa" {
 		BsaIterator -bsafile=$_filename -regex="textures\\\\landscape\\\\.*\\.dds" { 
-			ImportMapFromDDS -even -name=test -replacemap 
-			ScaleMap -sizeX=4 -sizeY=4 -map=test 
-			SetFlag -name=newname -value=$_bsafilename -replace=".dds" -with=".bmp"
-			SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\FalloutNV" -num=1
-			MkDir -path=$newname -hasfilename
-			ExportMap -filename=$newname -map=test
+			MatchRegEx -input=$_bsafilename -regex="textures\\\\landscape\\\\lod\\\\.*" -invert {
+				ImportMapFromDDS -even -name=test -replacemap 
+				ScaleMap -sizeX=4 -sizeY=4 -map=test 
+				SetFlag -name=newname -value=$_bsafilename -replace=".dds" -with=".bmp"
+				SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\FalloutNV" -num=1
+				MkDir -path=$newname -hasfilename
+				ExportMap -filename=$newname -map=test
+			}
 		}
 	}
 
 	{ 
 		FileIterator -directory="textures\\landscape" -pattern="*.dds" -recursive {
-			ImportMapFromDDS -filename=$_filename -even -name=test -replacemap
-			ScaleMap -sizeX=4 -sizeY=4 -map=test 
-			SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp"
-			SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\FalloutNV" -num=1
-			MkDir -path=$newname -hasfilename
-			ExportMap -filename=$newname -map=test
+			MatchRegEx -input=$_filename -regex="textures\\\\landscape\\\\lod\\\\.*" -invert {
+				ImportMapFromDDS -filename=$_filename -even -name=test -replacemap
+				ScaleMap -sizeX=4 -sizeY=4 -map=test 
+				SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp"
+				SetFlag -name=newname -value=$newname -replace="textures\\landscape" -with="tes4qlod_tex\\FalloutNV" -num=1
+				MkDir -path=$newname -hasfilename
+				ExportMap -filename=$newname -map=test
+			}
 		}
 	}
 }
 
 @!makemeshes @!writeout @!tes4qlod @!makenormalmaps Exit
-
-
 ImportMapFromModList
+
+SelectAll
+
+@tes4qlod {
+	SetFlag -name="tes4qlod_flag_q" -value="2"
+	SetFlag -name="option_silent_opt" -value=""
+	@option_silent SetFlag -name="option_silent_opt" -value="-silent"
+	SetFlag -name="width_x" -value=$(($_x2-$_x1)*$tes4qlod_flag_q/128)
+	SetFlag -name="width_y" -value=$(($_y2-$_y1)*$tes4qlod_flag_q/128)
+	CreateMap -name=terraincolor -widthx=$width_x -widthy=$width_y -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
+	CreateAlgCollection -name=red
+	AlgConst -alg=red -add=0.36
+	CreateAlgCollection -name=green
+	AlgConst -alg=green -add=0.35
+	CreateAlgCollection -name=blue
+	AlgConst -alg=blue -add=0.30
+	FillColorMap -map=terraincolor  -algblue=blue -alggreen=green -algred=red
+	;;ScaleMap -map="terraincolor" -factor=0.5 -rgb
+	Tes4qlod -colormap=terraincolor -q=$tes4qlod_flag_q -a $option_silent_opt
+	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	@option_map ExportMap -map=terraincolor -filename="$_worldspace&Map.bmp" -FlipY
+	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\Landscape\LOD\$_worldspace\diffuse"
+	SetFlag -name=_flag_format -value="01.0" 
+	@level3 {
+		QuadIterator -level=3 {
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).bmp" 
+		}
+	}
+	ScaleMap -map="terraincolor" -factor=0.5 -rgb
+	@level2 {
+		QuadIterator -level=2 {
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).bmp" 
+		}
+	}
+	ScaleMap -map="terraincolor" -factor=0.5 -rgb
+	@level1 {
+		QuadIterator -level=1 {
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).bmp" 
+		}
+	}
+	ScaleMap -map="terraincolor" -factor=0.5 -rgb
+	@level0 {
+		QuadIterator -level=0 {
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).bmp" 
+		}
+	}
+
+}
 
 ; ****************************
 ; Make normal maps
@@ -186,7 +240,7 @@ SelectAll
 SetFlag -name=_flag_format -value="01.0" 
 QuadIterator -level=3 {
 	ExportBS -useshapes -map="_watermap" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)" -sort -segments=16 -no_uv $createpedestals 
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -makebound -transz="-100"
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -makebound
 	ExportBS -filename="$_worldspace.level4.x$($_quad_x * 4).y$($_quad_y * 4).nif" -writeonly -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)"
 }
 
@@ -224,7 +278,7 @@ MakeTriangulation
 
 QuadIterator -level=2 {
 	ExportBS -useshapes -map="_watermap" -transx="$(-32768 * $_quad_x)" -transy="$(-32768 * $_quad_y)" -loc_transx="$(32768 * $_quad_x)" -loc_transy="$(32768 * $_quad_y)" -sort -no_uv
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -transx="$(-32768 * $_quad_x)" -transy="$(-32768 * $_quad_y)" -makebound ;; -transz="500"
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -transx="$(-32768 * $_quad_x)" -transy="$(-32768 * $_quad_y)" -makebound
 	ExportBS -filename="$_worldspace.level8.x$($_quad_x * 8).y$($_quad_y * 8).nif" -writeonly -loc_transx="$(32768 * $_quad_x)" -loc_transy="$(32768 * $_quad_y)"
 }
 
@@ -262,7 +316,7 @@ MakeTriangulation
 
 QuadIterator -level=1 {
 	ExportBS -useshapes -map="_watermap" -transx="$(-65536 * $_quad_x)" -transy="$(-65536 * $_quad_y)" -loc_transx="$(65536 * $_quad_x)" -loc_transy="$(65536 * $_quad_y)" -sort -no_uv
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -transx="$(-65536 * $_quad_x)" -transy="$(-65536 * $_quad_y)" -makebound ;; -transz="500"
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -transx="$(-65536 * $_quad_x)" -transy="$(-65536 * $_quad_y)" -makebound
 	ExportBS -filename="$_worldspace.level16.x$($_quad_x * 16).y$($_quad_y * 16).nif" -writeonly -loc_transx="$(65536 * $_quad_x)" -loc_transy="$(65536 * $_quad_y)"
 }
 
@@ -344,7 +398,7 @@ GUICheckBox -name=overwritelods -text="Overwrite the original files (please make
 GUIEnable -name=overwritelods 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=overwritelods 
 
-GUICheckBox -name=level3 -text="Generate level3 (innermost level)" -select
+GUICheckBox -name=level3 -text="Generate level3 (nearest level)" -select
 GUIEnable -name=level3 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level3 
 
@@ -356,7 +410,7 @@ GUICheckBox -name=level1 -text="Generate level1" -select
 GUIEnable -name=level1 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level1
 
-GUICheckBox -name=level0 -text="Generate level0 (outermost level)" -select
+GUICheckBox -name=level0 -text="Generate level0 (most distant level)" -select
 GUIEnable -name=level0 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level0
 
@@ -367,8 +421,8 @@ GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
 
 GUIDropDown -name=flagnm_compression -vdist=5 -help="dds compression format."
 GUIDropDownItem -parent=flagnm_compression -name=c_dxt1 -text="Use DDS DXT1 compression" 
-GUIDropDownItem -parent=flagnm_compression -name=c_dxt3 -text="Use DDS DXT3 compression" 
-GUIDropDownItem -parent=flagnm_compression -name=c_dxt5 -text="Use DDS DXT5 compression" -select
+;;GUIDropDownItem -parent=flagnm_compression -name=c_dxt3 -text="Use DDS DXT3 compression" 
+;;GUIDropDownItem -parent=flagnm_compression -name=c_dxt5 -text="Use DDS DXT5 compression" -select
 GUIDropDownItem -parent=flagnm_compression -name=c_none -text="<None> (needs other tool to convert bmp to dds)" 
 GUIEnable -name=flagnm_compression
 @!makenormalmaps @!tes4qlod GUIDisable -name=flagnm_compression
