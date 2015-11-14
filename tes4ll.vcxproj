@@ -140,6 +140,7 @@
     <ClCompile Include="..\lltool\src\llcreatemap.cpp" />
     <ClCompile Include="..\lltool\src\llcreatenormalmap.cpp" />
     <ClCompile Include="..\lltool\src\llcreatepolygon.cpp" />
+    <ClCompile Include="..\lltool\src\lldeletemap.cpp" />
     <ClCompile Include="..\lltool\src\lldiamondsquare.cpp" />
     <ClCompile Include="..\lltool\src\llecho.cpp" />
     <ClCompile Include="..\lltool\src\llexit.cpp" />
@@ -923,6 +924,7 @@
     <ClInclude Include="..\lltool\include\llcreatenormalmap.h" />
     <ClInclude Include="..\lltool\include\llcreatepolygon.h" />
     <ClInclude Include="..\lltool\include\llcreateworkers.h" />
+    <ClInclude Include="..\lltool\include\lldeletemap.h" />
     <ClInclude Include="..\lltool\include\lldiamondsquare.h" />
     <ClInclude Include="..\lltool\include\llecho.h" />
     <ClInclude Include="..\lltool\include\llexit.h" />

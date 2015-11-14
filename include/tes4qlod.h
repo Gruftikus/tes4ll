@@ -119,7 +119,7 @@ protected:
 		opt_keepout,
 		opt_flip;
 
-	int verbosity, in_vwd, silent;
+	int verbosity, in_vwd;
 
 	static char *opt_tes_mode;
 	static char *TES_SKYRIM;

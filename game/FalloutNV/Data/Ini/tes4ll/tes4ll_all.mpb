@@ -95,49 +95,51 @@ ImportMapFromModList
 SelectAll
 
 @tes4qlod {
-	SetFlag -name="tes4qlod_flag_q" -value="2"
-	SetFlag -name="option_silent_opt" -value=""
-	@option_silent SetFlag -name="option_silent_opt" -value="-silent"
-	SetFlag -name="width_x" -value=$(($_x2-$_x1)*$tes4qlod_flag_q/128)
-	SetFlag -name="width_y" -value=$(($_y2-$_y1)*$tes4qlod_flag_q/128)
+	SetFlag -name="tes4qlod_flag_q" -value="2" $silent
+	SetFlag -name="option_silent_opt" -value="" $silent
+	@option_silent SetFlag -name="option_silent_opt" -value="-silent" $silent
+	SetFlag -name="width_x" -value=$(($_x2-$_x1)*$tes4qlod_flag_q/128) $silent
+	SetFlag -name="width_y" -value=$(($_y2-$_y1)*$tes4qlod_flag_q/128) $silent
 	CreateMap -name=terraincolor -widthx=$width_x -widthy=$width_y -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
-	CreateAlgCollection -name=red
-	AlgConst -alg=red -add="$back_red"
-	CreateAlgCollection -name=green
-	AlgConst -alg=green -add="$back_green"
-	CreateAlgCollection -name=blue
-	AlgConst -alg=blue -add="$back_blue"
+	CreateAlgCollection -name=red $silent
+	AlgConst -alg=red -add="$back_red" $silent
+	CreateAlgCollection -name=green $silent
+	AlgConst -alg=green -add="$back_green" $silent
+	CreateAlgCollection -name=blue $silent
+	AlgConst -alg=blue -add="$back_blue" $silent
 	FillColorMap -map=terraincolor  -algblue=blue -alggreen=green -algred=red
 	Tes4qlod -colormap=terraincolor -q=$tes4qlod_flag_q -a $option_silent_opt
+	Filter -n=1 -map=terraincolor -rgb
+	DeleteMap -map=terraincolor
 	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
-	@option_map ExportMap -map=terraincolor -filename="$_worldspace&Map.bmp" -FlipY
+	@option_map ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map.bmp" -FlipY
 	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\Landscape\LOD\$_worldspace\diffuse"
 	SetFlag -name=_flag_format -value="01.0" 
 	@level3 {
-		QuadIterator -level=3 {
-			@!c_none ExportMapToDDS -FlipX -map=terraincolor -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=terraincolor -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).bmp" 
+		QuadIterator -level=3 $silent {
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).bmp" 
 		}
 	}
-	ScaleMap -map="terraincolor" -factor=0.5 -rgb
+	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
 	@level2 {
-		QuadIterator -level=2 {
-			@!c_none ExportMapToDDS -FlipX -map=terraincolor -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=terraincolor -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).bmp" 
+		QuadIterator -level=2 $silent {
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).bmp" 
 		}
 	}
-	ScaleMap -map="terraincolor" -factor=0.5 -rgb
+	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
 	@level1 {
-		QuadIterator -level=1 {
-			@!c_none ExportMapToDDS -FlipX -map=terraincolor -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=terraincolor -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).bmp" 
+		QuadIterator -level=1 $silent {
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).bmp" 
 		}
 	}
-	ScaleMap -map="terraincolor" -factor=0.5 -rgb
+	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
 	@level0 {
-		QuadIterator -level=0 {
-			@!c_none ExportMapToDDS -FlipX -map=terraincolor -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=terraincolor -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).bmp" 
+		QuadIterator -level=0 $silent {
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).bmp" 
 		}
 	}
 
@@ -148,38 +150,38 @@ SelectAll
 ; ****************************
 
 @makenormalmaps {
-	SelectAll
-	CopyMap -name="_heightmap_tmp"
-	ScaleMap -map="_heightmap_tmp" -factor=2
+	SelectAll $silent
+	CopyMap -name="_heightmap_tmp" $silent
+	ScaleMap -map="_heightmap_tmp" -factor=2 $silent
 	@!lodshadows CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -boost=$z_val
 	@lodshadows  CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -shadows -northboost=$z_val
 	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
 	@option_map ExportMap -map=_normalmap -filename="$_worldspace&Normalmap.bmp" -FlipY
 	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\Landscape\LOD\$_worldspace\normals"
-	SetFlag -name=_flag_format -value="01.0" 
+	SetFlag -name=_flag_format -value="01.0" $silent
 	@level3 {
-		QuadIterator -level=3 {
+		QuadIterator -level=3 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -format=$dds_format -crop=256
 			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).bmp" 
 		}
 	}
 	ScaleMap -map="_normalmap" -factor=0.5 -rgb
 	@level2 {
-		QuadIterator -level=2 {
+		QuadIterator -level=2 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -format=$dds_format -crop=256
 			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).bmp" 
 		}
 	}
 	ScaleMap -map="_normalmap" -factor=0.5 -rgb
 	@level1 {
-		QuadIterator -level=1 {
+		QuadIterator -level=1 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -format=$dds_format -crop=256
 			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).bmp" 
 		}
 	}
 	ScaleMap -map="_normalmap" -factor=0.5 -rgb
 	@level0 {
-		QuadIterator -level=0 {
+		QuadIterator -level=0 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -format=$dds_format -crop=256
 			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).bmp" 
 		}
@@ -447,9 +449,9 @@ GUIEnable -name=level0
 GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
 
 GUIDropDown -name=flagnm_compression -vdist=5 -help="dds compression format."
-GUIDropDownItem -parent=flagnm_compression -name=c_dxt1 -text="Use DDS DXT1 compression" 
+GUIDropDownItem -parent=flagnm_compression -name=c_dxt1 -text="Use DDS DXT1 compression"  -select
 ;;GUIDropDownItem -parent=flagnm_compression -name=c_dxt3 -text="Use DDS DXT3 compression" 
-;;GUIDropDownItem -parent=flagnm_compression -name=c_dxt5 -text="Use DDS DXT5 compression" -select
+;;GUIDropDownItem -parent=flagnm_compression -name=c_dxt5 -text="Use DDS DXT5 compression"
 GUIDropDownItem -parent=flagnm_compression -name=c_none -text="<None> (needs other tool to convert bmp to dds)" 
 GUIEnable -name=flagnm_compression
 @!makenormalmaps @!tes4qlod GUIDisable -name=flagnm_compression
