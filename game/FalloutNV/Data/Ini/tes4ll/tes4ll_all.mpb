@@ -263,7 +263,15 @@ QuadIterator -level=0 {
 ; ============================
 SelectAll
 MakeTriangulation
-SplitAtGrid -x=4096 -y=4096
+{
+	SplitAtGrid -x=4096 -y=4096
+	;;SplitAtZ -z=2600 -removebelow
+	CellIterator -silent {
+		GetHeight -x="$($_cell_x*4096+2048)" -y="$($_cell_y*4096+2048)" -map="_watermap" -silent
+		Echo -text="Cell $_cell_x&,$_cell_y : $_z" -silent 
+		SplitAtZ -z=$_z -removebelow -silent 
+	}
+}
 ; ============================
 SelectAll
 SetFlag -name=_flag_format -value="01.0" 

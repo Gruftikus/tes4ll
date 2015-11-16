@@ -95,7 +95,6 @@ int llExportMeshToNif::Exec(void) {
 	if (useshapes) {
 
 		NiTriShape *node_ptr;
-		vector<BSSegment > segments;
 		segments.resize(segmented);
 
 		if (segmented) {

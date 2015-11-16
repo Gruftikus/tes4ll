@@ -134,6 +134,7 @@
     <ClCompile Include="..\lltool\src\llalgsecond.cpp" />
     <ClCompile Include="..\lltool\src\llalgslope.cpp" />
     <ClCompile Include="..\lltool\src\llalgstripe.cpp" />
+    <ClCompile Include="..\lltool\src\llcelliterator.cpp" />
     <ClCompile Include="..\lltool\src\llcommands.cpp" />
     <ClCompile Include="..\lltool\src\llcopyfile.cpp" />
     <ClCompile Include="..\lltool\src\llcopymap.cpp" />
@@ -152,6 +153,7 @@
     <ClCompile Include="..\lltool\src\llfileiterator.cpp" />
     <ClCompile Include="..\lltool\src\llfillcolormap.cpp" />
     <ClCompile Include="..\lltool\src\llfilter.cpp" />
+    <ClCompile Include="..\lltool\src\llgetheight.cpp" />
     <ClCompile Include="..\lltool\src\llimportmap.cpp" />
     <ClCompile Include="..\lltool\src\llimportmapfromdds.cpp" />
     <ClCompile Include="..\lltool\src\llinactivateallvertices.cpp" />
@@ -190,6 +192,7 @@
     <ClCompile Include="..\lltool\src\llsplitat.cpp" />
     <ClCompile Include="..\lltool\src\llsplitatgrid.cpp" />
     <ClCompile Include="..\lltool\src\llsplitatpolygonborder.cpp" />
+    <ClCompile Include="..\lltool\src\llsplitatz.cpp" />
     <ClCompile Include="..\lltool\src\llsplitbetween.cpp" />
     <ClCompile Include="..\lltool\src\llstencilpolygon.cpp" />
     <ClCompile Include="..\lltool\src\lltrianglelist.cpp" />
@@ -917,6 +920,7 @@
     <ClInclude Include="..\lltool\include\llalgsecond.h" />
     <ClInclude Include="..\lltool\include\llalgslope.h" />
     <ClInclude Include="..\lltool\include\llalgstripe.h" />
+    <ClInclude Include="..\lltool\include\llcelliterator.h" />
     <ClInclude Include="..\lltool\include\llcommands.h" />
     <ClInclude Include="..\lltool\include\llcopyfile.h" />
     <ClInclude Include="..\lltool\include\llcopymap.h" />
@@ -936,6 +940,7 @@
     <ClInclude Include="..\lltool\include\llfileiterator.h" />
     <ClInclude Include="..\lltool\include\llfillcolormap.h" />
     <ClInclude Include="..\lltool\include\llfilter.h" />
+    <ClInclude Include="..\lltool\include\llgetheight.h" />
     <ClInclude Include="..\lltool\include\llimportmap.h" />
     <ClInclude Include="..\lltool\include\llimportmapfromdds.h" />
     <ClInclude Include="..\lltool\include\llinactivateallvertices.h" />
@@ -974,6 +979,7 @@
     <ClInclude Include="..\lltool\include\llsplitat.h" />
     <ClInclude Include="..\lltool\include\llsplitatgrid.h" />
     <ClInclude Include="..\lltool\include\llsplitatpolygonborder.h" />
+    <ClInclude Include="..\lltool\include\llsplitatz.h" />
     <ClInclude Include="..\lltool\include\llsplitbetween.h" />
     <ClInclude Include="..\lltool\include\llstencilpolygon.h" />
     <ClInclude Include="..\lltool\include\lltrianglelist.h" />

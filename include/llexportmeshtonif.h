@@ -7,6 +7,7 @@
 #include "../../niflib/include/obj/NiTriStripsData.h"
 #include "../../niflib/include/obj/NiTriShape.h"
 #include "../../niflib/include/obj/NiTriShapeData.h"
+#include "../../niflib/include/gen/BSSegment.h"
 #include "../../niflib/include/niflib.h"
 
 class llExportMeshToNif : public llExportMeshToObj {
@@ -24,6 +25,7 @@ protected:
 	float loc_trans_x, loc_trans_y, loc_trans_z;
 
 	static Niflib::NiNode *ninode_ptr;
+	vector<Niflib::BSSegment> segments;
 
 public:
 
