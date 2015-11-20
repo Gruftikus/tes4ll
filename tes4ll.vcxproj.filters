@@ -2259,6 +2259,9 @@
     <ClCompile Include="..\lltool\src\llsplitatz.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\lltool\src\llsorttriangles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lltool\include\llsetpath.h">
@@ -4638,6 +4641,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\lltool\include\llsplitatz.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lltool\include\llsorttriangles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

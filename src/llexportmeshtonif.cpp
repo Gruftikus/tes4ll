@@ -30,6 +30,8 @@ int llExportMeshToNif::Prepare(void) {
 
 	loc_trans_x = loc_trans_y = loc_trans_z = 0;
 
+	segments.resize(0);
+
 	return 1;
 }
 
@@ -95,10 +97,11 @@ int llExportMeshToNif::Exec(void) {
 	if (useshapes) {
 
 		NiTriShape *node_ptr;
-		segments.resize(segmented);
-
+		
 		if (segmented) {
 			node_ptr = new BSSegmentedTriShape;	
+			if (segments.size() != segmented)
+				segments.resize(segmented);
 		} else {
 			node_ptr = new NiTriShape;
 		}
@@ -119,7 +122,8 @@ int llExportMeshToNif::Exec(void) {
 
 		int running_segment = 0, last_tri = 0, cell_x, cell_y;
 		for (int i=0; i<num_triangles; i++) {
-			if (segmented) {
+			if (segmented && (running_segment < segmented)) {
+			//if (0) {
 				int new_cell_x = (int)floor(newtriangles->GetTriangleCenterX(i)/cellsize_x);
 				int new_cell_y = (int)floor(newtriangles->GetTriangleCenterY(i)/cellsize_y);
 				if (i==0) {
@@ -134,10 +138,10 @@ int llExportMeshToNif::Exec(void) {
 						if (running_segment < segmented) {
 							segments[running_segment].count = i - last_tri;
 							last_tri = i;
-							running_segment++;	
 							//std::cout << segments[running_segment].offset << ":" <<
 							//segments[running_segment].count << std::endl;
 						}
+						running_segment++;	
 					}
 				}
 			}

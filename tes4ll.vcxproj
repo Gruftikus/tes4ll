@@ -189,6 +189,7 @@
     <ClCompile Include="..\lltool\src\llsetheight.cpp" />
     <ClCompile Include="..\lltool\src\llsetpath.cpp" />
     <ClCompile Include="..\lltool\src\llsetvertex.cpp" />
+    <ClCompile Include="..\lltool\src\llsorttriangles.cpp" />
     <ClCompile Include="..\lltool\src\llsplitat.cpp" />
     <ClCompile Include="..\lltool\src\llsplitatgrid.cpp" />
     <ClCompile Include="..\lltool\src\llsplitatpolygonborder.cpp" />
@@ -976,6 +977,7 @@
     <ClInclude Include="..\lltool\include\llsetheight.h" />
     <ClInclude Include="..\lltool\include\llsetpath.h" />
     <ClInclude Include="..\lltool\include\llsetvertex.h" />
+    <ClInclude Include="..\lltool\include\llsorttriangles.h" />
     <ClInclude Include="..\lltool\include\llsplitat.h" />
     <ClInclude Include="..\lltool\include\llsplitatgrid.h" />
     <ClInclude Include="..\lltool\include\llsplitatpolygonborder.h" />
