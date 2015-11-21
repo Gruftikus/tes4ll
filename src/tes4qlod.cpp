@@ -254,7 +254,7 @@ int TES4qLOD::Exec(void) {
 
 	char lod_texture_formids_file[512];
 
-	if (opt_lod_tex) {
+	if (opt_lod_tex && 0) { //not required
 		sprintf_s(lod_texture_formids_file, 512, LOD_LTEX_DATA_FILE, opt_tes_mode);
 		if (verbosity) printf("Reading %s.esm Texture FormIDs from %s ...", opt_tes_mode, lod_texture_formids_file);
 		fflush(stdout);

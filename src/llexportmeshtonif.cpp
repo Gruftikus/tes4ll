@@ -167,8 +167,12 @@ int llExportMeshToNif::Exec(void) {
 
 		vector<Triangle> newt=node2_ptr->GetTriangles();
 
-		_llLogger()->WriteNextLine(-LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
-			filename, newt.size(), newpoints->GetVertices().size());
+		if (filename)
+			_llLogger()->WriteNextLine(-LOG_INFO, "The (shape-based) mesh %s has %i triangles and %i vertices",
+				filename, newt.size(), newpoints->GetVertices().size());
+		else
+			_llLogger()->WriteNextLine(-LOG_INFO, "The (shape-based) mesh has %i triangles and %i vertices",
+				newt.size(), newpoints->GetVertices().size());
 
 		//Vector3 center = node2_ptr->GetCenter();
 		//center.z -= 7000;
