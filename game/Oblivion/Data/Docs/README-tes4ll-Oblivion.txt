@@ -9,7 +9,7 @@ None.
 
 But this is not true:
 
-* If you need a GUI, use MPGUI (http://oblivion.nexusmods.com/mods/41447).
+* If you need a GUI, use MPGUI (http://www.nexusmods.com/oblivion/mods/41447/?).
 
 
 Installation
@@ -22,6 +22,17 @@ After this procedure you should have one executable in your Oblivion data direct
 Uninstallation
 ==============
 Restore the old LOD meshes in Data\meshes\landscape\lod which you (hopefully!) saved. Delete tes4ll.exe, and the content of ini\tes4ll
+
+
+Why?
+====
+In the Oblivion game engine, the LOD meshes can be replaced quad-by-quad only. If one has a lot of landscape changes, the following problems might appear:
+
+* The quad meshes do not fit at their borders, because they were created independently.
+
+* "Wall-like" steps between the normal grid and the LOD meshes.
+
+* Floating objects (trees, buildings).
 
 
 Generation of meshes (the simple method)

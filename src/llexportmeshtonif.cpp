@@ -79,6 +79,11 @@ int llExportMeshToNif::Exec(void) {
 	float cellsize_y = 0;
 	if (_llUtils()->GetValueF("_cellsize_y"))
 		cellsize_y = (float)(*_llUtils()->GetValueF("_cellsize_y"));
+	unsigned int dim_x = 0, dim_y = 0;
+	if (cellsize_x && cellsize_y) {
+		dim_x = (_llUtils()->x11 - _llUtils()->x00)/cellsize_x;
+		dim_y = (_llUtils()->y11 - _llUtils()->y00)/cellsize_y;
+	}
 
 	//Now the nif-specific part:
 
@@ -122,10 +127,11 @@ int llExportMeshToNif::Exec(void) {
 
 		int running_segment = 0, last_tri = 0, cell_x, cell_y;
 		for (int i=0; i<num_triangles; i++) {
-			if (segmented && (running_segment < segmented)) {
-			//if (0) {
+			if (segmented && (running_segment < segmented) && cellsize_x && cellsize_y) {
 				int new_cell_x = (int)floor(newtriangles->GetTriangleCenterX(i)/cellsize_x);
 				int new_cell_y = (int)floor(newtriangles->GetTriangleCenterY(i)/cellsize_y);
+				if (new_cell_x >= dim_x) new_cell_x = dim_x-1;
+				if (new_cell_y >= dim_y) new_cell_y = dim_y-1;
 				if (i==0) {
 					cell_x = new_cell_x;
 					cell_y = new_cell_y;

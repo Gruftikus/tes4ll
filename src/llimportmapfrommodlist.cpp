@@ -78,7 +78,9 @@ int llImportMapFromModlist::Exec(void) {
 	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32+1, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32+1, 0, defaultheight);
 	heightmap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
 	
-	llMap *watermap = new llMap(TES4qLOD::max_x - TES4qLOD::min_x + 1, TES4qLOD::max_y - TES4qLOD::min_y + 1);
+	float waterdefaultheight = 0;
+	if (_llUtils()->GetValue("_waterdefaultheight")) waterdefaultheight = *_llUtils()->GetValueF("_waterdefaultheight");
+	llMap *watermap = new llMap(TES4qLOD::max_x - TES4qLOD::min_x + 1, TES4qLOD::max_y - TES4qLOD::min_y + 1, 0, waterdefaultheight);
 	watermap->SetEven();
 	watermap->SetCoordSystem(x1, y1, x2, y2, 1.0f);
 

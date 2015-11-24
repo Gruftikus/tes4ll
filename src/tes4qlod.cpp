@@ -592,9 +592,8 @@ int TES4qLOD::Add4LTEXData(char *_r, int _size) {
 				memcpy(fname, _r + pos + 6, nsize - 4);
 				fname[nsize - 4] = '\0';
 				strcat_s(fname, 512, ".dds");
-			} else if (opt_tes_mode == TES_FALLOUTNV) {
+			} else if (opt_tes_mode == TES_FALLOUTNV || opt_tes_mode == TES_FALLOUT3) {
 				memcpy(fname, _r + pos + 6, nsize);
-				//std::cout << fname << std::endl;
 			} 
 		} else if (strncmp("EDID", _r + pos, 4) == 0) {
 			if (opt_tes_mode == TES_SKYRIM) {

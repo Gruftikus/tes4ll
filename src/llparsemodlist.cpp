@@ -33,20 +33,33 @@ int llParseModList::Exec(void) {
 	DWORD size1;
 	DWORD Type;
 
-	char *gamekey = "SOFTWARE\\Bethesda Softworks\\Oblivion";
+	char *gamekey1 = "SOFTWARE\\Bethesda Softworks\\Oblivion";
+	char *gamekey2 = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\Oblivion";
 	if (_llUtils()->IsEnabled("_gamemode")) {
-		if (_stricmp(_llUtils()->GetValue("_gamemode"), "Fallout3") == 0) 
-			gamekey = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\fallout3";
-		if (_stricmp(_llUtils()->GetValue("_gamemode"), "Falloutnv") == 0) 
-			gamekey = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\falloutnv";
-		if (_stricmp(_llUtils()->GetValue("_gamemode"), "Skyrim") == 0) 
-			gamekey = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\skyrim";
+		if (_stricmp(_llUtils()->GetValue("_gamemode"), "Fallout3") == 0) {
+			gamekey1 = "SOFTWARE\\Bethesda Softworks\\fallout3";
+			gamekey2 = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\fallout3";
+		} else if (_stricmp(_llUtils()->GetValue("_gamemode"), "Falloutnv") == 0) {
+			gamekey1 = "SOFTWARE\\Bethesda Softworks\\falloutnv";
+			gamekey2 = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\falloutnv";
+		} else if (_stricmp(_llUtils()->GetValue("_gamemode"), "Skyrim") == 0) {
+			gamekey1 = "SOFTWARE\\Bethesda Softworks\\skyrim";
+			gamekey2 = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\skyrim";
+		}
 	}
-	//std::cout << _llUtils()->GetValue("_gamemode") << ":" << gamekey << std::endl;
 
 	//seek for game dir, if not yet set by user
 	if (!_llUtils()->IsEnabled("_gamedir")) {
-		if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, gamekey, 0, 
+		if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, gamekey1, 0, 
+			KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
+				size1 = 1023;
+				RegQueryValueEx( keyHandle, "Installed Path", NULL, &Type, 
+					(LPBYTE)rgValue,&size1);
+				char *oblivion_path = new char[strlen(rgValue)+2];
+				strcpy_s(oblivion_path, strlen(rgValue)+1, rgValue);
+				_llLogger()->WriteNextLine(-LOG_INFO, "Game path is: %s", oblivion_path);
+				_llUtils()->SetValue("_gamedir", oblivion_path);
+		} else if( RegOpenKeyEx(HKEY_LOCAL_MACHINE, gamekey2, 0, 
 			KEY_QUERY_VALUE, &keyHandle) == ERROR_SUCCESS) {
 				size1 = 1023;
 				RegQueryValueEx( keyHandle, "Installed Path", NULL, &Type, 
