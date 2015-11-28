@@ -26,8 +26,10 @@ SetFlag -name="dds_format" -value="DXT1"
 @c_dxt3 SetFlag -name="dds_format" -value="DXT3"
 @c_dxt5 SetFlag -name="dds_format" -value="DXT5"
 
-@!minheight SetFlag -name="minheight" -value="-2048"
+@!minheight SetFlag -name="minheight" -value="-2500"
 SetFlag -name="_defaultheight" -value=$minheight
+@!waterminheight SetFlag -name="waterminheight" -value="-2300"
+SetFlag -name="_waterdefaultheight" -value=$waterminheight
 
 ; ****************************
 ; Make color maps
@@ -113,29 +115,29 @@ SelectAll
 	SetFlag -name=_flag_format -value="01.0" 
 	@level3 {
 		QuadIterator -level=3 $silent {
-			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).bmp" 
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).bmp" 
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
 	@level2 {
 		QuadIterator -level=2 $silent {
-			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).bmp" 
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).bmp" 
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
 	@level1 {
 		QuadIterator -level=1 $silent {
-			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).bmp" 
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).bmp" 
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
 	@level0 {
 		QuadIterator -level=0 $silent {
-			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).bmp" 
+			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).bmp" 
 		}
 	}
 	DeleteMap -map=terraincolor_filtered
@@ -157,29 +159,29 @@ SelectAll
 	SetFlag -name=_flag_format -value="01.0" $silent
 	@level3 {
 		QuadIterator -level=3 $silent {
-			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).bmp" 
+			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).bmp" 
 		}
 	}
 	ScaleMap -map="_normalmap" -factor=0.5 -rgb
 	@level2 {
 		QuadIterator -level=2 $silent {
-			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).bmp" 
+			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).bmp" 
 		}
 	}
 	ScaleMap -map="_normalmap" -factor=0.5 -rgb
 	@level1 {
 		QuadIterator -level=1 $silent {
-			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).bmp" 
+			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).bmp" 
 		}
 	}
 	ScaleMap -map="_normalmap" -factor=0.5 -rgb
 	@level0 {
 		QuadIterator -level=0 $silent {
-			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -format=$dds_format -crop=256
-			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).bmp" 
+			@!c_none ExportMapToDDS -FlipX -map=_normalmap -filename="$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
+			@c_none  ExportMap      -FlipX -map=_normalmap -filename="$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).bmp" 
 		}
 	}
 	DeleteMap -map="_heightmap_tmp"
@@ -275,9 +277,9 @@ MakeTriangulation
 SelectAll $silent
 SetFlag -name=_flag_format -value="01.0" $silent
 QuadIterator -level=3 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)" -sort -segments=16 -no_uv -createpedestals -pedestalz=-10000
-	ExportBS -useshapes -addgeometrydata -flipu -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_quad_x * 4).y$($_quad_y * 4).dds" -transx="$(-16384 * $_quad_x)" -transy="$(-16384 * $_quad_y)" -makebound $nosplit $createpedestals -pedestaldiff=$pedestaldiff
-	ExportBS -filename="$_worldspace.level4.x$($_quad_x * 4).y$($_quad_y * 4).nif" -writeonly -loc_transx="$(16384 * $_quad_x)" -loc_transy="$(16384 * $_quad_y)"
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -segments=16 -no_uv -createpedestals -pedestalz=-10000 ;; -transz=-10
+	ExportBS -useshapes -addgeometrydata -flipu -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound $nosplit $createpedestals -pedestaldiff=$pedestaldiff
+	ExportBS -filename="$_worldspace.level4.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
 
 ; ============================
@@ -313,9 +315,9 @@ MakeTriangulation
 ; ============================
 
 QuadIterator -level=2 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-32768 * $_quad_x)" -transy="$(-32768 * $_quad_y)" -loc_transx="$(32768 * $_quad_x)" -loc_transy="$(32768 * $_quad_y)" -sort -no_uv -createpedestals -pedestalz=-10000
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level8.x$($_quad_x * 8).y$($_quad_y * 8).dds" -transx="$(-32768 * $_quad_x)" -transy="$(-32768 * $_quad_y)" -makebound
-	ExportBS -filename="$_worldspace.level8.x$($_quad_x * 8).y$($_quad_y * 8).nif" -writeonly -loc_transx="$(32768 * $_quad_x)" -loc_transy="$(32768 * $_quad_y)"
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$y1" -sort -no_uv -createpedestals -pedestalz=-10000
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
+	ExportBS -filename="$_worldspace.level8.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
 
 ; ============================
@@ -351,9 +353,9 @@ MakeTriangulation
 ; ============================
 
 QuadIterator -level=1 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-65536 * $_quad_x)" -transy="$(-65536 * $_quad_y)" -loc_transx="$(65536 * $_quad_x)" -loc_transy="$(65536 * $_quad_y)" -sort -no_uv -createpedestals -pedestalz=-10000
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_quad_x * 16).y$($_quad_y * 16).dds" -transx="$(-65536 * $_quad_x)" -transy="$(-65536 * $_quad_y)" -makebound
-	ExportBS -filename="$_worldspace.level16.x$($_quad_x * 16).y$($_quad_y * 16).nif" -writeonly -loc_transx="$(65536 * $_quad_x)" -loc_transy="$(65536 * $_quad_y)"
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$y1" -sort -no_uv -createpedestals -pedestalz=-10000
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
+	ExportBS -filename="$_worldspace.level16.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
 
 ; ============================
@@ -390,9 +392,9 @@ SplitAtGrid -x=131072 -y=131072
 ; ============================
 
 QuadIterator -level=0 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-131072 * $_quad_x)" -transy="$(-131072 * $_quad_y)" -loc_transx="$(131072 * $_quad_x)" -loc_transy="$(131072 * $_quad_y)" -sort -no_uv -createpedestals -pedestalz=-10000
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_quad_x * 32).y$($_quad_y * 32).dds" -transx="$(-131072 * $_quad_x)" -transy="$(-131072 * $_quad_y)" -makebound 
-	ExportBS -filename="$_worldspace.level32.x$($_quad_x * 32).y$($_quad_y * 32).nif" -writeonly -loc_transx="$(131072 * $_quad_x)" -loc_transy="$(131072 * $_quad_y)"
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$y1" -sort -no_uv -createpedestals -pedestalz=-10000
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound 
+	ExportBS -filename="$_worldspace.level32.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
 }
 
@@ -450,8 +452,11 @@ GUICheckBox -name=level0 -text="Generate level0 (most distant level)" -select
 GUIEnable -name=level0 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level0
 
-;;GUITextBox -text="Minimum height" -name=min_height_intro -width=0.30 -vdist=10 
-;;GUITextBox -text="-2048" -name=minheight -input -sameline -width=0.70 -help="Set a mimimum value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
+GUITextBox -text="Default landscape height" -name=min_height_intro -width=0.30 -vdist=10 
+GUITextBox -text="-2500" -name=minheight -input -sameline -width=0.70 -help="Set a default value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
+
+GUITextBox -text="Default water height" -name=min_waterheight_intro -width=0.30 -vdist=10 
+GUITextBox -text="-2300" -name=waterminheight -input -sameline -width=0.70 -help="Set a default value for the water plane, in particular for empty cells. Change this only if you know what you are doing."
 
 GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
 

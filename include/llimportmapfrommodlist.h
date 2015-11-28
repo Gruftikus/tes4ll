@@ -16,6 +16,8 @@ protected:
 		opt_center;
 	TES4qLOD *tes4qlod;
 
+	float quadoffsetx, quadoffsety;
+
 public:
 
 	llImportMapFromModlist();

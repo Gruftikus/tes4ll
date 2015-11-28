@@ -14,6 +14,8 @@ int llImportMapFromModlist::Prepare(void) {
 	opt_size_y = 0;
 	opt_center = 0;
 
+	quadoffsetx = quadoffsety = 0;
+
 	return 1;
 }
 
@@ -27,6 +29,9 @@ int llImportMapFromModlist::RegisterOptions(void) {
 
 	RegisterValue("-dimX",  &opt_size_x);
 	RegisterValue("-dimY",  &opt_size_y);
+
+	RegisterValue("-quadoffsetx",  &quadoffsetx);
+	RegisterValue("-quadoffsety",  &quadoffsety);
 
 	return 1;
 }
@@ -89,13 +94,13 @@ int llImportMapFromModlist::Exec(void) {
 	_llUtils()->x11 = x2;
 	_llUtils()->y11 = y2;
 
-	llQuadList     *quads      = heightmap->GenerateQuadList();
+	llQuadList     *quads      = heightmap->GenerateQuadList(quadoffsetx, quadoffsety);
 	llPointList    *points     = new llPointList(0, quads); 
 	llPolygonList  *polygons   = new llPolygonList(points, heightmap);
 	llLineList     *lines      = new llLineList(0, points, heightmap);
 	llTriangleList *triangles  = new llTriangleList(0, points);
 
-	llQuadList     *wquads      = watermap->GenerateQuadList();
+	llQuadList     *wquads      = watermap->GenerateQuadList(quadoffsetx, quadoffsety);
 	llPointList    *wpoints     = new llPointList(0, wquads); 
 	llPolygonList  *wpolygons   = new llPolygonList(wpoints, watermap);
 	llLineList     *wlines      = new llLineList(0, wpoints, watermap);
