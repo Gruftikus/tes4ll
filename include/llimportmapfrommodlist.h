@@ -14,9 +14,11 @@ protected:
 	int	opt_size_x,
 		opt_size_y,
 		opt_center;
+	int autooffset;
 	TES4qLOD *tes4qlod;
 
 	float quadoffsetx, quadoffsety;
+	float x1, y1, x2, y2;
 
 public:
 

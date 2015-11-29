@@ -758,6 +758,7 @@
     <ClCompile Include="src\llexportmeshtonif.cpp" />
     <ClCompile Include="src\llimportmapfrommodlist.cpp" />
     <ClCompile Include="src\llparsemodlist.cpp" />
+    <ClCompile Include="src\llreadlodsettings.cpp" />
     <ClCompile Include="src\tes4ll.cpp" />
     <ClCompile Include="src\tes4qlod.cpp" />
   </ItemGroup>
@@ -1555,6 +1556,7 @@
     <ClInclude Include="include\llexportmeshtonif.h" />
     <ClInclude Include="include\llimportmapfrommodlist.h" />
     <ClInclude Include="include\llparsemodlist.h" />
+    <ClInclude Include="include\llreadlodsettings.h" />
     <ClInclude Include="include\tes4qlod.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

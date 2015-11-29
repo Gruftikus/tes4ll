@@ -2262,6 +2262,9 @@
     <ClCompile Include="..\lltool\src\llsorttriangles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\llreadlodsettings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lltool\include\llsetpath.h">
@@ -4644,6 +4647,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\lltool\include\llsorttriangles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\llreadlodsettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

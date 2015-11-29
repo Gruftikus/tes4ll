@@ -115,6 +115,8 @@ protected:
 		opt_read_dimensions,//CHANGE_IF
 		opt_size_x,
 		opt_size_y,
+		opt_x1,
+		opt_y1,
 		opt_center,
 		opt_keepout,
 		opt_flip;
@@ -156,6 +158,7 @@ public:
 
 	static int min_x, max_x, min_y, max_y;
 	int x_cell, y_cell;
+	float waterheight;
 	
 };
 

@@ -22,6 +22,8 @@
 #include "../include/llimportmapfrommodlist.h"
 #include "../include/tes4qlod.h"
 #include "../include/llbsaiterator.h"
+#include "../include/llreadlodsettings.h"
+
 
 void usage(void) {
 
@@ -64,7 +66,7 @@ int main(int argc, char **argv) {
 
 	std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@github" << std::endl;
-	std::cout << "V5.10, 24.11.2015" << std::endl;
+	std::cout << "V5.11, 29.11.2015" << std::endl;
     std::cout << "***********************" << std::endl;
 
 	char *list_string = NULL;
@@ -147,6 +149,7 @@ int main(int argc, char **argv) {
 	batch->RegisterWorker(new llImportMapFromModlist());
 	batch->RegisterWorker(new TES4qLOD());
 	batch->RegisterWorker(new llBsaIterator());
+	batch->RegisterWorker(new llReadLodSettings());
 
 
 	//******************

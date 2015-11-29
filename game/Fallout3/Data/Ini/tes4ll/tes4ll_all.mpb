@@ -88,7 +88,17 @@ SetFlag -name="_waterdefaultheight" -value=$waterminheight
 }
 
 @!makemeshes @!writeout @!tes4qlod @!makenormalmaps Exit
-@crop_ws ImportMapFromModList -dimX=128 -dimY=128 -center
+	
+@crop_ws {
+	FileIterator -pattern="*.bsa" $silent {
+		BsaIterator -bsafile=$_filename -regex="lodsettings\\\\$_worldspace.dlodsettings" $silent { 
+			Echo -text="Found lodsettings in $_filename" $silent
+			ReadLodSettings $silent
+		}
+	}
+	ReadLodSettings -filename="$_gamedir\\data\\lodsettings\\$_worldspace.dlodsettings" $silent
+	ImportMapFromModList -x1=$($_lod_x1*4096) -x2=$(($_lod_x2+1)*4096) -y1=$($_lod_y1*4096) -y2=$(($_lod_y2+1)*4096) -autooffset
+}
 @!crop_ws ImportMapFromModList
 
 SelectAll
@@ -437,7 +447,7 @@ GUICheckBox -name=overwritelods -text="Overwrite the original files (please make
 GUIEnable -name=overwritelods 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=overwritelods 
 
-GUICheckBox -name=crop_ws -text="Crop worldspace to 128x128 cells" -help="Reduces calculation time for Wasteland." -select
+GUICheckBox -name=crop_ws -text="Read dimensions from dlodsettings file" -help="Very important." -select
 GUIEnable -name=crop_ws
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=crop_ws 
 
@@ -458,10 +468,10 @@ GUIEnable -name=level0
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level0
 
 GUITextBox -text="Default landscape height" -name=min_height_intro -width=0.30 -vdist=10 
-GUITextBox -text="-2500" -name=minheight -input -sameline -width=0.70 -help="Set a default value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
+GUITextBox -text="-2048" -name=minheight -input -sameline -width=0.70 -help="Set a default value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
 
 GUITextBox -text="Default water height" -name=min_waterheight_intro -width=0.30 -vdist=10 
-GUITextBox -text="-2300" -name=waterminheight -input -sameline -width=0.70 -help="Set a default value for the water plane, in particular for empty cells. Change this only if you know what you are doing."
+GUITextBox -text="10500" -name=waterminheight -input -sameline -width=0.70 -help="Set a default value for the water plane, in particular for empty cells. Change this only if you know what you are doing."
 
 GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
 

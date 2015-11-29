@@ -66,6 +66,8 @@ int TES4qLOD::RegisterOptions(void) {
 
 	RegisterValue("-dimX",   &opt_size_x);
 	RegisterValue("-dimY",   &opt_size_y);
+	RegisterValue("-x1",     &opt_x1);
+	RegisterValue("-y1",     &opt_y1);
 	RegisterFlag ("-silent", &silent);
 
 	RegisterValue("-map",      &mapname);
@@ -280,6 +282,9 @@ int TES4qLOD::Exec(void) {
 	for (i = 0; i < _llUtils()->GetNumMods(); i++) {
 		ExportTES4LandT4QLOD(_llUtils()->GetMod(i));
 	}
+
+	if (Used("-x1")) min_x = opt_x1;
+	if (Used("-y1")) min_y = opt_y1;
 
 	if (opt_size_x) {
 		if (opt_center) 
@@ -847,6 +852,17 @@ int TES4qLOD::Process4WRLDData(char *_r, int _size) {
 					MKDIR(lod2_dir);
 				}
 			}
+
+			while (pos < _size) { 
+					//std::cout << *(_r+pos) << *(_r+pos+1) << *(_r+pos+2) << *(_r+pos+3) << std::endl;
+					if (strncmp("NAM4", _r + pos, 4) == 0) { //LOD water height
+						memcpy(&waterheight, _r + pos + 6, 4);
+						//std::cout << waterheight << std::endl;
+					}
+					memcpy(&nsize, _r + pos + 4, 2);
+					pos += 6 + nsize;
+			}
+
 			return 1;
 		} else {
 			if (verbosity) printf(" - Ignoring this Worldspace.\n");
