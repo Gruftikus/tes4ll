@@ -3,6 +3,7 @@
 
 @makepedestals SetFlag -name="createpedestals" -value="-createpedestals"
 @be_silent     SetFlag -name="silent" -value="-silent"
+@readwaterheight SetFlag -name="opt_readwaterheight" -value="-readwaterheight"
 
 @!back_red   SetFlag -name="back_red"   -value="0.36"
 @!back_green SetFlag -name="back_green" -value="0.35"
@@ -38,6 +39,7 @@ SetFlag -name="_waterdefaultheight" -value=$waterminheight
 @tes4qlod_cache {
 	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
 	
+	@!only_pattern {
 	@bsa_last { 
 		FileIterator -directory="textures\\landscape" -pattern="*.dds" -recursive $silent {
 			MatchRegEx -input=$_filename -regex="textures\\\\landscape\\\\lod\\\\.*" -invert $silent {
@@ -85,11 +87,43 @@ SetFlag -name="_waterdefaultheight" -value=$waterminheight
 			}
 		}
 	}
+	}
+	
+	@make_landscape_pattern { 
+		SetFlag -name=landscape_pattern -value=$landscape_pattern -replace="\\" -with="\\\\" -num=99 $silent
+		FileIterator -directory="textures\\$landscape_pattern" -pattern="*.dds" -recursive $silent {
+			MatchRegEx -input=$_filename -regex="textures\\\\landscape\\\\.*_n.dds" -invert $silent {
+				echo -text="Open texture file $_filename for compressing" $silent
+				ImportMapFromDDS -filename=$_filename -even -name=test -replacemap $silent
+				ScaleMap -sizeX=4 -sizeY=4 -map=test $silent
+				SetFlag -name=newname -value=$_filename -replace=".dds" -with=".bmp" $silent
+				SetFlag -name=newname -value=$newname -replace="textures\\" -with="tes4qlod_tex\\FalloutNV\\" -num=1 $silent
+				MkDir -path=$newname -hasfilename $silent
+				ExportMap -filename=$newname -map=test $silent
+			}
+		}
+	}
 }
 
 @!makemeshes @!writeout @!tes4qlod @!makenormalmaps Exit
-ImportMapFromModList
 
+@crop_ws {
+	FileIterator -pattern="*.bsa" $silent {
+		BsaIterator -bsafile=$_filename -regex="lodsettings\\\\$_worldspace.dlodsettings" $silent { 
+			Echo -text="Found lodsettings in $_filename" $silent
+			ReadLodSettings $silent
+		}
+	}
+	ReadLodSettings -filename="$_gamedir\\data\\lodsettings\\$_worldspace.dlodsettings" $silent
+	
+	@!_lod_x1 {
+		Echo -text="FATAL: file $_worldspace.dlodsettings not found"
+		Exit
+	}
+	
+	ImportMapFromModList -x1=$($_lod_x1*4096) -x2=$(($_lod_x2+1)*4096) -y1=$($_lod_y1*4096) -y2=$(($_lod_y2+1)*4096) -autooffset $opt_readwaterheight
+}
+@!crop_ws ImportMapFromModList $opt_readwaterheight
 SelectAll
 
 @tes4qlod {
@@ -426,13 +460,10 @@ SetOption -noskipinfo ;avoid nasty skip messenges in loop mode
 GUIEnable -name=final_gui
 @!_worldspace GUIDisable -name=final_gui
 
-GUITextBox -text="If you have selected all previous options, you can continue here..." -name=final_gui_intro -vdist=10
-
-
-GUITextBox -text="General options" -name=tes4ll_text2 -vdist=10
+GUITextBox -text="Global file options" -name=tes4ll_text2a -vdist=10
 
 ## A checkbox for a basic question:
-GUICheckBox -name=overwritelods -text="Overwrite the original files (please make a backup before checking this option)" -help="You have to check this option if tes4ll should place the new files in the LOD directories."
+GUICheckBox -name=overwritelods -text="Overwrite the original files (please make a backup before checking this option)" -help="You have to check this option if tes4ll should place the new files in the LOD directories." -vdist=5
 GUIEnable -name=overwritelods 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=overwritelods 
 
@@ -452,11 +483,14 @@ GUICheckBox -name=level0 -text="Generate level0 (most distant level)" -select
 GUIEnable -name=level0 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level0
 
+GUITextBox -text="Map option" -name=tes4ll_text2a -vdist=10
+
+GUICheckBox -name=crop_ws -text="Read dimensions from dlodsettings file" -help="Very important." -select
+GUIEnable -name=crop_ws
+@!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=crop_ws 
+
 GUITextBox -text="Default landscape height" -name=min_height_intro -width=0.30 -vdist=10 
 GUITextBox -text="-2500" -name=minheight -input -sameline -width=0.70 -help="Set a default value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
-
-GUITextBox -text="Default water height" -name=min_waterheight_intro -width=0.30 -vdist=10 
-GUITextBox -text="-2300" -name=waterminheight -input -sameline -width=0.70 -help="Set a default value for the water plane, in particular for empty cells. Change this only if you know what you are doing."
 
 GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
 
@@ -492,7 +526,7 @@ GUIEnable -name=tes4ll_gui
 GUITextBox -text="Select options for LOD mesh generation..." -name=tes4ll_gui_intro -vdist=10
 
 ## A checkbox for a basic question:
-GUICheckBox -name=makemeshes -text="Make LOD meshes" -help="Check this if you want to create the LOD meshes" -select
+GUICheckBox -name=makemeshes -text="Make LOD meshes" -help="Check this if you want to create the LOD meshes" -select -vdist=5
 
 GUITextBox -text="Options for vertices placement" -name=tes4ll_text1 -vdist=10
 
@@ -515,7 +549,14 @@ GUITextBox -text="300" -name=pedestaldiff -input -sameline -width=0.30 -help="He
 GUIEnable -name=pedestaldiff
 @!makepedestals GUIDisable -name=pedestaldiff
 
-GUICheckBox -name=removewaterground -text="Remove water below ground (so far nearest level only)" -vdist=5 -select
+GUICheckBox -name=readwaterheight -text="Read default water height from WRLD record" -vdist=5 -select -select
+
+GUITextBox -text="Default water height" -name=min_waterheight_intro -width=0.30 -vdist=5
+GUITextBox -text="10500" -name=waterminheight -input -sameline -width=0.70 -help="Set a default value for the water plane, in particular for empty cells. Change this only if you know what you are doing."
+GUIEnable -name=min_waterheight_intro
+@readwaterheight GUIDisable -name=min_waterheight_intro
+
+GUICheckBox -name=removewaterground -text="Remove water below ground (so far nearest level only)" -vdist=10 -select
 
 ; ****************************
 [tes4llnm_gui]
@@ -527,9 +568,8 @@ GUIEnable -name=tes4llnm_gui
 
 GUITextBox -text="Select options for normal maps generation..." -name=tes4llnm_gui_intro -vdist=10
 
-
 ## A checkbox for a basic question:
-GUICheckBox -name=makenormalmaps -text="Make normal maps" -help="Select this if you want to generate the normal maps"
+GUICheckBox -name=makenormalmaps -text="Make normal maps" -help="Select this if you want to generate the normal maps" -vdist=5
 
 ###--------------------------------------------------------------
 GUITextBox -text="Graphics options" -name=tes4llnm_text3 -vdist=10
@@ -570,7 +610,7 @@ GUIEnable -name=tes4qlod_gui
 
 GUITextBox -text="Select options for color maps generation..." -name=tes4qlod_gui_intro -vdist=10
 
-GUICheckBox -name=tes4qlod -text="Make color maps (calls build-in TES4qLOD)" -help="Select this if you want to generate the color maps with TES4qLOD"
+GUICheckBox -name=tes4qlod -text="Make color maps (calls build-in TES4qLOD)" -help="Select this if you want to generate the color maps with TES4qLOD" -vdist=5
 
 GUICheckBox -name=tes4qlod_cache -text="Regenerate texture cache" -help="Always required if started first time or new mods have been installed"
 
@@ -579,13 +619,22 @@ GUIDropDown -name=tes4qlod_cache_order -help="Select priorities" -vdist=3
 ## and now the items:
 GUIDropDownItem -parent=tes4qlod_cache_order -name=bsa_first -text="Loose files override BSAs" -select
 GUIDropDownItem -parent=tes4qlod_cache_order -name=bsa_last -text="BSAs override loose files" 
+GUIDropDownItem -parent=tes4qlod_cache_order -name=only_pattern -text="Do nothing, only additional path" 
 GUIEnable -name=tes4qlod_cache_order
 @!tes4qlod_cache GUIDisable -name=tes4qlod_cache_order
 
+GUICheckBox -name=make_landscape_pattern -text="Add additional texture path" -vdist=5 -width=0.20
+GUIEnable -name=make_landscape_pattern
+@!tes4qlod_cache GUIDisable -name=make_landscape_pattern
+
+GUITextBox -text="Alton\landscape" -name=landscape_pattern -input -sameline -width=0.80
+GUIEnable -name=landscape_pattern
+@!make_landscape_pattern GUIDisable -name=landscape_pattern
+@!tes4qlod_cache GUIDisable -name=landscape_pattern
 GUITextBox -text="Options:" -name=tes4qlod_into3 -vdist=10
 
 ## A flag about the total map:
-GUICheckBox -name=option_map -text="Create full map of wordspace" -help="Creates a full map of your worldspace"
+GUICheckBox -name=option_map -text="Create full map of wordspace" -help="Creates a full map of your worldspace" -vdist=5
 GUIEnable -name=option_map
 @!tes4qlod GUIDisable -name=option_map
 

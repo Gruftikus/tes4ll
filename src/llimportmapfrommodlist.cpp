@@ -16,6 +16,7 @@ int llImportMapFromModlist::Prepare(void) {
 
 	quadoffsetx = quadoffsety = 0;
 	autooffset = 0;
+	readwaterheight = 0;
 
 	return 1;
 }
@@ -38,6 +39,8 @@ int llImportMapFromModlist::RegisterOptions(void) {
 	RegisterValue("-y1", &y1);
 	RegisterValue("-x2", &x2);
 	RegisterValue("-y2", &y2);
+
+	RegisterFlag ("-readwaterheight", &readwaterheight);
 
 	return 1;
 }
@@ -106,7 +109,11 @@ int llImportMapFromModlist::Exec(void) {
 	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32+1, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32+1, 0, defaultheight);
 	heightmap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
 
-	llMap *watermap = new llMap(TES4qLOD::max_x - TES4qLOD::min_x + 1, TES4qLOD::max_y - TES4qLOD::min_y + 1, 0, tes4qlod->waterheight);
+	llMap *watermap = NULL;
+	if (readwaterheight) 
+		watermap = new llMap(TES4qLOD::max_x - TES4qLOD::min_x + 1, TES4qLOD::max_y - TES4qLOD::min_y + 1, 0, tes4qlod->waterheight);
+	else
+		watermap = new llMap(TES4qLOD::max_x - TES4qLOD::min_x + 1, TES4qLOD::max_y - TES4qLOD::min_y + 1, 0, waterdefaultheight);
 	watermap->SetEven();
 	watermap->SetCoordSystem(x1, y1, x2, y2, 1.0f);
 

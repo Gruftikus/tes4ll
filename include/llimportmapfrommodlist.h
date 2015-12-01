@@ -14,7 +14,7 @@ protected:
 	int	opt_size_x,
 		opt_size_y,
 		opt_center;
-	int autooffset;
+	int autooffset, readwaterheight;
 	TES4qLOD *tes4qlod;
 
 	float quadoffsetx, quadoffsety;
