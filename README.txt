@@ -101,7 +101,7 @@ Version 5.00 (27 Dec 2014):
 			  
 Version 5.01 (02 Feb 2015): 
               Bugfixes for skipped texture generation and fatal error in 
-			  write	procedure
+              write procedure
 			  
 Version 5.02 (10 Aug 2015): 
               Bugfixes		
@@ -110,8 +110,11 @@ Version 5.03 (27 Oct 2015):
               Bugfix
 			  
 Version 5.10 (24 Nov 2015): 
-			  Fallout New Vegas Support
-			  (required a lot of changes which are listed in more detail on Github)
+              Fallout New Vegas Support
+              (required a lot of changes which are listed in more detail on Github)
+              
+Version 5.11 (06 Dec 2015):
+              Reading of geometry by lodsettings and WRLD record
 		  
 
 Literature
