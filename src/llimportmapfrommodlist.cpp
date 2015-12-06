@@ -60,7 +60,8 @@ int llImportMapFromModlist::Exec(void) {
 	tes4qlod = new TES4qLOD();
 
 	float waterdefaultheight = 0;
-	if (_llUtils()->GetValue("_waterdefaultheight")) waterdefaultheight = *_llUtils()->GetValueF("_waterdefaultheight");
+	if (_llUtils()->GetValue("_waterdefaultheight")) 
+		waterdefaultheight = *_llUtils()->GetValueF("_waterdefaultheight");
 	tes4qlod->waterheight = waterdefaultheight;
 
 	char dummy[100];
@@ -97,12 +98,11 @@ int llImportMapFromModlist::Exec(void) {
 	if (!Used("-x2")) 
 		x2 = (TES4qLOD::max_x + 1)*(*_llUtils()->GetValueF("_cellsize_x"));
 	else
-		TES4qLOD::max_x = x2 / (*_llUtils()->GetValueF("_cellsize_x"));
+		TES4qLOD::max_x = x2 / (*_llUtils()->GetValueF("_cellsize_x")) - 1;
 	if (!Used("-y2")) 
 		y2 = (TES4qLOD::max_y + 1)*(*_llUtils()->GetValueF("_cellsize_y"));
 	else
-		TES4qLOD::max_y = y2 / (*_llUtils()->GetValueF("_cellsize_y"));
-
+		TES4qLOD::max_y = y2 / (*_llUtils()->GetValueF("_cellsize_y")) - 1;
 
 	float defaultheight = 0;
 	if (_llUtils()->GetValue("_defaultheight")) defaultheight = *_llUtils()->GetValueF("_defaultheight");
@@ -110,10 +110,11 @@ int llImportMapFromModlist::Exec(void) {
 	heightmap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
 
 	llMap *watermap = NULL;
-	if (readwaterheight) 
+	if (readwaterheight) {
 		watermap = new llMap(TES4qLOD::max_x - TES4qLOD::min_x + 1, TES4qLOD::max_y - TES4qLOD::min_y + 1, 0, tes4qlod->waterheight);
-	else
+	} else {
 		watermap = new llMap(TES4qLOD::max_x - TES4qLOD::min_x + 1, TES4qLOD::max_y - TES4qLOD::min_y + 1, 0, waterdefaultheight);
+	}
 	watermap->SetEven();
 	watermap->SetCoordSystem(x1, y1, x2, y2, 1.0f);
 

@@ -35,7 +35,7 @@ int llReadLodSettings::Exec(void) {
 
 	if (filename) {
 		if (fopen_s(&fptr, filename," rb")) {
-			_llLogger()->WriteNextLine(-LOG_ERROR, "Unable to open LODSettings file \"%s\"", filename);
+			_llLogger()->WriteNextLine(-LOG_INFO, "Unable to open LODSettings file \"%s\"", filename);
 			return 0;
 		}
 

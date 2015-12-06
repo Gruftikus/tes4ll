@@ -451,8 +451,10 @@ int TES4qLOD::ExportTES4LandT4QLOD(char *_input_esp_filename) {
 
 	while (fread(s, 1, 8, fpin) > 0) {
 
-		if (!isalpha(s[0]) && !isalpha(s[1]) && !isalpha(s[2]) && !isalpha(s[3])) 
-			printf(" - WARNING: FOUND A WILD NON-ASCII RECORD HEADER: %c%c%c%c ", s[0], s[1], s[2], s[3]);
+		if (!isalpha(s[0]) && !isalpha(s[1]) && !isalpha(s[2]) && !isalpha(s[3])) {
+			printf(" - WARNING: FOUND A WILD NON-ASCII RECORD HEADER in file %s\n", _input_esp_filename);
+			return 0;
+		}
 
 		/**************************************
 		 * The Core TES4 ESM/ESP Record Parser.
@@ -854,13 +856,13 @@ int TES4qLOD::Process4WRLDData(char *_r, int _size) {
 			}
 
 			while (pos < _size) { 
-					//std::cout << *(_r+pos) << *(_r+pos+1) << *(_r+pos+2) << *(_r+pos+3) << std::endl;
-					if (strncmp("NAM4", _r + pos, 4) == 0) { //LOD water height
-						memcpy(&waterheight, _r + pos + 6, 4);
-						//std::cout << waterheight << std::endl;
-					}
-					memcpy(&nsize, _r + pos + 4, 2);
-					pos += 6 + nsize;
+				//std::cout << *(_r+pos) << *(_r+pos+1) << *(_r+pos+2) << *(_r+pos+3) << std::endl;
+				if (strncmp("NAM4", _r + pos, 4) == 0) { //LOD water height
+					memcpy(&waterheight, _r + pos + 6, 4);
+					//std::cout << "Waterheight set to: " << waterheight << std::endl;
+				}
+				memcpy(&nsize, _r + pos + 4, 2);
+				pos += 6 + nsize;
 			}
 
 			return 1;

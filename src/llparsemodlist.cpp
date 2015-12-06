@@ -91,7 +91,10 @@ int llParseModList::Exec(void) {
 	if (cd) {
 		_llLogger()->WriteNextLine(LOG_COMMAND,"%s: change directory path to %s", command_name, _llUtils()->GetValue("_gamedir"));
 		_chdir(_llUtils()->GetValue("_gamedir"));
-		_chdir("Data");
+		if (_llUtils()->GetValue("_datadir"))
+			_chdir(_llUtils()->GetValue("_datadir"));
+		else
+			_chdir("Data");
 	}
 
 	const char *option = _llUtils()->GetValue("_modlist");
@@ -189,29 +192,39 @@ int llParseModList::Exec(void) {
 			char * my_flag_list = new char[strlen(esp_list_sorted[j]) + 1];
 			strcpy_s(my_flag_list, strlen(esp_list_sorted[j])+1, esp_list_sorted[j]);
 			for (unsigned int jj=0; jj<strlen(my_flag_list); jj++) {
-				if (*(my_flag_list+jj) == ' ') *(my_flag_list+jj)='_';
+				if (*(my_flag_list+jj) == ' ' || *(my_flag_list+jj) == ',') *(my_flag_list+jj)='_';
 			}
-			_llLogger()->WriteNextLine(LOG_INFO,"Mod flag: %s",my_flag_list);
+			_llLogger()->WriteNextLine(LOG_INFO, "Mod flag: %s", my_flag_list);
 			_llUtils()->AddFlag(my_flag_list);
 		}
 
 	} else { //list mod option provided
 		char *ptr;          
 		char *saveptr1 = NULL;
-		char *list_string = new char[strlen(option)+1];
-		strcpy_s(list_string, strlen(option)+1, option);
+		char *list_string = _llUtils()->NewString(option);
+
+		for (int ii=0; ii<strlen(list_string)-1; ii++) {
+			if (list_string[ii] == '\\' && list_string[ii+1] == ',') {
+				list_string[ii+1] = '#';
+			}
+		}
+		
 		ptr = strtok_int(list_string, ',', &saveptr1);
 		while(ptr != NULL) {
-			char *flag_list = new char[strlen(ptr)+1];
-			strcpy_s(flag_list, strlen(ptr)+1, ptr);
-			char *mod_list = new char[strlen(ptr)+1];
-			strcpy_s(mod_list, strlen(ptr)+1, ptr);
+			char *flag_list = _llUtils()->NewString(ptr);
+			_llUtils()->StripSpaces(&flag_list);
+			flag_list = _llUtils()->Replace(flag_list, "\\#", "\\,");
+			flag_list = _llUtils()->ReplaceProtectedKomma(flag_list);
+			char *mod_list  = _llUtils()->NewString(ptr);
+			_llUtils()->StripSpaces(&mod_list);
+			mod_list = _llUtils()->Replace(mod_list, "\\#", "\\,");
+			mod_list = _llUtils()->ReplaceProtectedKomma(mod_list);
 			_llUtils()->AddMod(mod_list);
 			for (unsigned int j=0;j<strlen(flag_list);j++) {
-				if (*(flag_list+j) == ' ') *(flag_list+j)='_';
+				if (*(flag_list+j) == ' ' || *(flag_list+j) == ',') *(flag_list+j)='_';
 			}
 			ptr = strtok_int(NULL, ',', &saveptr1);
-			_llLogger()->WriteNextLine(LOG_INFO,"Mod flag: %s",flag_list);
+			_llLogger()->WriteNextLine(LOG_INFO, "Mod flag: %s", flag_list);
 			_llUtils()->AddFlag(flag_list);
 		}
 	}

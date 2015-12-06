@@ -11,6 +11,8 @@
 
 @!pedestaldiff SetFlag -name="pedestaldiff" -value="300"
 
+@!_datadir SetFlag -name="_datadir" -value="Data"
+SetFlag -name=_datadir -value="$_datadir" -replace="\\" -with="\\\\" -num=99 $silent
 ; ============================
 ; Optional 16 bit matrices (no 32-bit floats)
 ; enable this only if the tes4ll task exceeds 3GB 
@@ -20,6 +22,9 @@
 ; ============================
 
 ParseModList -cd    ;reads mod list from Plugins.txt (or from -l option) and set the flags
+
+@!_tmpdir SetFlag -name="_tmpdir" -value="$_gamedir\\Data\\tes4ll.tmp"
+SetFlag -name=_tmpdir -value="$_tmpdir" -replace="\\" -with="\\\\" -num=99 $silent
 
 SetFlag -name="_quad_levels" -value=4
 
@@ -37,7 +42,7 @@ SetFlag -name="_waterdefaultheight" -value=$waterminheight
 ; ****************************
 
 @tes4qlod_cache {
-	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\"
 	
 	@!only_pattern {
 	@bsa_last { 
@@ -114,7 +119,7 @@ SetFlag -name="_waterdefaultheight" -value=$waterminheight
 			ReadLodSettings $silent
 		}
 	}
-	ReadLodSettings -filename="$_gamedir\\data\\lodsettings\\$_worldspace.dlodsettings" $silent
+	ReadLodSettings -filename="$_gamedir\\$_datadir\\lodsettings\\$_worldspace.dlodsettings" $silent
 	
 	@!_lod_x1 {
 		Echo -text="FATAL: file $_worldspace.dlodsettings not found"
@@ -143,9 +148,12 @@ SelectAll
 	Tes4qlod -colormap=terraincolor -q=$tes4qlod_flag_q -a $option_silent_opt
 	Filter -n=1 -map=terraincolor -rgb
 	DeleteMap -map=terraincolor
-	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	SetFlag -name="_install_dir" -value="$_tmpdir\"
+	MkDir -path=$_install_dir $silent
 	@option_map ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map.bmp" -FlipY
-	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\Landscape\LOD\$_worldspace\diffuse"
+	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\Textures\Landscape\LOD\$_worldspace\diffuse"
+	@!overwritelods SetFlag -name="_install_dir" -value="$_tmpdir\Textures\Landscape\LOD\$_worldspace\diffuse"
+	MkDir -path=$_install_dir $silent
 	SetFlag -name=_flag_format -value="01.0" 
 	@level3 {
 		QuadIterator -level=3 $silent {
@@ -187,9 +195,12 @@ SelectAll
 	ScaleMap -map="_heightmap_tmp" -factor=2 $silent
 	@!lodshadows CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -boost=$z_val
 	@lodshadows  CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -shadows -northboost=$z_val
-	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	SetFlag -name="_install_dir" -value="$_tmpdir\"
 	@option_map ExportMap -map=_normalmap -filename="$_worldspace&Normalmap.bmp" -FlipY
-	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\Landscape\LOD\$_worldspace\normals"
+	MkDir -path=$_install_dir $silent
+	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\Textures\Landscape\LOD\$_worldspace\normals"
+	@!overwritelods SetFlag -name="_install_dir" -value="$_tmpdir\Textures\Landscape\LOD\$_worldspace\normals"
+	MkDir -path=$_install_dir $silent
 	SetFlag -name=_flag_format -value="01.0" $silent
 	@level3 {
 		QuadIterator -level=3 $silent {
@@ -227,7 +238,8 @@ SelectAll
 ; ****************************
 
 @writeout {
-	SetFlag -name="_install_dir" -value="$_gamedir\Data"
+	SetFlag -name="_install_dir" -value="$_tmpdir\"
+	MkDir -path=$_install_dir $silent
 	SelectAll $silent
 	ExportMap -depth=32 -filename="$_worldspace.bmp" 
 }
@@ -241,8 +253,8 @@ SelectAll
 SelectAll $silent
 SetHeight -min -z=$minheight -usegameunits $silent
 
-@!overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\"
-@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD\$_worldspace"
+@!overwritelods SetFlag -name="_install_dir" -value="$_tmpdir\Meshes\Landscape\LOD\$_worldspace"
+@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\Meshes\Landscape\LOD\$_worldspace"
 MkDir -path=$_install_dir $silent
 
 ; =============================
@@ -349,7 +361,7 @@ MakeTriangulation
 ; ============================
 
 QuadIterator -level=2 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$y1" -sort -no_uv -createpedestals -pedestalz=-10000
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=-10000
 	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
 	ExportBS -filename="$_worldspace.level8.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
@@ -387,7 +399,7 @@ MakeTriangulation
 ; ============================
 
 QuadIterator -level=1 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$y1" -sort -no_uv -createpedestals -pedestalz=-10000
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=-10000
 	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
 	ExportBS -filename="$_worldspace.level16.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
@@ -426,7 +438,7 @@ SplitAtGrid -x=131072 -y=131072
 ; ============================
 
 QuadIterator -level=0 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$y1" -sort -no_uv -createpedestals -pedestalz=-10000
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=-10000
 	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound 
 	ExportBS -filename="$_worldspace.level32.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
@@ -467,7 +479,12 @@ GUICheckBox -name=overwritelods -text="Overwrite the original files (please make
 GUIEnable -name=overwritelods 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=overwritelods 
 
-GUICheckBox -name=level3 -text="Generate level3 (nearest level)" -select
+GUITextBox -text="Temporary directory" -name=tmpdir_intro -width=0.30 -vdist=5 
+GUITextBox -text="$_gamedir\tes4ll.tmp" -name=_tmpdir -input -sameline -width=0.70 -help="Alternative installation path and path for full maps"
+GUIEnable -name=_tmpdir
+@!makemeshes GUIDisable -name=_tmpdir 
+
+GUICheckBox -name=level3 -text="Generate level3 (nearest level)" -select -vdist=5 
 GUIEnable -name=level3 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=level3 
 
@@ -543,20 +560,28 @@ GUITextBox -text="Other options" -name=tes4ll_text2 -vdist=10
 GUICheckBox -name=writeout -text="Write heightmap as a 32-bit bmp file" -vdist=5
 
 GUICheckBox -name=makepedestals -text="Adding pedestals" -vdist=5 -select -width=0.20 
+GUIEnable -name=makepedestals
+@!makemeshes GUIDisable -name=makepedestals 
 
 GUITextBox -text="Pedestal height:" -name=pedestal_height_intro -sameline -width=0.10 
 GUITextBox -text="300" -name=pedestaldiff -input -sameline -width=0.30 -help="Height for border pedestals."
 GUIEnable -name=pedestaldiff
 @!makepedestals GUIDisable -name=pedestaldiff
+@!makemeshes GUIDisable -name=pedestaldiff
 
 GUICheckBox -name=readwaterheight -text="Read default water height from WRLD record" -vdist=5 -select -select
+GUIEnable -name=readwaterheight
+@!makemeshes GUIDisable -name=readwaterheight
 
 GUITextBox -text="Default water height" -name=min_waterheight_intro -width=0.30 -vdist=5
 GUITextBox -text="10500" -name=waterminheight -input -sameline -width=0.70 -help="Set a default value for the water plane, in particular for empty cells. Change this only if you know what you are doing."
-GUIEnable -name=min_waterheight_intro
-@readwaterheight GUIDisable -name=min_waterheight_intro
+GUIEnable -name=waterminheight
+@readwaterheight GUIDisable -name=waterminheight
+@!makemeshes GUIDisable -name=waterminheight
 
 GUICheckBox -name=removewaterground -text="Remove water below ground (so far nearest level only)" -vdist=10 -select
+GUIEnable -name=removewaterground
+@!makemeshes GUIDisable -name=removewaterground
 
 ; ****************************
 [tes4llnm_gui]
