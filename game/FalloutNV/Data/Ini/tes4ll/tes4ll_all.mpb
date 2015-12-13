@@ -33,8 +33,9 @@ SetFlag -name="dds_format" -value="DXT1"
 @c_dxt3 SetFlag -name="dds_format" -value="DXT3"
 @c_dxt5 SetFlag -name="dds_format" -value="DXT5"
 
-@!minheight SetFlag -name="minheight" -value="-2500"
-SetFlag -name="_defaultheight" -value=$minheight
+@!minheight SetFlag -name="minheight" -value="-10000"
+@!defaultheight SetFlag -name="defaultheight" -value="-2500"
+SetFlag -name="_defaultheight" -value=$defaultheight
 @!waterminheight SetFlag -name="waterminheight" -value="-2300"
 SetFlag -name="_waterdefaultheight" -value=$waterminheight
 
@@ -149,6 +150,26 @@ SelectAll
 	Tes4qlod -colormap=terraincolor -q=$tes4qlod_flag_q -a $option_silent_opt
 	Filter -n=1 -map=terraincolor -rgb
 	DeleteMap -map=terraincolor
+	
+	@make_rocky_filter {
+		MakeDerivatives -map="_heightmap" $use16bit	
+		CreateAlgCollection -name=red_filter
+		@rocky_filter_value  SetFlag -name=cap -value="$(1/$rocky_filter_value)"
+		@!rocky_filter_value SetFlag -name=cap -value="1.2"
+		AlgEquation -alg=red_filter   -map=terraincolor_filtered -red   -equation="z"
+		AlgEquation -alg=red_filter   -map=_heightmap_d2x   -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		AlgEquation -alg=red_filter   -map=_heightmap_d2y   -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		CreateAlgCollection -name=blue_filter
+		AlgEquation -alg=blue_filter  -map=terraincolor_filtered -blue  -equation="z"
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2x -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2y -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		CreateAlgCollection -name=green_filter
+		AlgEquation -alg=green_filter -map=terraincolor_filtered -green -equation="z"
+		AlgEquation -alg=green_filter -map=_heightmap_d2x  -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		AlgEquation -alg=green_filter -map=_heightmap_d2y  -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	}
+	
 	SetFlag -name="_install_dir" -value="$_tmpdir\"
 	MkDir -path=$_install_dir $silent
 	@option_map ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map.bmp" -FlipY
@@ -163,6 +184,8 @@ SelectAll
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
+	@make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	;;ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map8.bmp" -FlipY
 	@level2 {
 		QuadIterator -level=2 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
@@ -170,6 +193,8 @@ SelectAll
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
+	@make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	;;ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map16.bmp" -FlipY
 	@level1 {
 		QuadIterator -level=1 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
@@ -177,6 +202,8 @@ SelectAll
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
+	@make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	;;ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map32.bmp" -FlipY
 	@level0 {
 		QuadIterator -level=0 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
@@ -184,6 +211,12 @@ SelectAll
 		}
 	}
 	DeleteMap -map=terraincolor_filtered
+	@make_rocky_filter {
+		DeleteMap -map=_heightmap_d1x
+		DeleteMap -map=_heightmap_d2x
+		DeleteMap -map=_heightmap_d1y
+		DeleteMap -map=_heightmap_d2y
+	}
 }
 
 ; ****************************
@@ -234,6 +267,15 @@ SelectAll
 	DeleteMap -map="_normalmap"
 }
 
+
+; ****************************
+; Make meshes 
+; ****************************
+@!makemeshes Exit
+
+SelectAll $silent
+SetHeight -min -z=$minheight -usegameunits $silent
+
 ; ****************************
 ; Generate optional heightmap
 ; ****************************
@@ -244,19 +286,6 @@ SelectAll
 	SelectAll $silent
 	ExportMap -depth=32 -filename="$_worldspace.bmp" 
 }
-
-; ****************************
-; Make meshes 
-; ****************************
-
-@!makemeshes Exit
-
-SelectAll $silent
-SetHeight -min -z=$minheight -usegameunits $silent
-
-@!overwritelods SetFlag -name="_install_dir" -value="$_tmpdir\Meshes\Landscape\LOD\$_worldspace"
-@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\Meshes\Landscape\LOD\$_worldspace"
-MkDir -path=$_install_dir $silent
 
 ; =============================
 ; Water Map, needed in any case
@@ -273,8 +302,23 @@ SetFlag -name="_mindistance" -value=64 $silent
 ; Smooth the heighmap
 ; Avoids that the random points are triggered by local fluctuations
 ; ============================
-Filter -n=4    
-MakeDerivatives -map="_heightmap_filtered" $use16bit
+Filter -n=4   
+MakeDerivatives -map="_heightmap_filtered" $use16bit 
+@writeout {
+	SetFlag -name="_install_dir" -value="$_tmpdir\"
+	MkDir -path=$_install_dir $silent
+	SelectAll $silent
+	ExportMap -depth=32 -filename="$_worldspace&_filtered.bmp" -map="_heightmap_filtered"
+	ExportMap -depth=32 -filename="$_worldspace&_filtered_d1x.bmp" -map="_heightmap_filtered_d1x"
+	ExportMap -depth=32 -filename="$_worldspace&_filtered_d1y.bmp" -map="_heightmap_filtered_d1y"
+	ExportMap -depth=32 -filename="$_worldspace&_filtered_d2x.bmp" -map="_heightmap_filtered_d2x"
+	ExportMap -depth=32 -filename="$_worldspace&_filtered_d2y.bmp" -map="_heightmap_filtered_d2y"
+}
+
+
+@!overwritelods SetFlag -name="_install_dir" -value="$_tmpdir\Meshes\Landscape\LOD\$_worldspace"
+@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\Meshes\Landscape\LOD\$_worldspace"
+MkDir -path=$_install_dir $silent
 ; ============================
 
 @!no_firstorder AlgFirstOrder -add=0.2
@@ -324,7 +368,7 @@ MakeTriangulation
 SelectAll $silent
 SetFlag -name=_flag_format -value="01.0" $silent
 QuadIterator -level=3 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -segments=16 -no_uv -createpedestals -pedestalz=-10000 ;; -transz=-10
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -segments=16 -no_uv -createpedestals -pedestalz=$minheight
 	ExportBS -useshapes -addgeometrydata -flipu -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound $nosplit $createpedestals -pedestaldiff=$pedestaldiff
 	ExportBS -filename="$_worldspace.level4.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
@@ -343,6 +387,7 @@ RemoveInactiveVertices
 ; ****************************
 @level2 {
 SetGrid -x=32768 -y=32768
+SetGridBorder -x=4096 -y=4096
 SetFlag -name="_mindistance" -value=256 $silent
 SetFlag -name="_mindistancegrid" -value=256 $silent
 SetFlag -name="_cellsize_x" -value=32768 $silent
@@ -362,7 +407,7 @@ MakeTriangulation
 ; ============================
 
 QuadIterator -level=2 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=-10000
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
 	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
 	ExportBS -filename="$_worldspace.level8.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
@@ -381,6 +426,7 @@ RemoveInactiveVertices
 ; ****************************
 @level1 {
 SetGrid -x=65536 -y=65536 -stepx=4096 -stepy=4096 
+SetGridBorder -x=4096 -y=4096
 SetFlag -name="n" -value=4000 $silent
 @high_res SetFlag -name="n" -value=8000 $silent
 @ultimate SetFlag -name="n" -value=16000 $silent
@@ -400,7 +446,7 @@ MakeTriangulation
 ; ============================
 
 QuadIterator -level=1 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=-10000
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
 	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
 	ExportBS -filename="$_worldspace.level16.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
@@ -419,6 +465,7 @@ RemoveInactiveVertices
 ; ****************************
 @level0 {
 SetGrid -x=131072 -y=131072 -stepx=4096 -stepy=4096 
+SetGridBorder -x=4096 -y=4096
 SetFlag -name="n" -value=1000 $silent
 @high_res SetFlag -name="n" -value=2000 $silent
 @ultimate SetFlag -name="n" -value=4000 $silent
@@ -439,7 +486,7 @@ SplitAtGrid -x=131072 -y=131072
 ; ============================
 
 QuadIterator -level=0 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=-10000
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
 	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound 
 	ExportBS -filename="$_worldspace.level32.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
 }
@@ -507,8 +554,11 @@ GUICheckBox -name=crop_ws -text="Read dimensions from dlodsettings file" -help="
 GUIEnable -name=crop_ws
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=crop_ws 
 
-GUITextBox -text="Default landscape height" -name=min_height_intro -width=0.30 -vdist=10 
-GUITextBox -text="-2500" -name=minheight -input -sameline -width=0.70 -help="Set a default value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
+GUITextBox -text="Default landscape height" -name=default_height_intro -width=0.30 -vdist=10 
+GUITextBox -text="-2500" -name=defaultheight -input -sameline -width=0.70 -help="Set a default value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
+
+GUITextBox -text="Minimum landscape height" -name=min_height_intro -width=0.30 -vdist=10 
+GUITextBox -text="-10000" -name=minheight -input -sameline -width=0.70 -help="Set a minimum value for the landscape, and the lower level of the water pedestals. Change this only if you know what you are doing."
 
 GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
 
@@ -657,6 +707,7 @@ GUITextBox -text="modname\landscape" -name=landscape_pattern -input -sameline -w
 GUIEnable -name=landscape_pattern
 @!make_landscape_pattern GUIDisable -name=landscape_pattern
 @!tes4qlod_cache GUIDisable -name=landscape_pattern
+
 GUITextBox -text="Options:" -name=tes4qlod_into3 -vdist=10
 
 ## A flag about the total map:
@@ -687,8 +738,16 @@ GUITextBox -text="0.30" -name=back_blue -input -sameline -width=0.30 -help="Blue
 GUIEnable -name=back_blue
 @!tes4qlod GUIDisable -name=back_blue
 
+GUITextBox -text="Filters:" -name=tes4qlod_into5 -vdist=10
 
+GUICheckBox -name=make_rocky_filter -text="Apply rocky filter, intensity:" -vdist=5 -width=0.20
+GUIEnable -name=make_rocky_filter
+@!tes4qlod GUIDisable -name=make_rocky_filter
 
+GUITextBox -text="0.83" -name=rocky_filter_value -input -sameline -width=0.80 -help="This is an intensity factor for capping the 2nd derivative. Handle changes with care."
+GUIEnable -name=rocky_filter_value
+@!make_rocky_filter GUIDisable -name=rocky_filter_value
+@!tes4qlod GUIDisable -name=rocky_filter_value
 
 
 

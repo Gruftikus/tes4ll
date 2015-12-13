@@ -13,6 +13,7 @@
 
 @!_datadir SetFlag -name="_datadir" -value="Data"
 SetFlag -name=_datadir -value="$_datadir" -replace="\\" -with="\\\\" -num=99 $silent
+
 ; ============================
 ; Optional 16 bit matrices (no 32-bit floats)
 ; enable this only if the tes4ll task exceeds 3GB 
@@ -32,8 +33,9 @@ SetFlag -name="dds_format" -value="DXT1"
 @c_dxt3 SetFlag -name="dds_format" -value="DXT3"
 @c_dxt5 SetFlag -name="dds_format" -value="DXT5"
 
-@!minheight SetFlag -name="minheight" -value="-2048"
-SetFlag -name="_defaultheight" -value=$minheight
+@!minheight SetFlag -name="minheight" -value="-10000"
+@!defaultheight SetFlag -name="defaultheight" -value="-2048"
+SetFlag -name="_defaultheight" -value=$defaultheight
 @!waterminheight SetFlag -name="waterminheight" -value="10500"
 SetFlag -name="_waterdefaultheight" -value=$waterminheight
 
@@ -148,6 +150,26 @@ SelectAll
 	Tes4qlod -colormap=terraincolor -q=$tes4qlod_flag_q -a $option_silent_opt
 	Filter -n=1 -map=terraincolor -rgb
 	DeleteMap -map=terraincolor
+	
+	@make_rocky_filter {
+		MakeDerivatives -map="_heightmap" $use16bit	
+		CreateAlgCollection -name=red_filter
+		@rocky_filter_value  SetFlag -name=cap -value="$(1/$rocky_filter_value)"
+		@!rocky_filter_value SetFlag -name=cap -value="0.7"
+		AlgEquation -alg=red_filter   -map=terraincolor_filtered -red   -equation="z"
+		AlgEquation -alg=red_filter   -map=_heightmap_d2x   -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		AlgEquation -alg=red_filter   -map=_heightmap_d2y   -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		CreateAlgCollection -name=blue_filter
+		AlgEquation -alg=blue_filter  -map=terraincolor_filtered -blue  -equation="z"
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2x -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2y -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		CreateAlgCollection -name=green_filter
+		AlgEquation -alg=green_filter -map=terraincolor_filtered -green -equation="z"
+		AlgEquation -alg=green_filter -map=_heightmap_d2x  -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		AlgEquation -alg=green_filter -map=_heightmap_d2y  -equation="(1-z/$cap)" -zmax=$cap -zmin=0
+		FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	}
+	
 	SetFlag -name="_install_dir" -value="$_tmpdir\"
 	MkDir -path=$_install_dir $silent
 	@option_map ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map.bmp" -FlipY
@@ -162,6 +184,8 @@ SelectAll
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
+	make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	;;ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map8.bmp" -FlipY
 	@level2 {
 		QuadIterator -level=2 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
@@ -169,6 +193,8 @@ SelectAll
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
+	make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	;;ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map16.bmp" -FlipY
 	@level1 {
 		QuadIterator -level=1 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
@@ -176,6 +202,8 @@ SelectAll
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
+	make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	;;ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map32.bmp" -FlipY
 	@level0 {
 		QuadIterator -level=0 $silent {
 			@!c_none ExportMapToDDS -FlipX -map=terraincolor_filtered -filename="$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -format=$dds_format -crop=256
@@ -183,6 +211,12 @@ SelectAll
 		}
 	}
 	DeleteMap -map=terraincolor_filtered
+	@make_rocky_filter {
+		DeleteMap -map=_heightmap_d1x
+		DeleteMap -map=_heightmap_d2x
+		DeleteMap -map=_heightmap_d1y
+		DeleteMap -map=_heightmap_d2y
+	}
 }
 
 ; ****************************
@@ -233,6 +267,15 @@ SelectAll
 	DeleteMap -map="_normalmap"
 }
 
+
+; ****************************
+; Make meshes 
+; ****************************
+@!makemeshes Exit
+
+SelectAll $silent
+SetHeight -min -z=$minheight -usegameunits $silent
+
 ; ****************************
 ; Generate optional heightmap
 ; ****************************
@@ -243,19 +286,6 @@ SelectAll
 	SelectAll $silent
 	ExportMap -depth=32 -filename="$_worldspace.bmp" 
 }
-
-; ****************************
-; Make meshes 
-; ****************************
-
-@!makemeshes Exit
-
-SelectAll $silent
-SetHeight -min -z=$minheight -usegameunits $silent
-
-@!overwritelods SetFlag -name="_install_dir" -value="$_tmpdir\Meshes\Landscape\LOD\$_worldspace"
-@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\Meshes\Landscape\LOD\$_worldspace"
-MkDir -path=$_install_dir $silent
 
 ; =============================
 ; Water Map, needed in any case
@@ -274,6 +304,21 @@ SetFlag -name="_mindistance" -value=64 $silent
 ; ============================
 Filter -n=4    
 MakeDerivatives -map="_heightmap_filtered" $use16bit
+@writeout {
+	SetFlag -name="_install_dir" -value="$_tmpdir\"
+	MkDir -path=$_install_dir $silent
+	SelectAll $silent
+	ExportMap -depth=32 -filename="$_worldspace&_filtered.bmp" -map="_heightmap_filtered"
+	ExportMap -depth=32 -filename="$_worldspace&_filtered_d1x.bmp" -map="_heightmap_filtered_d1x"
+	ExportMap -depth=32 -filename="$_worldspace&_filtered_d1y.bmp" -map="_heightmap_filtered_d1y"
+	ExportMap -depth=32 -filename="$_worldspace&_filtered_d2x.bmp" -map="_heightmap_filtered_d2x"
+	ExportMap -depth=32 -filename="$_worldspace&_filtered_d2y.bmp" -map="_heightmap_filtered_d2y"
+}
+
+
+@!overwritelods SetFlag -name="_install_dir" -value="$_tmpdir\Meshes\Landscape\LOD\$_worldspace"
+@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\Meshes\Landscape\LOD\$_worldspace"
+MkDir -path=$_install_dir $silent
 ; ============================
 
 AlgFirstOrder -add=0.2
@@ -289,6 +334,8 @@ AlgSecondOrder -multiply=0.5
 ; ****************************
 @level3 {
 SetGrid -x=4096 -y=4096
+
+
 ; ============================
 ; Set the random points
 ; ============================
@@ -342,6 +389,7 @@ RemoveInactiveVertices
 ; ****************************
 @level2 {
 SetGrid -x=32768 -y=32768
+SetGridBorder -x=4096 -y=4096
 SetFlag -name="_mindistance" -value=256 $silent
 SetFlag -name="_mindistancegrid" -value=256 $silent
 SetFlag -name="_cellsize_x" -value=32768 $silent
@@ -380,6 +428,7 @@ RemoveInactiveVertices
 ; ****************************
 @level1 {
 SetGrid -x=65536 -y=65536 -stepx=4096 -stepy=4096 
+
 SetFlag -name="n" -value=4000 $silent
 @high_res SetFlag -name="n" -value=8000 $silent
 @ultimate SetFlag -name="n" -value=16000 $silent
@@ -418,6 +467,7 @@ RemoveInactiveVertices
 ; ****************************
 @level0 {
 SetGrid -x=131072 -y=131072 -stepx=4096 -stepy=4096 
+
 SetFlag -name="n" -value=1000 $silent
 @high_res SetFlag -name="n" -value=2000 $silent
 @ultimate SetFlag -name="n" -value=4000 $silent
@@ -509,6 +559,9 @@ GUIEnable -name=crop_ws
 GUITextBox -text="Default landscape height" -name=min_height_intro -width=0.30 -vdist=10 
 GUITextBox -text="-2048" -name=minheight -input -sameline -width=0.70 -help="Set a default value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
 
+
+
+
 GUITextBox -text="Tool options" -name=tes4ll_text4 -vdist=10
 
 GUIDropDown -name=flagnm_compression -vdist=5 -help="dds compression format."
@@ -564,7 +617,7 @@ GUIEnable -name=makepedestals
 @!makemeshes GUIDisable -name=makepedestals 
 
 GUITextBox -text="Pedestal height:" -name=pedestal_height_intro -sameline -width=0.10 
-GUITextBox -text="300" -name=pedestaldiff -input -sameline -width=0.30 -help="Height for border pedestals."
+GUITextBox -text="500" -name=pedestaldiff -input -sameline -width=0.30 -help="Height for border pedestals."
 GUIEnable -name=pedestaldiff
 @!makepedestals GUIDisable -name=pedestaldiff
 @!makemeshes GUIDisable -name=pedestaldiff
@@ -687,6 +740,16 @@ GUITextBox -text="0.20" -name=back_blue -input -sameline -width=0.30 -help="Blue
 GUIEnable -name=back_blue
 @!tes4qlod GUIDisable -name=back_blue
 
+GUITextBox -text="Filters:" -name=tes4qlod_into5 -vdist=10
+
+GUICheckBox -name=make_rocky_filter -text="Apply rocky filter, intensity:" -vdist=5 -width=0.20
+GUIEnable -name=make_rocky_filter
+@!tes4qlod GUIDisable -name=make_rocky_filter
+
+GUITextBox -text="1.43" -name=rocky_filter_value -input -sameline -width=0.80 -help="This is an intensity factor for capping the 2nd derivative. Handle changes with care."
+GUIEnable -name=rocky_filter_value
+@!make_rocky_filter GUIDisable -name=rocky_filter_value
+@!tes4qlod GUIDisable -name=rocky_filter_value
 
 
 

@@ -106,7 +106,7 @@ int llImportMapFromModlist::Exec(void) {
 
 	float defaultheight = 0;
 	if (_llUtils()->GetValue("_defaultheight")) defaultheight = *_llUtils()->GetValueF("_defaultheight");
-	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32+1, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32+1, 0, defaultheight);
+	llMap *heightmap = new llMap((TES4qLOD::max_x - TES4qLOD::min_x + 1)*32+1, (TES4qLOD::max_y - TES4qLOD::min_y + 1)*32+1, 0, defaultheight/8.0f);
 	heightmap->SetCoordSystem(x1, y1, x2, y2, 8.0f);
 
 	llMap *watermap = NULL;
