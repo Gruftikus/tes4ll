@@ -1,14 +1,12 @@
 [tes4ll]
 @logfile LogFile -filename=$logfile
 
-; ============================
-; Optional pedestal walls
-; Requires more triangles!
-; Enable this only if you want to exchange or overwrite single quads
-; Not required if you rerun tes4ll after landscape changes
-; Read the manual for more info
-; SetFlag -name="createpedestals" -value="-createpedestals"
-; ============================
+@makepedestals SetFlag -name="createpedestals" -value="-createpedestals"
+@be_silent     SetFlag -name="silent" -value="-silent"
+@!back_red   SetFlag -name="back_red"   -value="0.38"
+@!back_green SetFlag -name="back_green" -value="0.37"
+@!back_blue  SetFlag -name="back_blue"  -value="0.27"
+
 
 ; ============================
 ; Optional 16 bit matrices (no 32-bit floats)
@@ -20,6 +18,8 @@
 
 ParseModList -cd    ;reads mod list from Plugins.txt (or from -l option) and set the flags
 
+@!_tmpdir SetFlag -name="_tmpdir" -value="$_gamedir\\Data\\tes4ll.tmp"
+SetFlag -name=_tmpdir -value="$_tmpdir" -replace="\\" -with="\\\\" -num=99 $silent
 SetFlag -name="_quad_levels" -value=2
 
 SetFlag -name="dds_format" -value="DXT1"
@@ -80,8 +80,37 @@ SelectAll
 	SetFlag -name="width_x" -value=$(($_x2-$_x1)*$tes4qlod_flag_q/128)
 	SetFlag -name="width_y" -value=$(($_y2-$_y1)*$tes4qlod_flag_q/128)
 	CreateMap -name=terraincolor -widthx=$width_x -widthy=$width_y -x1=$_x1 -y1=$_y1 -x2=$_x2 -y2=$_y2 -zscale=1 -rgb -even
+	CreateAlgCollection -name=red $silent
+	AlgConst -alg=red -add="$back_red" $silent
+	CreateAlgCollection -name=green $silent
+	AlgConst -alg=green -add="$back_green" $silent
+	CreateAlgCollection -name=blue $silent
+	AlgConst -alg=blue -add="$back_blue" $silent
+	FillColorMap -map=terraincolor  -algblue=blue -alggreen=green -algred=red
 	Tes4qlod -colormap=terraincolor -q=$tes4qlod_flag_q $tes4qlod_flag_a $option_silent_opt
-	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	@qlod2 Filter -n=1 -map=terraincolor -rgb
+	@make_rocky_filter {
+		MakeDerivatives -map="_heightmap" $use16bit	
+		CreateAlgCollection -name=red_filter
+		@rocky_filter_value  SetFlag -name=cap -value="$(1/$rocky_filter_value)"
+		@!rocky_filter_value SetFlag -name=cap -value="1.2"
+		SetFlag -name=max -value="$(0.8 * $cap)"
+		AlgEquation -alg=red_filter   -map=terraincolor -red   -equation="z"
+		AlgEquation -alg=red_filter   -map=_heightmap_d2x   -equation="(1-z/$cap)" -zmax=$max -zmin=0
+		AlgEquation -alg=red_filter   -map=_heightmap_d2y   -equation="(1-z/$cap)" -zmax=$max -zmin=0
+		CreateAlgCollection -name=blue_filter
+		AlgEquation -alg=blue_filter  -map=terraincolor -blue  -equation="z"
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2x -equation="(1-z/$cap)" -zmax=$max -zmin=0
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2y -equation="(1-z/$cap)" -zmax=$max -zmin=0
+		CreateAlgCollection -name=green_filter
+		AlgEquation -alg=green_filter -map=terraincolor -green -equation="z"
+		AlgEquation -alg=green_filter -map=_heightmap_d2x  -equation="(1-z/$cap)" -zmax=$max -zmin=0
+		AlgEquation -alg=green_filter -map=_heightmap_d2y  -equation="(1-z/$cap)" -zmax=$max -zmin=0
+		FillColorMap -map=terraincolor -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	}
+	SetFlag -name="_install_dir" -value="$_tmpdir\"
+	MkDir -path=$_install_dir
+	
 	@option_map ExportMap -map=terraincolor -filename="$_worldspace&Map.bmp" -FlipY
 	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
 	SetFlag -name=_flag_format -value="02.0" 
@@ -529,7 +558,7 @@ GUIEnable -name=option_blending
 
 
 ## A flag about the total map:
-GUICheckBox -name=option_map -text="Create full map of wordspace" -help="Creates a full map of your worldspace"
+GUICheckBox -name=option_map -text="Create full map of wordspace" -help="Creates a full map of your worldspace" -vdist=5
 GUIEnable -name=option_map
 @!tes4qlod GUIDisable -name=option_map
 
@@ -543,12 +572,13 @@ GUIEnable -name=option_silent
 
 
 
+GUITextBox -text="Filters:" -name=tes4qlod_into5 -vdist=10
 
+GUICheckBox -name=make_rocky_filter -text="Apply rocky filter, intensity:" -vdist=5 -width=0.20
+GUIEnable -name=make_rocky_filter
+@!tes4qlod GUIDisable -name=make_rocky_filter
 
-
-
-
-
-
-
-
+GUITextBox -text="0.8" -name=rocky_filter_value -input -sameline -width=0.80 -help="This is an intensity factor for capping the 2nd derivative. Handle changes with care."
+GUIEnable -name=rocky_filter_value
+@!make_rocky_filter GUIDisable -name=rocky_filter_value
+@!tes4qlod GUIDisable -name=rocky_filter_value

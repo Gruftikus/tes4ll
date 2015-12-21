@@ -115,6 +115,12 @@ Version 5.10 (24 Nov 2015):
               
 Version 5.11 (06 Dec 2015):
               Reading of geometry by lodsettings and WRLD record
+			  
+Version 5.12 (13 Dec 2015):
+              Rocky filter option
+			  
+Version 5.13 (15 Dec 2015):
+              Fixed "water tower bug" in Fallout NV			  
 		  
 
 Literature

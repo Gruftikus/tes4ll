@@ -280,6 +280,7 @@ int TES4qLOD::Exec(void) {
 	 *********************************************************/
 
 	for (i = 0; i < _llUtils()->GetNumMods(); i++) {
+		//std::cout << _llUtils()->GetMod(i) << std::endl;
 		ExportTES4LandT4QLOD(_llUtils()->GetMod(i));
 	}
 
@@ -437,6 +438,7 @@ int TES4qLOD::ExportTES4LandT4QLOD(char *_input_esp_filename) {
 
 //	char c;		/* For command-line getopts args.     */
 	char s[40];	/* For storing the record header.     */
+	char s1[5] = "none";
 	char *r;	/* Pointer to the Record Data.        */
 
 	FILE *fpin; /* Input File Stream (original ESP/ESM).  */
@@ -452,9 +454,15 @@ int TES4qLOD::ExportTES4LandT4QLOD(char *_input_esp_filename) {
 	while (fread(s, 1, 8, fpin) > 0) {
 
 		if (!isalpha(s[0]) && !isalpha(s[1]) && !isalpha(s[2]) && !isalpha(s[3])) {
-			printf(" - WARNING: FOUND A WILD NON-ASCII RECORD HEADER in file %s\n", _input_esp_filename);
+			printf(" - WARNING: FOUND A WILD NON-ASCII RECORD HEADER in file %s, last rec was %c%c%c%c\n", _input_esp_filename, s1[0], s1[1], s1[2], s1[3]);
+
 			return 0;
 		}
+
+		s1[0] = s[0];
+		s1[1] = s[1];
+		s1[2] = s[2];
+		s1[3] = s[3];
 
 		/**************************************
 		 * The Core TES4 ESM/ESP Record Parser.
@@ -471,13 +479,14 @@ int TES4qLOD::ExportTES4LandT4QLOD(char *_input_esp_filename) {
 			strncmp(s, "DELE", 4) == 0 ||
 			strncmp(s, "CNAM", 4) == 0 ||
 			strncmp(s, "INTV", 4) == 0 ||
+			strncmp(s, "ONAM", 4) == 0 ||
 			strncmp(s, "SNAM", 4) == 0) {
 
 			size = 0;
 			memcpy(&size, (s+4), 2);
 			size += 6;
 
-		} else  {
+		} else {
 			memcpy(&size, (s+4), 4);
 			size += tes_rec_offset;
 		}
@@ -743,6 +752,7 @@ int TES4qLOD::Process4CELLData(char *_r, int _size) {
 
 	cell.current_x = 0;
 	cell.current_y = 0;
+	int found_cell = 0;
 
 	if (_llUtils()->MyIsUpper(_r[tes_rec_offset])   && _llUtils()->MyIsUpper(_r[tes_rec_offset+1]) && 
 		_llUtils()->MyIsUpper(_r[tes_rec_offset+2]) && _llUtils()->MyIsUpper(_r[tes_rec_offset+3])) {
@@ -776,6 +786,7 @@ int TES4qLOD::Process4CELLData(char *_r, int _size) {
 		if (strncmp("XCLC", decomp + pos, 4) == 0) {
 			memcpy(&cell.current_x, decomp+pos+6, 4);
 			memcpy(&cell.current_y, decomp+pos+10, 4);
+			found_cell = 1;
 		} else if (strncmp("EDID", decomp + pos, 4) == 0) {
 			strncpy(cell.name, decomp + pos + 6, nsize);
 		} else if (strncmp("XCLW", decomp + pos, 4) == 0) {
@@ -787,11 +798,11 @@ int TES4qLOD::Process4CELLData(char *_r, int _size) {
 	 
 	if (waterlevel > 100000.f || waterlevel < -100000.f) has_water = 0;
 
-	//if (has_water) {
-		//printf("found water %f %i %i\n", waterlevel, cell.current_x, cell.current_y);
+	//if (has_water && waterlevel > (5000) && found_cell) {
+		//printf("found water %f %i %i %s\n", waterlevel, cell.current_x, cell.current_y, cell.name);
 	//}
 
-	if (has_water && opt_read_heightmap && watermap) {
+	if (has_water && opt_read_heightmap && watermap && found_cell) {
 		//printf("%i %i\n", (cell.current_x * 3 - x_cell * 3 + 1), (cell.current_y * 3 - y_cell * 3 + 1));
 		watermap->SetElementRaw(cell.current_x - x_cell, cell.current_y - y_cell, waterlevel);
 	}

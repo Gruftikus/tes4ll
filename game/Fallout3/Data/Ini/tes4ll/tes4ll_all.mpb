@@ -184,7 +184,7 @@ SelectAll
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
-	make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	@make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
 	;;ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map8.bmp" -FlipY
 	@level2 {
 		QuadIterator -level=2 $silent {
@@ -193,7 +193,7 @@ SelectAll
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
-	make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	@make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
 	;;ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map16.bmp" -FlipY
 	@level1 {
 		QuadIterator -level=1 $silent {
@@ -202,7 +202,7 @@ SelectAll
 		}
 	}
 	ScaleMap -map="terraincolor_filtered" -factor=0.5 -rgb
-	make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+	@make_rocky_filter FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
 	;;ExportMap -map=terraincolor_filtered -filename="$_worldspace&Map32.bmp" -FlipY
 	@level0 {
 		QuadIterator -level=0 $silent {
