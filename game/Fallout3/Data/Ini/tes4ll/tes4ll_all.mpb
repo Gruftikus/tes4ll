@@ -8,6 +8,9 @@
 @!back_red   SetFlag -name="back_red"   -value="0.24"
 @!back_green SetFlag -name="back_green" -value="0.24"
 @!back_blue  SetFlag -name="back_blue"  -value="0.20"
+@!filter_red   SetFlag -name="filter_red"   -value="1.0"
+@!filter_green SetFlag -name="filter_green" -value="1.0"
+@!filter_blue  SetFlag -name="filter_blue"  -value="1.0"
 
 @!pedestaldiff SetFlag -name="pedestaldiff" -value="300"
 
@@ -151,24 +154,27 @@ SelectAll
 	Filter -n=1 -map=terraincolor -rgb
 	DeleteMap -map=terraincolor
 	
+	CreateAlgCollection -name=red_filter
+	CreateAlgCollection -name=blue_filter
+	CreateAlgCollection -name=green_filter
+	AlgEquation -alg=red_filter   -map=terraincolor_filtered -red   -equation="z * $filter_red"
+	AlgEquation -alg=blue_filter  -map=terraincolor_filtered -blue  -equation="z * $filter_blue"
+	AlgEquation -alg=green_filter -map=terraincolor_filtered -green -equation="z * $filter_green"		
+	
 	@make_rocky_filter {
 		MakeDerivatives -map="_heightmap" $use16bit	
-		CreateAlgCollection -name=red_filter
 		@rocky_filter_value  SetFlag -name=cap -value="$(1/$rocky_filter_value)"
-		@!rocky_filter_value SetFlag -name=cap -value="0.7"
-		AlgEquation -alg=red_filter   -map=terraincolor_filtered -red   -equation="z"
-		AlgEquation -alg=red_filter   -map=_heightmap_d2x   -equation="(1-z/$cap)" -zmax=$cap -zmin=0
-		AlgEquation -alg=red_filter   -map=_heightmap_d2y   -equation="(1-z/$cap)" -zmax=$cap -zmin=0
-		CreateAlgCollection -name=blue_filter
-		AlgEquation -alg=blue_filter  -map=terraincolor_filtered -blue  -equation="z"
-		AlgEquation -alg=blue_filter  -map=_heightmap_d2x -equation="(1-z/$cap)" -zmax=$cap -zmin=0
-		AlgEquation -alg=blue_filter  -map=_heightmap_d2y -equation="(1-z/$cap)" -zmax=$cap -zmin=0
-		CreateAlgCollection -name=green_filter
-		AlgEquation -alg=green_filter -map=terraincolor_filtered -green -equation="z"
-		AlgEquation -alg=green_filter -map=_heightmap_d2x  -equation="(1-z/$cap)" -zmax=$cap -zmin=0
-		AlgEquation -alg=green_filter -map=_heightmap_d2y  -equation="(1-z/$cap)" -zmax=$cap -zmin=0
-		FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
+		@!rocky_filter_value SetFlag -name=cap -value="1.2"
+		SetFlag -name=max_mixing -value="$($rocky_filter_value_mix * $cap)"
+		AlgEquation -alg=red_filter   -map=_heightmap_d2x   -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
+		AlgEquation -alg=red_filter   -map=_heightmap_d2y   -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0		
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2x -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2y -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0		
+		AlgEquation -alg=green_filter -map=_heightmap_d2x  -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
+		AlgEquation -alg=green_filter -map=_heightmap_d2y  -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
 	}
+
+	FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter
 	
 	SetFlag -name="_install_dir" -value="$_tmpdir\"
 	MkDir -path=$_install_dir $silent
@@ -740,18 +746,36 @@ GUITextBox -text="0.20" -name=back_blue -input -sameline -width=0.30 -help="Blue
 GUIEnable -name=back_blue
 @!tes4qlod GUIDisable -name=back_blue
 
-GUITextBox -text="Filters:" -name=tes4qlod_into5 -vdist=10
+GUITextBox -text="Filters (applied iteratively per level):" -name=tes4qlod_into5 -vdist=10
 
-GUICheckBox -name=make_rocky_filter -text="Apply rocky filter, intensity:" -vdist=5 -width=0.20
+GUITextBox -text="Red factor:" -name=filter_red_intro -width=0.10 -vdist=10 
+GUITextBox -text="1.0" -name=filter_red -input -sameline -width=0.30 -help="Red filter factor."
+GUIEnable -name=filter_red
+@!tes4qlod GUIDisable -name=filter_red
+
+GUITextBox -text="Green factor:" -name=filter_green_intro -width=0.10 -vdist=10 
+GUITextBox -text="1.0" -name=filter_green -input -sameline -width=0.30 -help="Green filter factor."
+GUIEnable -name=filter_green
+@!tes4qlod GUIDisable -name=filter_green
+
+GUITextBox -text="Blue factor:" -name=filter_blue_intro -width=0.10 -vdist=10 
+GUITextBox -text="1.0" -name=filter_blue -input -sameline -width=0.30 -help="Blue filter factor."
+GUIEnable -name=filter_blue
+@!tes4qlod GUIDisable -name=filter_blue
+
+GUICheckBox -name=make_rocky_filter -text="Apply rocky filter" -vdist=10 -width=0.20
 GUIEnable -name=make_rocky_filter
 @!tes4qlod GUIDisable -name=make_rocky_filter
 
-GUITextBox -text="1.43" -name=rocky_filter_value -input -sameline -width=0.80 -help="This is an intensity factor for capping the 2nd derivative. Handle changes with care."
+GUITextBox -text="Area factor (larger: more shaded):" -name=rocky_filter_value1 -sameline -width=0.20 
+GUITextBox -text="1.43" -name=rocky_filter_value -input -sameline -width=0.30 -help="This is an intensity factor for capping the 2nd derivative. Handle changes with care."
 GUIEnable -name=rocky_filter_value
 @!make_rocky_filter GUIDisable -name=rocky_filter_value
 @!tes4qlod GUIDisable -name=rocky_filter_value
 
-
-
-
-
+GUITextBox -text="" -name=rocky_filter_value2a -width=0.20
+GUITextBox -text="Mixing factor (0.0 ... 1.0):" -name=rocky_filter_value2b -sameline -width=0.20 
+GUITextBox -text="1.0" -name=rocky_filter_value_mix -input -sameline -width=0.30 -help="This is an intensity factor for mixing the filter (between 0.0 and 1.0). Handle changes with care."
+GUIEnable -name=rocky_filter_value_mix
+@!make_rocky_filter GUIDisable -name=rocky_filter_value_mix
+@!tes4qlod GUIDisable -name=rocky_filter_value_mix

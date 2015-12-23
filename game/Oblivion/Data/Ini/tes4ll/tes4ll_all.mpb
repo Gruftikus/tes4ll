@@ -94,18 +94,18 @@ SelectAll
 		CreateAlgCollection -name=red_filter
 		@rocky_filter_value  SetFlag -name=cap -value="$(1/$rocky_filter_value)"
 		@!rocky_filter_value SetFlag -name=cap -value="1.2"
-		SetFlag -name=max -value="$(0.8 * $cap)"
+		SetFlag -name=max_mixing -value="$($rocky_filter_value_mix * $cap)"
 		AlgEquation -alg=red_filter   -map=terraincolor -red   -equation="z"
-		AlgEquation -alg=red_filter   -map=_heightmap_d2x   -equation="(1-z/$cap)" -zmax=$max -zmin=0
-		AlgEquation -alg=red_filter   -map=_heightmap_d2y   -equation="(1-z/$cap)" -zmax=$max -zmin=0
+		AlgEquation -alg=red_filter   -map=_heightmap_d2x   -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
+		AlgEquation -alg=red_filter   -map=_heightmap_d2y   -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
 		CreateAlgCollection -name=blue_filter
 		AlgEquation -alg=blue_filter  -map=terraincolor -blue  -equation="z"
-		AlgEquation -alg=blue_filter  -map=_heightmap_d2x -equation="(1-z/$cap)" -zmax=$max -zmin=0
-		AlgEquation -alg=blue_filter  -map=_heightmap_d2y -equation="(1-z/$cap)" -zmax=$max -zmin=0
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2x -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
+		AlgEquation -alg=blue_filter  -map=_heightmap_d2y -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
 		CreateAlgCollection -name=green_filter
 		AlgEquation -alg=green_filter -map=terraincolor -green -equation="z"
-		AlgEquation -alg=green_filter -map=_heightmap_d2x  -equation="(1-z/$cap)" -zmax=$max -zmin=0
-		AlgEquation -alg=green_filter -map=_heightmap_d2y  -equation="(1-z/$cap)" -zmax=$max -zmin=0
+		AlgEquation -alg=green_filter -map=_heightmap_d2x  -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
+		AlgEquation -alg=green_filter -map=_heightmap_d2y  -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
 		FillColorMap -map=terraincolor -algblue=blue_filter -alggreen=green_filter -algred=red_filter
 	}
 	SetFlag -name="_install_dir" -value="$_tmpdir\"
@@ -567,8 +567,6 @@ GUIEnable -name=option_map
 GUICheckBox -name=option_silent -text="Silent TES4qLOD" -help="Disables all the text output of tes4qlod"
 GUIEnable -name=option_silent
 @!tes4qlod GUIDisable -name=option_silent
-
-
 
 
 

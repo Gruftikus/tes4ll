@@ -120,8 +120,10 @@ Version 5.12 (13 Dec 2015):
               Rocky filter option
 			  
 Version 5.13 (15 Dec 2015):
-              Fixed "water tower bug" in Fallout NV			  
-		  
+              Fixed "water tower bug" in Fallout NV
+			  
+Version 5.14 (23 Dec 2015):
+              Fixed esp/esm parser bug, improved filter options		  
 
 Literature
 ==========
