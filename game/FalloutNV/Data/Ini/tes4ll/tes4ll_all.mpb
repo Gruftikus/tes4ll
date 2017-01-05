@@ -171,14 +171,11 @@ SelectAll
 		AlgEquation -alg=red_filter   -map=_heightmap_d2x   -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
 		AlgEquation -alg=red_filter   -map=_heightmap_d2y   -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0		
 
-
 		AlgEquation -alg=blue_filter  -map=_heightmap_d2x -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
 		AlgEquation -alg=blue_filter  -map=_heightmap_d2y -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0		
 
-
 		AlgEquation -alg=green_filter -map=_heightmap_d2x  -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
 		AlgEquation -alg=green_filter -map=_heightmap_d2y  -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
-
 	}
 	
 	FillColorMap -map=terraincolor_filtered -algblue=blue_filter -alggreen=green_filter -algred=red_filter

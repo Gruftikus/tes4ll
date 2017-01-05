@@ -25,7 +25,7 @@ SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\myworld"
 	CreateMap -name=terraincolor -widthx=$($width_x/128) -widthy=$($width_y/128) -x1=$_x1 -y1=$_y1 -x2=$($_x1+$width_x) -y2=$($_y1+$width_y) -zscale=1 -rgb -even
 	Tes4qlod -a -z -colormap=terraincolor
 	ScaleMap -map=terraincolor -sizeX=4096 -sizeY=4096 
-	ExportMapToDDS -map=terraincolor -format=dxt1 -filename="$_worldspace&Map.dds" -FlipY
+	ExportMapToDDS -map=terraincolor -format=dxt1 -filename="$_worldspace&Map.dds"
 }
 
 @makewatermap {

@@ -8,6 +8,7 @@
 @!back_blue  SetFlag -name="back_blue"  -value="0.27"
 
 
+
 ; ============================
 ; Optional 16 bit matrices (no 32-bit floats)
 ; enable this only if the tes4ll task exceeds 3GB 
@@ -68,6 +69,9 @@ SetFlag -name=tes4qlod_flag_q -value="1"
 @qlod4 SetFlag -name=tes4qlod_flag_q -value="4"
 
 ImportMapFromModList
+SetFlag -name="ws_filename"  -value="$_worldspaceid"
+@!_modname SetFlag -name="_modname" -value=""
+@new_naming_scheme SetFlag -name="ws_filename" -value="$_worldspace"
 
 SetFlag -name="large_ws" -value=$($_nquads>100) -zerosuppression
 @large_ws SetFlag -name="use16bit" -value="-use16bit"
@@ -90,11 +94,11 @@ SelectAll
 	Tes4qlod -colormap=terraincolor -q=$tes4qlod_flag_q $tes4qlod_flag_a $option_silent_opt
 	@qlod2 Filter -n=1 -map=terraincolor -rgb
 	@make_rocky_filter {
-		MakeDerivatives -map="_heightmap" $use16bit	
-		CreateAlgCollection -name=red_filter
+		MakeDerivatives -map="_heightmap" $use16bit			
 		@rocky_filter_value  SetFlag -name=cap -value="$(1/$rocky_filter_value)"
 		@!rocky_filter_value SetFlag -name=cap -value="1.2"
 		SetFlag -name=max_mixing -value="$($rocky_filter_value_mix * $cap)"
+		CreateAlgCollection -name=red_filter
 		AlgEquation -alg=red_filter   -map=terraincolor -red   -equation="z"
 		AlgEquation -alg=red_filter   -map=_heightmap_d2x   -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
 		AlgEquation -alg=red_filter   -map=_heightmap_d2y   -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
@@ -108,15 +112,25 @@ SelectAll
 		AlgEquation -alg=green_filter -map=_heightmap_d2y  -equation="(1-z/$cap)" -zmax=$max_mixing -zmin=0
 		FillColorMap -map=terraincolor -algblue=blue_filter -alggreen=green_filter -algred=red_filter
 	}
+	@make_color_filter {
+		CreateAlgCollection -name=red_filter2
+		AlgEquation -alg=red_filter2   -map=terraincolor -red   -equation="z*$red_filter_value"
+		CreateAlgCollection -name=blue_filter2
+		AlgEquation -alg=blue_filter2  -map=terraincolor -blue  -equation="z*$blue_filter_value"
+		CreateAlgCollection -name=green_filter2
+		AlgEquation -alg=green_filter2 -map=terraincolor -green -equation="z*$green_filter_value"
+		FillColorMap -map=terraincolor -algblue=blue_filter2 -alggreen=green_filter2 -algred=red_filter2
+	}
 	SetFlag -name="_install_dir" -value="$_tmpdir\"
 	MkDir -path=$_install_dir
-	
 	@option_map ExportMap -map=terraincolor -filename="$_worldspace&Map.bmp" -FlipY
-	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
+	@overwritelods                    SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
+	@overwritelods @new_naming_scheme SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated\$_modname"
+	MkDir -path=$_install_dir
 	SetFlag -name=_flag_format -value="02.0" 
 	QuadIterator -level=0 {		
-		@!c_none ExportMapToDDS -map=terraincolor -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32.dds" -format=$dds_format
-		@c_none  ExportMap      -map=terraincolor -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32.bmp" 
+		@!c_none ExportMapToDDS -map=terraincolor -filename="$ws_filename.$($_quad_x * 32).$(32 * $_quad_y).32.dds" -format=$dds_format
+		@c_none  ExportMap      -map=terraincolor -filename="$ws_filename.$($_quad_x * 32).$(32 * $_quad_y).32.bmp" 
 	}
 }
 
@@ -131,13 +145,15 @@ SelectAll
 	@512   ScaleMap -map="_heightmap_tmp" -factor=0.5
 	@!lodshadows CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -boost=$z_val
 	@lodshadows  CreateNormalMap -map="_heightmap_tmp" -name="_normalmap" -shadows -northboost=$z_val
-	SetFlag -name="_install_dir" -value="$_gamedir\Data\"
+	SetFlag -name="_install_dir" -value="$_tmpdir\"
 	@option_map ExportMap -map=_normalmap -filename="$_worldspace&Normalmap.bmp" -FlipY
-	@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
+	@overwritelods                    SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated"
+	@overwritelods @new_naming_scheme SetFlag -name="_install_dir" -value="$_gamedir\Data\Textures\landscapelod\generated\$_modname"
+	MkDir -path=$_install_dir
 	SetFlag -name=_flag_format -value="02.0" 
 	QuadIterator -level=0 {
-		@!c_none ExportMapToDDS -map=_normalmap -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32_fn.dds" -format=$dds_format
-		@c_none  ExportMap      -map=_normalmap -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32_fn.bmp" 
+		@!c_none ExportMapToDDS -map=_normalmap -filename="$ws_filename.$($_quad_x * 32).$(32 * $_quad_y).32_fn.dds" -format=$dds_format
+		@c_none  ExportMap      -map=_normalmap -filename="$ws_filename.$($_quad_x * 32).$(32 * $_quad_y).32_fn.bmp" 
 	}
 }
 
@@ -146,7 +162,7 @@ SelectAll
 ; ****************************
 
 @writeout {
-	SetFlag -name="_install_dir" -value="$_gamedir\Data"
+	SetFlag -name="_install_dir" -value="$_tmpdir\"
 	SelectAll
 	ExportMap -depth=32 -filename="$_worldspace.bmp" 
 }
@@ -159,8 +175,9 @@ SelectAll
 
 SetHeight -min -z=$minheight -usegameunits
 
-@!overwritelods SetFlag -name="_install_dir" -value="$_gamedir\Data\"
-@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD"
+@!overwritelods                   SetFlag -name="_install_dir" -value="$_tmpdir\"
+@overwritelods                    SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD"
+@overwritelods @new_naming_scheme SetFlag -name="_install_dir" -value="$_gamedir\Data\Meshes\Landscape\LOD\$_modname"
 MkDir -path=$_install_dir
 
 SetFlag -name="opt_useshapes" -value=""
@@ -322,7 +339,7 @@ SplitAtGrid -x=4096 -y=4096
 SetFlag -name=_flag_format -value="02.0" 
 
 QuadIterator -level=0 {
-	ExportMeshToNif -filename="$_worldspaceid.$($_quad_x * 32).$(32 * $_quad_y).32.nif" $opt_useshapes $createpedestals
+	ExportMeshToNif -filename="$ws_filename.$($_quad_x * 32).$(32 * $_quad_y).32.nif" $opt_useshapes $createpedestals
 }
 
 ; ============================
@@ -362,6 +379,15 @@ GUITextBox -text="General options" -name=tes4ll_text2 -vdist=10
 GUICheckBox -name=overwritelods -text="Overwrite the original files (please make a backup before checking this option)" -help="You have to check this option if tes4ll should place the new files in the LOD directories."
 GUIEnable -name=overwritelods 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=overwritelods 
+
+GUITextBox -text="Temporary directory" -name=tmpdir_intro -width=0.30 -vdist=5 
+GUITextBox -text="$_gamedir\tes4ll.tmp" -name=_tmpdir -input -sameline -width=0.70 -help="Alternative installation path and path for full maps"
+GUIEnable -name=_tmpdir
+@!makemeshes GUIDisable -name=_tmpdir 
+
+GUICheckBox -name=new_naming_scheme -text="Use the new naming scheme for EngineBugFixes" -help="Use the new naming scheme of EngineBugFixes which contains the name instead of the form ID."
+GUIEnable -name=new_naming_scheme 
+@!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=new_naming_scheme 
 
 GUICheckBox -name=use16bitopt -text="Use 16 bit derivative matrices" -help="Only slightly more unprecise, but saves 2x memory. Use this for large worlds like Onras heightmaps of Tamriel"
 GUIEnable -name=use16bitopt 
@@ -534,9 +560,9 @@ GUICheckBox -name=tes4qlod_cache -text="Regenerate texture cache" -help="Always 
 GUICheckBox -name=tes4qlod -text="Make color maps (calls build-in TES4qLOD)" -help="Select this if you want to generate the color maps with TES4qLOD"
 
 ## Just some info:
-GUITextBox -text="Please select what TES4qLOD should do" -name=tes4qlod_into -vdist=10
+GUITextBox -text="Please select what TES4qLOD should do" -name=tes4qlod_text -vdist=10
 
-GUITextBox -text="Select resolution per quad:" -name=tes4qlod_into2 -vdist=10
+GUITextBox -text="Select resolution per quad:" -name=tes4qlod_text2 -vdist=10
 
 ## Add a drop down menu, first the parent:
 GUIDropDown -name=tes4qlod_resolution -help="Select the resolution for a single quad (N.B. Vanilla has 512x512)" -vdist=3
@@ -549,7 +575,7 @@ GUIEnable -name=tes4qlod_resolution
 
 
 
-GUITextBox -text="Options:" -name=tes4qlod_into3 -vdist=10
+GUITextBox -text="Options:" -name=tes4qlod_text3 -vdist=10
 
 ## New blending flag
 GUICheckBox -name=option_blending -text="Use layer blending" -help="Uses the opacity of the different layers for alpha blending" -select
@@ -570,7 +596,7 @@ GUIEnable -name=option_silent
 
 
 
-GUITextBox -text="Filters:" -name=tes4qlod_into5 -vdist=10
+GUITextBox -text="Filters:" -name=tes4qlod_text5 -vdist=10
 
 GUICheckBox -name=make_rocky_filter -text="Apply rocky filter, intensity:" -vdist=5 -width=0.20
 GUIEnable -name=make_rocky_filter
@@ -580,3 +606,35 @@ GUITextBox -text="0.8" -name=rocky_filter_value -input -sameline -width=0.80 -he
 GUIEnable -name=rocky_filter_value
 @!make_rocky_filter GUIDisable -name=rocky_filter_value
 @!tes4qlod GUIDisable -name=rocky_filter_value
+
+GUICheckBox -name=make_color_filter -text="Apply color filters, intensities:" -vdist=5 -width=0.20
+GUIEnable -name=make_color_filter
+@!tes4qlod GUIDisable -name=make_color_filter
+
+GUITextBox -name=tes4qlod_text6 -text="Red:" -width=0.10 -sameline
+GUIEnable -name=tes4qlod_text6
+@!tes4qlod GUIDisable -name=tes4qlod_text6
+
+GUITextBox -text="1.0" -name=red_filter_value -input -sameline -width=0.10 -help="This is an intensity factor for red."
+GUIEnable -name=red_filter_value
+@!make_color_filter GUIDisable -name=red_filter_value
+@!tes4qlod GUIDisable -name=red_filter_value
+
+GUITextBox -name=tes4qlod_text7 -text="Green:" -width=0.10 -sameline
+GUIEnable -name=tes4qlod_text7
+@!tes4qlod GUIDisable -name=tes4qlod_text7
+
+GUITextBox -text="1.0" -name=green_filter_value -input -sameline -width=0.10 -help="This is an intensity factor for green."
+GUIEnable -name=green_filter_value
+@!make_color_filter GUIDisable -name=green_filter_value
+@!tes4qlod GUIDisable -name=green_filter_value
+
+GUITextBox -name=tes4qlod_text8 -text="Blue:" -width=0.10 -sameline
+GUIEnable -name=tes4qlod_text8
+@!tes4qlod GUIDisable -name=tes4qlod_text8
+
+GUITextBox -text="1.0" -name=blue_filter_value -input -sameline -width=0.10 -help="This is an intensity factor for blue."
+GUIEnable -name=blue_filter_value
+@!make_color_filter GUIDisable -name=blue_filter_value
+@!tes4qlod GUIDisable -name=blue_filter_value
+

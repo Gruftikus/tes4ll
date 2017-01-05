@@ -45,7 +45,10 @@ int llParseModList::Exec(void) {
 		} else if (_stricmp(_llUtils()->GetValue("_gamemode"), "Skyrim") == 0) {
 			gamekey1 = "SOFTWARE\\Bethesda Softworks\\skyrim";
 			gamekey2 = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\skyrim";
-		}
+		} else if (_stricmp(_llUtils()->GetValue("_gamemode"), "Fallout4") == 0) {
+			gamekey1 = "SOFTWARE\\Bethesda Softworks\\fallout4";
+			gamekey2 = "SOFTWARE\\Wow6432Node\\Bethesda Softworks\\fallout4";
+		} 
 	}
 
 	//seek for game dir, if not yet set by user

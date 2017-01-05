@@ -105,7 +105,7 @@ int TES4qLOD::Prepare(void) {
 	opt_center = 0;
 	opt_keepout = 0;
 
-	verbosity = 1;
+	verbosity = 0;
 	silent    = 0;
 
 	total_refr = 0;
@@ -541,6 +541,8 @@ int TES4qLOD::ExportTES4LandT4QLOD(char *_input_esp_filename) {
 		} else if (strncmp(s, "WRLD", 4) == 0) {
 			if (!Process4WRLDData(r, size)) {
 				total_worlds++;
+			} else if (!_llUtils()->IsEnabled("_modname")) {
+				_llUtils()->SetValue("_modname", _input_esp_filename);
 			}
 		} else if (strncmp(s, "LAND", 4) == 0) {
 			total_land++;
