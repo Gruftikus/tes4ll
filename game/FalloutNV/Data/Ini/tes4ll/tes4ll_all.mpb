@@ -544,7 +544,7 @@ GUIEnable -name=overwritelods
 GUITextBox -text="Temporary directory" -name=tmpdir_intro -width=0.30 -vdist=5 
 GUITextBox -text="$_gamedir\tes4ll.tmp" -name=_tmpdir -input -sameline -width=0.70 -help="Alternative installation path and path for full maps"
 GUIEnable -name=_tmpdir
-@!makemeshes GUIDisable -name=_tmpdir 
+@!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=_tmpdir 
 
 GUICheckBox -name=level3 -text="Generate level3 (nearest level)" -select -vdist=5 
 GUIEnable -name=level3 

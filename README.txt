@@ -124,6 +124,9 @@ Version 5.13 (15 Dec 2015):
 			  
 Version 5.14 (23 Dec 2015):
               Fixed esp/esm parser bug, improved filter options		  
+			  
+Version 5.15 (08 Jan 2017):
+              Added filter options for Oblivion version
 
 Literature
 ==========

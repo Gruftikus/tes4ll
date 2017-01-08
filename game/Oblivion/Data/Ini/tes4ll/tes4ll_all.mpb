@@ -97,6 +97,7 @@ SelectAll
 		MakeDerivatives -map="_heightmap" $use16bit			
 		@rocky_filter_value  SetFlag -name=cap -value="$(1/$rocky_filter_value)"
 		@!rocky_filter_value SetFlag -name=cap -value="1.2"
+		@!rocky_filter_value_mix SetFlag -name=rocky_filter_value_mix -value="1.0"
 		SetFlag -name=max_mixing -value="$($rocky_filter_value_mix * $cap)"
 		CreateAlgCollection -name=red_filter
 		AlgEquation -alg=red_filter   -map=terraincolor -red   -equation="z"
@@ -383,9 +384,9 @@ GUIEnable -name=overwritelods
 GUITextBox -text="Temporary directory" -name=tmpdir_intro -width=0.30 -vdist=5 
 GUITextBox -text="$_gamedir\tes4ll.tmp" -name=_tmpdir -input -sameline -width=0.70 -help="Alternative installation path and path for full maps"
 GUIEnable -name=_tmpdir
-@!makemeshes GUIDisable -name=_tmpdir 
+@!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=_tmpdir 
 
-GUICheckBox -name=new_naming_scheme -text="Use the new naming scheme for EngineBugFixes" -help="Use the new naming scheme of EngineBugFixes which contains the name instead of the form ID."
+GUICheckBox -name=new_naming_scheme -text="Use the new naming scheme of EngineBugFixes" -help="Use the new naming scheme of EngineBugFixes which contains the name instead of the form ID."
 GUIEnable -name=new_naming_scheme 
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=new_naming_scheme 
 
@@ -590,7 +591,7 @@ GUIEnable -name=option_map
 
 
 ## Verbosity option of tes4qlod:
-GUICheckBox -name=option_silent -text="Silent TES4qLOD" -help="Disables all the text output of tes4qlod"
+GUICheckBox -name=option_silent -text="Silent TES4qLOD" -help="Disables all the text output of tes4qlod" -vdist=5
 GUIEnable -name=option_silent
 @!tes4qlod GUIDisable -name=option_silent
 
@@ -598,14 +599,22 @@ GUIEnable -name=option_silent
 
 GUITextBox -text="Filters:" -name=tes4qlod_text5 -vdist=10
 
-GUICheckBox -name=make_rocky_filter -text="Apply rocky filter, intensity:" -vdist=5 -width=0.20
+GUICheckBox -name=make_rocky_filter -text="Apply rocky filter" -vdist=10 -width=0.20
 GUIEnable -name=make_rocky_filter
 @!tes4qlod GUIDisable -name=make_rocky_filter
 
-GUITextBox -text="0.8" -name=rocky_filter_value -input -sameline -width=0.80 -help="This is an intensity factor for capping the 2nd derivative. Handle changes with care."
+GUITextBox -text="Area factor (larger: more shaded):" -name=rocky_filter_value1 -sameline -width=0.20 
+GUITextBox -text="0.9" -name=rocky_filter_value -input -sameline -width=0.30 -help="This is an intensity factor for capping the 2nd derivative. Handle changes with care."
 GUIEnable -name=rocky_filter_value
 @!make_rocky_filter GUIDisable -name=rocky_filter_value
 @!tes4qlod GUIDisable -name=rocky_filter_value
+
+GUITextBox -text="" -name=rocky_filter_value2a -width=0.20
+GUITextBox -text="Mixing factor (0.0 ... 1.0):" -name=rocky_filter_value2b -sameline -width=0.20 
+GUITextBox -text="0.8" -name=rocky_filter_value_mix -input -sameline -width=0.30 -help="This is an intensity factor for mixing the filter (between 0.0 and 1.0). Handle changes with care."
+GUIEnable -name=rocky_filter_value_mix
+@!make_rocky_filter GUIDisable -name=rocky_filter_value_mix
+@!tes4qlod GUIDisable -name=rocky_filter_value_mix
 
 GUICheckBox -name=make_color_filter -text="Apply color filters, intensities:" -vdist=5 -width=0.20
 GUIEnable -name=make_color_filter
