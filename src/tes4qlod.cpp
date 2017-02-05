@@ -479,6 +479,7 @@ int TES4qLOD::ExportTES4LandT4QLOD(char *_input_esp_filename) {
 			strncmp(s, "DELE", 4) == 0 ||
 			strncmp(s, "CNAM", 4) == 0 ||
 			strncmp(s, "INTV", 4) == 0 ||
+			strncmp(s, "INCC", 4) == 0 ||
 			strncmp(s, "ONAM", 4) == 0 ||
 			strncmp(s, "SNAM", 4) == 0) {
 

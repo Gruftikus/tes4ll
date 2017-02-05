@@ -209,7 +209,6 @@ int llExportMeshToNif::Exec(void) {
 		node2_ptr->SetStripCount(1);
 		node2_ptr->SetStrip(0, newtriangles->GetVertices());
 
-		node2_ptr->SetTriangles(t);
 		if (no_uv) {
 			node2_ptr->SetUVSetCount(0);
 		} else {
