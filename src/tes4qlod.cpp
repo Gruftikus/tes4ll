@@ -609,11 +609,12 @@ int TES4qLOD::Add4LTEXData(char *_r, int _size) {
 			ltex = 0;
 			if (opt_tes_mode == TES_SKYRIM) {
 				memcpy(fname, _r + pos + 6, nsize - 4);
-				fname[nsize - 4] = '\0';
+				fname[nsize - 5] = '\0';
 				strcat_s(fname, 512, ".dds");
 			} else if (opt_tes_mode == TES_FALLOUTNV || opt_tes_mode == TES_FALLOUT3) {
 				memcpy(fname, _r + pos + 6, nsize);
 			} 
+			//std::cout << "TX00 " << fname << std::endl;
 		} else if (strncmp("EDID", _r + pos, 4) == 0) {
 			if (opt_tes_mode == TES_SKYRIM) {
 				memcpy(fname, _r + pos + 7, nsize - 1);
@@ -651,17 +652,18 @@ int TES4qLOD::Add4LTEXData(char *_r, int _size) {
 		}
 	}
 	if (i == lod_ltex.count) {
+		//std::cout << "seeking for " << myfname << std::endl;
 		for (t = 0; t < ftex.count; t++) {
-			// printf("Comparing LTEX %s to %s\n", ftex.filename[i], fname);
+			//printf("Comparing LTEX %s to %s\n", ftex.filename[t], myfname);
 			if (_stricmp(ftex.filename[t], myfname) == 0) {
 				break;
 			}
 		}
 		if (txst_formid) {
-			//std::cout << "found txst for " << myfname << " with formid " << txst_formid << std::endl;
+			//std::cout << "found txst link for " << myfname << " (" << formid << ")" << " with formid " << txst_formid << std::endl;
 			for (ii = 0; ii < lod_ltex.count; ii++) {
 				if (lod_ltex.formid[ii] == txst_formid) {
-					//std::cout << "found" << std::endl;
+					//std::cout << "found the texture" << std::endl;
 					lod_ltex.formid[lod_ltex.count] = formid;
 					lod_ltex.txst_formid[lod_ltex.count] = txst_formid;
 					for (p = 0; p < 16; p++) {
@@ -926,6 +928,7 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 	     *decomp;
 
 	short int quad, t;
+	char unknown;
 
 	float vtxt_opacity;
 
@@ -1027,7 +1030,7 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 	}
 
 	int deb = 0;
-	//if (cell.current_x == -2 && cell.current_y == -10) deb = 1;
+	//if (cell.current_x == -6 && cell.current_y == -7) deb = 1;
 
 	int found_color = 0;
 	while (pos < decomp_size) {
@@ -1036,8 +1039,9 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 			found_color = 1;
 			memcpy(atxt, decomp+pos+6, 4);
 			quad = decomp[pos+6+4];
+			unknown = decomp[pos+6+5];
 			layer = decomp[pos+6+6]; //Get layer number, IF
-			//if (deb) std::cout << "ATXT " << layer << std::endl;
+			if (deb) printf("ATXT %x %x %x %x layer %i\n", atxt[3], atxt[2], atxt[1], atxt[0], layer);
 			if (atxt[0] == 0 && atxt[1] == 0 && atxt[2] == 0 && atxt[3] == 0) {
 				atxt[0] = atxt[1] = atxt[2] = atxt[3] = 255;
 			}
@@ -1050,7 +1054,8 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 			found_color = 1;
 			memcpy(atxt, decomp+pos+6, 4);
 			quad = decomp[pos+6+4];
-			//if (deb) printf("BTXT %x %x %x %x\n", atxt[0], atxt[1], atxt[2], atxt[3]);
+			unknown = decomp[pos+6+5];
+			if (deb) printf("BTXT %x %x %x %x\n", atxt[3], atxt[2], atxt[1], atxt[0]);
 			if (quad == 0) {
 				for (i = 0; i < 17 ; i++) {
 					for (j = 0; j < 17; j++) {
@@ -1093,7 +1098,7 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 				}
 			}
 		} else if (strncmp("VTXT", decomp+pos, 4) == 0) {
-			//if (deb) std::cout << "VTXT " ;
+			if (deb) std::cout << "VTXT " ;
 			for (k = 6; k < (6+nsize); k += 8) {
 				memcpy(&t, decomp+pos+k, 2); 
 				//= (unsigned int) ((unsigned char) decomp[pos+k] + (unsigned char) decomp[pos+k+1]*256);
@@ -1111,8 +1116,8 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 				memcpy(&vtxt_opacity, decomp+pos+k+4, 4);
 				memcpy(vtxt[layer+1][i][j], atxt, 4);
 				tex_opacity[layer+1][i][j] = vtxt_opacity;
-				//if (deb) std::cout << layer+1 << ":" << i << ":" << j << ":" << vtxt_opacity << " ";
-				//if (deb) printf(" %x %x %x %x ", vtxt[layer+1][i][j][3],vtxt[layer+1][i][j][2],vtxt[layer+1][i][j][1],vtxt[layer+1][i][j][0]);
+				if (deb) std::cout << layer+1 << ":" << i << ":" << j << ":" << vtxt_opacity << " ";
+				if (deb) printf(" %x %x %x %x ", vtxt[layer+1][i][j][3],vtxt[layer+1][i][j][2],vtxt[layer+1][i][j][1],vtxt[layer+1][i][j][0]);
 				num_layer[i][j] = layer + 1;
 			}
 			if (deb) std::cout << std::endl;
@@ -1158,16 +1163,18 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 			int first_alpha = 0;
 			for (l=0; l<=num_layer[i][j]; l++) {
 				texture_matched = -1;			
-				//if (deb) std::cout << "layer: " << l << ":" << i << ":" << j << ":";
-				//if (deb) printf("%x %x %x %x\n", vtxt[l][i][j][3],vtxt[l][i][j][2],vtxt[l][i][j][1],vtxt[l][i][j][0]);
+				if (deb) std::cout << "layer: " << l << ":" << i << ":" << j << ":";
+				if (deb) printf("%x %x %x %x\n", vtxt[l][i][j][3],vtxt[l][i][j][2],vtxt[l][i][j][1],vtxt[l][i][j][0]);
 				if ((vtxt[l][i][j][0] == 255 && vtxt[l][i][j][1] == 255 && vtxt[l][i][j][2] == 255 && vtxt[l][i][j][3] == 255)) {
 					texture_matched = -2; //FONV NULL Reference
 				} else {
 					for (k = 0; k < lod_ltex.count; k++) {			
 						if (memcmp(&vtxt[l][i][j], &lod_ltex.formid[k], 4) == 0) {
 							texture_matched = k;
+							if (deb) std::cout << "matched" << std::endl;
 						} else if (vtxt[l][i][j][3] != 0 && lod_ltex.formid[k] >= 16777216 && memcmp(&vtxt[l][i][j], &lod_ltex.formid[k], 3) == 0) {
 							texture_matched = k;
+							if (deb) std::cout << "matched" << std::endl;
 						} 
 					}
 				}
@@ -1180,60 +1187,65 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 								if (texture_matched >= 0) {
 									memcpy(&vimage[y+opt_q*i][x+opt_q*j], &lod_ltex.rgb[k][y][x], 3);	
 								}
-							} else if (!first_alpha) {
-								first_alpha = 1;
-								add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];
-								if (texture_matched >= 0) {
-									for (m = 0; m < 3; m++) {									
-										add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
-									}
-								} else { //Restore original background
-									unsigned int posx = colormap->GetRawX(128.0f * float(cell.current_x * 32)) + x + j * opt_q;
-									unsigned int posy = colormap->GetRawY(128.0f * float(cell.current_y * 32)) + y + i * opt_q;
-									unsigned char red, blue, green, alpha;
-									colormap->GetTupel(posx, posy, &blue, &green, &red, &alpha);
-									add_rgb[y+opt_q*i][x+opt_q*j][0] = blue;
-									add_rgb[y+opt_q*i][x+opt_q*j][1] = green;
-									add_rgb[y+opt_q*i][x+opt_q*j][2] = red;
-								}
 							} else {
-								if (opt_blending == 0) { //use Lightwaves "best win" method
-									if (tex_opacity[l][i][j] > add_tex_opacity[y+opt_q*i][x+opt_q*j]) {
-										for (m = 0; m < 3; m++) {
-											add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];
+								if (!first_alpha /* && l==6 */) { 
+									first_alpha = 1;
+									//memcpy(&vimage[y+opt_q*i][x+opt_q*j], &lod_ltex.rgb[k][y][x], 3);	//BUGBUG
+									add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];
+									if (texture_matched >= 0) {
+										for (m = 0; m < 3; m++) {									
 											add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
 										}
-									}
+									} else { //Restore original background
+										unsigned int posx = colormap->GetRawX(128.0f * float(cell.current_x * 32)) + x + j * opt_q;
+										unsigned int posy = colormap->GetRawY(128.0f * float(cell.current_y * 32)) + y + i * opt_q;
+										unsigned char red, blue, green, alpha;
+										colormap->GetTupel(posx, posy, &blue, &green, &red, &alpha);
+										add_rgb[y+opt_q*i][x+opt_q*j][0] = blue;
+										add_rgb[y+opt_q*i][x+opt_q*j][1] = green;
+										add_rgb[y+opt_q*i][x+opt_q*j][2] = red; 
+									} 
 								} else {
-									//https://en.wikipedia.org/wiki/Alpha_compositing
-									tex_opacity_b = (tex_opacity[l][i][j]);	
-									tex_opacity_a = add_tex_opacity[y+opt_q*i][x+opt_q*j];
-									tex_opacity_c = tex_opacity_a + (1.0f - tex_opacity_a)*tex_opacity_b;
-									add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity_c;
-									if (tex_opacity_c) {
-										if (texture_matched >= 0) {
+									
+									if (opt_blending == 0) { //use Lightwaves "best win" method
+										if (tex_opacity[l][i][j] > add_tex_opacity[y+opt_q*i][x+opt_q*j]) {
 											for (m = 0; m < 3; m++) {
-												add_rgb[y+opt_q*i][x+opt_q*j][m] = (1.f/tex_opacity_c) * (
-													tex_opacity_a*add_rgb[y+opt_q*i][x+opt_q*j][m] + (1.f - tex_opacity_a)*
-													tex_opacity_b*((float) (unsigned char) lod_ltex.rgb[k][y][x][m]));
+												add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity[l][i][j];
+												add_rgb[y+opt_q*i][x+opt_q*j][m] = (float) (unsigned char) lod_ltex.rgb[k][y][x][m];
 											}
-										} else { //Restore original background
-											unsigned int posx = colormap->GetRawX(128.0f * float(cell.current_x * 32)) + x + j * opt_q;
-											unsigned int posy = colormap->GetRawY(128.0f * float(cell.current_y * 32)) + y + i * opt_q;
-											unsigned char red, blue, green, alpha;
-											colormap->GetTupel(posx, posy, &blue, &green, &red, &alpha);
-											add_rgb[y+opt_q*i][x+opt_q*j][0] = (1.f/tex_opacity_c) * (
+										}
+									} else {
+										//https://en.wikipedia.org/wiki/Alpha_compositing
+										tex_opacity_b = (tex_opacity[l][i][j]);	
+										tex_opacity_a = add_tex_opacity[y+opt_q*i][x+opt_q*j];
+										tex_opacity_c = tex_opacity_a + (1.0f - tex_opacity_a)*tex_opacity_b;
+										add_tex_opacity[y+opt_q*i][x+opt_q*j] = tex_opacity_c;
+										if (tex_opacity_c) {
+											if (texture_matched >= 0) {
+												for (m = 0; m < 3; m++) {
+													add_rgb[y+opt_q*i][x+opt_q*j][m] = (1.f/tex_opacity_c) * (
+														tex_opacity_a*add_rgb[y+opt_q*i][x+opt_q*j][m] + (1.f - tex_opacity_a)*
+														tex_opacity_b*((float) (unsigned char) lod_ltex.rgb[k][y][x][m]));
+												}
+											} else { //Restore original background
+												unsigned int posx = colormap->GetRawX(128.0f * float(cell.current_x * 32)) + x + j * opt_q;
+												unsigned int posy = colormap->GetRawY(128.0f * float(cell.current_y * 32)) + y + i * opt_q;
+												unsigned char red, blue, green, alpha;
+												colormap->GetTupel(posx, posy, &blue, &green, &red, &alpha);
+												add_rgb[y+opt_q*i][x+opt_q*j][0] = (1.f/tex_opacity_c) * (
 													tex_opacity_a*add_rgb[y+opt_q*i][x+opt_q*j][0] + (1.f - tex_opacity_a)*
 													tex_opacity_b*((float) blue));
-											add_rgb[y+opt_q*i][x+opt_q*j][1] = (1.f/tex_opacity_c) * (
+												add_rgb[y+opt_q*i][x+opt_q*j][1] = (1.f/tex_opacity_c) * (
 													tex_opacity_a*add_rgb[y+opt_q*i][x+opt_q*j][1] + (1.f - tex_opacity_a)*
 													tex_opacity_b*((float) green));
-											add_rgb[y+opt_q*i][x+opt_q*j][2] = (1.f/tex_opacity_c) * (
+												add_rgb[y+opt_q*i][x+opt_q*j][2] = (1.f/tex_opacity_c) * (
 													tex_opacity_a*add_rgb[y+opt_q*i][x+opt_q*j][2] + (1.f - tex_opacity_a)*
 													tex_opacity_b*((float) red));
+											}
 										}
 									}
-								} 
+									
+								}
 							}
 						}
 					}
@@ -1247,9 +1259,9 @@ int TES4qLOD::Process4LANDData(char *_r, int _size) {
 					for (x = 0; x < opt_q; x++) {
 						for (m = 0; m < 3; m++) {
 							if (opt_blending) {
-								vimage[y+opt_q*i][x+opt_q*j][m] = 
+								 vimage[y+opt_q*i][x+opt_q*j][m] = 
 									(unsigned char) (((float) (unsigned char) vimage[y+opt_q*i][x+opt_q*j][m]) * (1.f - add_tex_opacity[y+opt_q*i][x+opt_q*j]) 
-									+ (add_rgb[y+opt_q*i][x+opt_q*j][m]) * add_tex_opacity[y+opt_q*i][x+opt_q*j]);
+									+ (add_rgb[y+opt_q*i][x+opt_q*j][m]) * add_tex_opacity[y+opt_q*i][x+opt_q*j]); 
 							} else {
 								if (add_tex_opacity[y+opt_q*i][x+opt_q*j] > 0.5)
 									vimage[y+opt_q*i][x+opt_q*j][m] = (unsigned char) add_rgb[y+opt_q*i][x+opt_q*j][m];

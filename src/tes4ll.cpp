@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 
 	std::cout << "Landscape LOD generator" << std::endl;
 	std::cout << "Written by gruftikus@github" << std::endl;
-	std::cout << "V5.15c, 05.02.2017" << std::endl;
+	std::cout << "V5.20, 17.06.2017" << std::endl;
     std::cout << "***********************" << std::endl;
 
 	char *list_string = NULL;
