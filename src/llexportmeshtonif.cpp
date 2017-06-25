@@ -6,6 +6,7 @@
 #include "../../niflib/include/obj/NiSourceTexture.h"
 #include "../../niflib/include/obj/bsshadertextureset.h"
 #include "../../niflib/include/obj/BSShaderPPLightingProperty.h"
+#include "../../niflib/include/obj/BSLightingShaderProperty.h"
 #include "../../niflib/include/obj/BSSegmentedTriShape.h"
 #include "../../niflib/include/obj/NiAdditionalGeometryData.h"
 
@@ -24,11 +25,14 @@ int llExportMeshToNif::Prepare(void) {
 	segmented  = 0;
 	addgeometrydata = 0;
 	no_uv = 0;
+	lightingshader = 0;
 
 	texset1 = NULL;
 	texset2 = NULL;
+	setname = NULL;
 
 	loc_trans_x = loc_trans_y = loc_trans_z = 0;
+	loc_scale = 1;
 
 	segments.resize(0);
 
@@ -42,15 +46,18 @@ int llExportMeshToNif::RegisterOptions(void) {
 	RegisterFlag ("-makeninode", &makeninode);
 	RegisterFlag ("-addgeometrydata", &addgeometrydata);
 	RegisterFlag ("-no_uv", &no_uv);
-	
+	RegisterFlag ("-lightingshader", &lightingshader);
+
 	RegisterValue("-texset1", &texset1);
 	RegisterValue("-texset2", &texset2);
+	RegisterValue("-setname", &setname);
 
 	RegisterValue("-segments",  &segmented);
 
 	RegisterValue("-loc_transx", &loc_trans_x);
 	RegisterValue("-loc_transy", &loc_trans_y);
 	RegisterValue("-loc_transz", &loc_trans_z);
+	RegisterValue("-loc_scale",  &loc_scale);
 
 	return 1;
 }
@@ -97,7 +104,8 @@ int llExportMeshToNif::Exec(void) {
     std::vector<Triangle> t(num_triangles);
 
 	NiAVObjectRef     myavobj;
-	NiGeometryDataRef mygeomobj;
+	NiGeometryDataRef mygeomobjdata;
+	NiGeometryRef     mygeomobj;
 
 	if (useshapes) {
 
@@ -111,16 +119,22 @@ int llExportMeshToNif::Exec(void) {
 			node_ptr = new NiTriShape;
 		}
 
+		mygeomobj = node_ptr;
+
+		if (setname)
+			node_ptr->SetName(setname);
+
 		NiTriShapeRef  node     = node_ptr;
 		myavobj                 = node_ptr;
 
 		NiTriShapeData   *node2_ptr = new NiTriShapeData();
 		NiTriShapeDataRef node2     = node2_ptr;
-		mygeomobj                   = node2_ptr;
+		mygeomobjdata               = node2_ptr;
 		
 		node_ptr->SetData(node2);
 		node_ptr->SetFlags(14);
 		node_ptr->SetLocalTranslation(Vector3 (loc_trans_x, loc_trans_y, loc_trans_z));
+		node_ptr->SetLocalScale(loc_scale);
 
 		node2_ptr->SetVertices(reinterpret_cast<std::vector<Niflib::Vector3> & >(newpoints->GetVertices()));   
 		node2_ptr->SetTspaceFlag(16);
@@ -194,9 +208,12 @@ int llExportMeshToNif::Exec(void) {
 		NiTriStripsRef node     = node_ptr;
 		myavobj                 = node_ptr;
 
+		if (setname)
+			node_ptr->SetName(setname);
+
 		NiTriStripsData   *node2_ptr = new NiTriStripsData();
 		NiTriStripsDataRef node2     = node2_ptr;
-		mygeomobj                    = node2_ptr;
+		mygeomobjdata                = node2_ptr;
 
 		node_ptr->SetData(node2);
 		node_ptr->SetFlags(14);
@@ -241,24 +258,55 @@ int llExportMeshToNif::Exec(void) {
 	}
 
 	if (texset1 || texset2) {
-		BSShaderPPLightingProperty * shader_ptr = new BSShaderPPLightingProperty();
-		BSShaderPPLightingPropertyRef shader = shader_ptr;
-		BSShaderTextureSet * txst_ptr = new BSShaderTextureSet();
-		BSShaderTextureSetRef txst = txst_ptr;
-		shader->SetTextureSet(txst);
-		shader->SetShaderFlags(BSShaderFlags(0x3000));
-		shader->SetUnknownInt2(2);
-		shader->SetUnknownInt3(0);
-		shader->SetUnknownFloat2(0.f);
-		shader->SetUnknownFloat4(8.f);
-		shader->SetUnknownFloat5(1.f);
-		shader->SetEnvmapScale(1.0);
 
-		txst->SetTexture(0, texset1); // color
-		txst->SetTexture(1, texset2); // normal		
-		for (int i=2; i<6; i++) txst->SetTexture(i, "");
+		if (lightingshader) {
+			//Skyrim
+			BSShaderTextureSet *txst_ptr = new BSShaderTextureSet();
+			BSShaderTextureSetRef txst = txst_ptr;
+			txst->SetTexture(0, texset1); // color
+			txst->SetTexture(1, texset2); // normal		
+			for (int i=2; i<9; i++) txst->SetTexture(i, "");
+			
+			BSLightingShaderProperty *shader_ptr = new BSLightingShaderProperty();
+			BSLightingShaderPropertyRef shader = shader_ptr;
 
-		myavobj->AddProperty(shader);
+			shader->SetSkyrimShaderType((BSLightingShaderPropertyShaderType) WORLDMAP4);
+			shader->SetTextureSet(txst);
+			shader->SetUVOffset(TexCoord(0.0f, 0.0f));
+			shader->SetUVScale(TexCoord(1.0f, 1.0f));
+			shader->SetShaderFlags1((SkyrimShaderPropertyFlags1)((1 << 12)/*SF_UNKNOWN_3*/ | (1 << 22)/*SF_TREE_BILLBOARD*/ | (1 << 31)/*SF_ZBUFFER_TEST*/));
+			shader->SetShaderFlags2((SkyrimShaderPropertyFlags2)((1 << 1)/*SLSF2_1*/ | (1 << 0)/*SLSF2_ZBUFFER_WRITE*/));
+			shader->SetEmissiveMultiple(1.0f);
+			shader->SetEmissiveColor(Color3(0.0f, 0.0f, 0.0f));
+			shader->SetTextureClampMode((TexClampMode) CLAMP_S_CLAMP_T);
+			shader->SetAlpha(1.0f);
+			shader->SetGlossiness(1.0f);
+			shader->SetSpecularStrength(1.0f);
+			shader->SetSpecularColor(Color3(1.0f, 1.0f, 1.0f));
+			
+			mygeomobj->SetBSProperty(0, (Ref<NiProperty>)shader);
+
+		} else {
+			//FO version
+			BSShaderTextureSet *txst_ptr = new BSShaderTextureSet();
+			BSShaderTextureSetRef txst = txst_ptr;
+			txst->SetTexture(0, texset1); // color
+			txst->SetTexture(1, texset2); // normal		
+			for (int i=2; i<6; i++) txst->SetTexture(i, "");
+
+			BSShaderPPLightingProperty *shader_ptr = new BSShaderPPLightingProperty();
+			BSShaderPPLightingPropertyRef shader = shader_ptr;
+
+			shader->SetTextureSet(txst);
+			shader->SetShaderFlags(BSShaderFlags(0x3000));
+			shader->SetUnknownInt2(2);
+			shader->SetUnknownInt3(0);
+			shader->SetUnknownFloat2(0.f);
+			shader->SetUnknownFloat4(8.f);
+			shader->SetUnknownFloat5(1.f);
+			shader->SetEnvmapScale(1.0);
+			myavobj->AddProperty(shader);
+		}	
 	}
 
 	if (addgeometrydata) {
@@ -312,8 +360,7 @@ int llExportMeshToNif::Exec(void) {
 		geom->SetDataInfo(info);
 		geom->SetDataBlock(block);
 
-		mygeomobj->SetAdditionalGeometryData((AbstractAdditionalGeometryDataRef) geom);
-
+		mygeomobjdata->SetAdditionalGeometryData((AbstractAdditionalGeometryDataRef) geom);
 	}
 
 	if (ninode_ptr) {

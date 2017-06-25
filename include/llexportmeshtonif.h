@@ -19,10 +19,11 @@ protected:
 	int makeninode;
 	int addgeometrydata;
 	int no_uv;
+	int lightingshader;
 
-	char *texset1, *texset2;
+	char *texset1, *texset2, *setname;
 
-	float loc_trans_x, loc_trans_y, loc_trans_z;
+	float loc_trans_x, loc_trans_y, loc_trans_z, loc_scale;
 
 	static Niflib::NiNode *ninode_ptr;
 	vector<Niflib::BSSegment> segments;

@@ -1,6 +1,9 @@
 [tes4ll]
 @logfile LogFile -filename=$logfile
 
+SetFlag -name="_nif_userversion1" -value="12"
+SetFlag -name="_nif_userversion2" -value="83"
+
 @makepedestals SetFlag -name="createpedestals" -value="-createpedestals"
 @be_silent     SetFlag -name="silent" -value="-silent"
 @readwaterheight SetFlag -name="opt_readwaterheight" -value="-readwaterheight"
@@ -36,10 +39,10 @@ SetFlag -name="dds_format" -value="DXT1"
 @c_dxt3 SetFlag -name="dds_format" -value="DXT3"
 @c_dxt5 SetFlag -name="dds_format" -value="DXT5"
 
-@!minheight SetFlag -name="minheight" -value="-10000"
-@!defaultheight SetFlag -name="defaultheight" -value="-2500"
+@!minheight SetFlag -name="minheight" -value="-20000"
+@!defaultheight SetFlag -name="defaultheight" -value="-12000"
 SetFlag -name="_defaultheight" -value=$defaultheight
-@!waterminheight SetFlag -name="waterminheight" -value="-2300"
+@!waterminheight SetFlag -name="waterminheight" -value="-14000"
 SetFlag -name="_waterdefaultheight" -value=$waterminheight
 
 ; ****************************
@@ -327,8 +330,8 @@ MakeDerivatives -map="_heightmap_filtered" $use16bit
 }
 
 
-@!overwritelods SetFlag -name="_install_dir" -value="$_tmpdir\Meshes\Landscape\LOD\$_worldspace"
-@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\Meshes\Landscape\LOD\$_worldspace"
+@!overwritelods SetFlag -name="_install_dir" -value="$_tmpdir\Meshes\Terrain\$_worldspace"
+@overwritelods  SetFlag -name="_install_dir" -value="$_gamedir\$_datadir\Meshes\Terrain\$_worldspace"
 MkDir -path=$_install_dir $silent
 ; ============================
 
@@ -381,9 +384,9 @@ MakeTriangulation
 SelectAll $silent
 SetFlag -name=_flag_format -value="01.0" $silent
 QuadIterator -level=3 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -segments=16 -no_uv -createpedestals -pedestalz=$minheight
-	ExportBS -useshapes -addgeometrydata -flipu -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level4.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound $nosplit $createpedestals -pedestaldiff=$pedestaldiff
-	ExportBS -filename="$_worldspace.level4.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
+	ExportBS -useshapes -map="_watermap" -transx="$((-1 * $_x1)*0.25)" -transy="$((-1 * $_y1)*0.25)" -sort -segments=16 -no_uv -createpedestals -pedestalz=$minheight -flags=14 -scale=0.25 -loc_scale=4 -setname="water" -makebound -makelocalbsnode
+	ExportBS -useshapes -flipv -texset1="Data\Textures\Terrain\$_worldspace\$_worldspace.4.$($_x1 / 4096).$($_y1 / 4096).dds"  -texset2="Data\Textures\Terrain\$_worldspace\$_worldspace.4.$($_x1 / 4096).$($_y1 / 4096)_n.dds" -scale=0.25 -loc_scale=4 -transx="$((-1 * $_x1)*0.25)" -transy="$((-1 * $_y1)*0.25)" -makebound $nosplit $createpedestals -pedestaldiff=$pedestaldiff -setname="land" -lightingshader -flags=14 
+	ExportBS -filename="$_worldspace.4.$($_x1 / 4096).$($_y1 / 4096).btr" -writeonly -setname="chunk" -flags=14 
 }
 
 ; ============================
@@ -501,9 +504,10 @@ SplitAtGrid -x=131072 -y=131072
 ; ============================
 
 QuadIterator -level=0 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level32.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound 
-	ExportBS -filename="$_worldspace.level32.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
+	;;ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -sort -no_uv -createpedestals -pedestalz=$minheight
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Terrain\$_worldspace\$_worldspace.32.$($_x1 / 4096).$($_y1 / 4096).dds" -texset2="Data\Textures\Terrain\$_worldspace\$_worldspace.32.$($_x1 / 4096).$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound 
+	ExportBS -filename="$_worldspace.32.$($_x1 / 4096).$($_y1 / 4096).btr" -writeonly ;; -loc_transx="$_x1" -loc_transy="$_y1"
 }
 }
 
@@ -570,10 +574,10 @@ GUIEnable -name=crop_ws
 @!makemeshes @!makenormalmaps @!tes4qlod GUIDisable -name=crop_ws 
 
 GUITextBox -text="Default landscape height" -name=default_height_intro -width=0.30 -vdist=10 
-GUITextBox -text="-2500" -name=defaultheight -input -sameline -width=0.70 -help="Set a default value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
+GUITextBox -text="-13000" -name=defaultheight -input -sameline -width=0.70 -help="Set a default value for the heightmap, in particular for empty cells. Change this only if you know what you are doing."
 
 GUITextBox -text="Minimum landscape height" -name=min_height_intro -width=0.30 -vdist=10 
-GUITextBox -text="-10000" -name=minheight -input -sameline -width=0.70 -help="Set a minimum value for the landscape, and the lower level of the water pedestals. Change this only if you know what you are doing."
+GUITextBox -text="-20000" -name=minheight -input -sameline -width=0.70 -help="Set a minimum value for the landscape, and the lower level of the water pedestals. Change this only if you know what you are doing."
 
 
 
