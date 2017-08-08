@@ -122,19 +122,19 @@ SetFlag -name="_waterdefaultheight" -value=$waterminheight
 
 @crop_ws {
 	FileIterator -pattern="*.bsa" $silent {
-		BsaIterator -bsafile=$_filename -regex="lodsettings\\\\$_worldspace.dlodsettings" $silent { 
+		BsaIterator -bsafile=$_filename -regex="lodsettings\\\\$_worldspace.lod" $silent { 
 			Echo -text="Found lodsettings in $_filename" $silent
-			ReadLodSettings $silent
+			ReadLodSettings -format=1 $silent
 		}
 	}
-	ReadLodSettings -filename="$_gamedir\\$_datadir\\lodsettings\\$_worldspace.dlodsettings" $silent
+	ReadLodSettings -filename="$_gamedir\\$_datadir\\lodsettings\\$_worldspace.lod" -format=1 $silent
 	
 	@!_lod_x1 {
-		Echo -text="FATAL: file $_worldspace.dlodsettings not found"
+		Echo -text="FATAL: file $_worldspace.lod not found"
 		Exit
 	}
 	
-	ImportMapFromModList -x1=$($_lod_x1*4096) -x2=$(($_lod_x2+1)*4096) -y1=$($_lod_y1*4096) -y2=$(($_lod_y2+1)*4096) -autooffset $opt_readwaterheight
+	ImportMapFromModList -x1=$($_lod_x1*4096) -y1=$($_lod_y1*4096) -autooffset $opt_readwaterheight
 }
 @!crop_ws ImportMapFromModList $opt_readwaterheight
 SelectAll
@@ -384,9 +384,13 @@ MakeTriangulation
 SelectAll $silent
 SetFlag -name=_flag_format -value="01.0" $silent
 QuadIterator -level=3 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$((-1 * $_x1)*0.25)" -transy="$((-1 * $_y1)*0.25)" -sort -segments=16 -no_uv -createpedestals -pedestalz=$minheight -flags=14 -scale=0.25 -loc_scale=4 -setname="water" -makebound -makelocalbsnode
+	ExportBS -useshapes -map="_watermap" -transx="$((-1 * $_x1)*0.25)" -transy="$((-1 * $_y1)*0.25)" -sort -segments=16 -no_uv -flags=14 -scale=0.25 -loc_scale=4 -setname="water" -makebound -makelocalbsnode
 	ExportBS -useshapes -flipv -texset1="Data\Textures\Terrain\$_worldspace\$_worldspace.4.$($_x1 / 4096).$($_y1 / 4096).dds"  -texset2="Data\Textures\Terrain\$_worldspace\$_worldspace.4.$($_x1 / 4096).$($_y1 / 4096)_n.dds" -scale=0.25 -loc_scale=4 -transx="$((-1 * $_x1)*0.25)" -transy="$((-1 * $_y1)*0.25)" -makebound $nosplit $createpedestals -pedestaldiff=$pedestaldiff -setname="land" -lightingshader -flags=14 
 	ExportBS -filename="$_worldspace.4.$($_x1 / 4096).$($_y1 / 4096).btr" -writeonly -setname="chunk" -flags=14 
+	
+	;;ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -sort -no_uv -createpedestals -pedestalz=$minheight
+	;;ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Terrain\$_worldspace\$_worldspace.4.$($_x1 / 4096).$($_y1 / 4096).dds" -texset2="Data\Textures\Terrain\$_worldspace\$_worldspace.4.$($_x1 / 4096).$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound 
+	;;ExportBS -filename="$_worldspace.4.$($_x1 / 4096).$($_y1 / 4096).btr" -writeonly 
 }
 
 ; ============================
@@ -423,9 +427,13 @@ MakeTriangulation
 ; ============================
 
 QuadIterator -level=2 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
-	ExportBS -filename="$_worldspace.level8.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
+	;;ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
+	;;ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level8.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
+	;;ExportBS -filename="$_worldspace.level8.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
+	
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -sort -no_uv -createpedestals -pedestalz=$minheight
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Terrain\$_worldspace\$_worldspace.8.$($_x1 / 4096).$($_y1 / 4096).dds" -texset2="Data\Textures\Terrain\$_worldspace\$_worldspace.8.$($_x1 / 4096).$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound 
+	ExportBS -filename="$_worldspace.8.$($_x1 / 4096).$($_y1 / 4096).btr" -writeonly 
 }
 
 ; ============================
@@ -463,9 +471,13 @@ MakeTriangulation
 ; ============================
 
 QuadIterator -level=1 $silent {
-	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
-	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
-	ExportBS -filename="$_worldspace.level16.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
+	;;ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
+	;;ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Landscape\LOD\$_worldspace\Diffuse\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -texset2="Data\Textures\Landscape\LOD\$_worldspace\Normals\$_worldspace.n.level16.x$($_x1 / 4096).y$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound
+	;;ExportBS -filename="$_worldspace.level16.x$($_x1 / 4096).y$($_y1 / 4096).nif" -writeonly -loc_transx="$_x1" -loc_transy="$_y1"
+	
+	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -sort -no_uv -createpedestals -pedestalz=$minheight
+	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Terrain\$_worldspace\$_worldspace.16.$($_x1 / 4096).$($_y1 / 4096).dds" -texset2="Data\Textures\Terrain\$_worldspace\$_worldspace.16.$($_x1 / 4096).$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound 
+	ExportBS -filename="$_worldspace.16.$($_x1 / 4096).$($_y1 / 4096).btr" -writeonly 
 }
 
 ; ============================
@@ -504,7 +516,6 @@ SplitAtGrid -x=131072 -y=131072
 ; ============================
 
 QuadIterator -level=0 $silent {
-	;;ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -loc_transx="$_x1" -loc_transy="$_y1" -sort -no_uv -createpedestals -pedestalz=$minheight
 	ExportBS -useshapes -map="_watermap" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -sort -no_uv -createpedestals -pedestalz=$minheight
 	ExportBS -useshapes -addgeometrydata -flipu $createpedestals -pedestaldiff=$pedestaldiff -texset1="Data\Textures\Terrain\$_worldspace\$_worldspace.32.$($_x1 / 4096).$($_y1 / 4096).dds" -texset2="Data\Textures\Terrain\$_worldspace\$_worldspace.32.$($_x1 / 4096).$($_y1 / 4096).dds" -transx="$(-1 * $_x1)" -transy="$(-1 * $_y1)" -makebound 
 	ExportBS -filename="$_worldspace.32.$($_x1 / 4096).$($_y1 / 4096).btr" -writeonly ;; -loc_transx="$_x1" -loc_transy="$_y1"

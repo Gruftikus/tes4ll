@@ -82,10 +82,10 @@ int llExportMeshToNif::Exec(void) {
 
 	float cellsize_x = 0;
 	if (_llUtils()->GetValueF("_cellsize_x"))
-		cellsize_x = (float)(*_llUtils()->GetValueF("_cellsize_x"));
+		cellsize_x = (float)(*_llUtils()->GetValueF("_cellsize_x")) * scale;
 	float cellsize_y = 0;
 	if (_llUtils()->GetValueF("_cellsize_y"))
-		cellsize_y = (float)(*_llUtils()->GetValueF("_cellsize_y"));
+		cellsize_y = (float)(*_llUtils()->GetValueF("_cellsize_y")) * scale;
 	unsigned int dim_x = 0, dim_y = 0;
 	if (cellsize_x && cellsize_y) {
 		dim_x = (_llUtils()->x11 - _llUtils()->x00)/cellsize_x;
@@ -140,31 +140,42 @@ int llExportMeshToNif::Exec(void) {
 		node2_ptr->SetTspaceFlag(16);
 
 		int running_segment = 0, last_tri = 0, cell_x, cell_y;
+		float cell_offset_x = 0;
+		if (segmented && cellsize_x)
+			cell_offset_x = floor(newtriangles->GetTriangleCenterX(0)/cellsize_x);
+		float cell_offset_y = 0;
+		if (segmented && cellsize_y)
+			cell_offset_y = floor(newtriangles->GetTriangleCenterY(0)/cellsize_y);
+
 		for (int i=0; i<num_triangles; i++) {
+
 			if (segmented && (running_segment < segmented) && cellsize_x && cellsize_y) {
-				int new_cell_x = (int)floor(newtriangles->GetTriangleCenterX(i)/cellsize_x);
-				int new_cell_y = (int)floor(newtriangles->GetTriangleCenterY(i)/cellsize_y);
+				int new_cell_x = (int)floor(newtriangles->GetTriangleCenterX(i)/cellsize_x - cell_offset_x);
+				int new_cell_y = (int)floor(newtriangles->GetTriangleCenterY(i)/cellsize_y - cell_offset_y);
 				if (new_cell_x >= dim_x) new_cell_x = dim_x-1;
 				if (new_cell_y >= dim_y) new_cell_y = dim_y-1;
+				//std::cout << newtriangles->GetTriangleCenterX(i)  << " :::: " << newtriangles->GetTriangleCenterY(i) << " :::: "
+					//<< new_cell_x  << " :::: " << new_cell_y
+					//<< std::endl;
 				if (i==0) {
 					cell_x = new_cell_x;
 					cell_y = new_cell_y;
 				} else {
 					segments[running_segment].offset = 3*last_tri;
-					segments[running_segment].count = i - last_tri + 1;
+					segments[running_segment].count = i - last_tri + 1; 
 					if (cell_x != new_cell_x || cell_y != new_cell_y) {
 						cell_x = new_cell_x;
 						cell_y = new_cell_y;
 						if (running_segment < segmented) {
-							segments[running_segment].count = i - last_tri;
+							segments[running_segment].count = i - last_tri; 
 							last_tri = i;
-							//std::cout << segments[running_segment].offset << ":" <<
-							//segments[running_segment].count << std::endl;
+							//std::cout << running_segment << ":" << segments[running_segment].offset << ":" << segments[running_segment].count << std::endl;
 						}
 						running_segment++;	
 					}
 				}
 			}
+
 			t[i].v1 = newtriangles->GetPoint1(i);
 			t[i].v2 = newtriangles->GetPoint2(i);
 			t[i].v3 = newtriangles->GetPoint3(i);

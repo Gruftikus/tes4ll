@@ -8,6 +8,7 @@ class llReadLodSettings : public llWorker {
 protected:
 
 	char *filename;
+	int   format;
 
 	int unknown1;
 	int unknown2;

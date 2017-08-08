@@ -11,6 +11,7 @@ int llReadLodSettings::Prepare(void) {
 	if (!llWorker::Prepare()) return 0;
 
 	filename = NULL;
+	format   = 0;
 
 	return 1;
 }
@@ -19,6 +20,8 @@ int llReadLodSettings::RegisterOptions(void) {
 	if (!llWorker::RegisterOptions()) return 0;
 
 	RegisterValue("-filename", &filename);
+	RegisterValue("-format",   &format);
+
 
 	return 1;
 }
@@ -33,45 +36,72 @@ int llReadLodSettings::Exec(void) {
 
 	FILE *fptr = NULL;
 
-	if (filename) {
-		if (fopen_s(&fptr, filename," rb")) {
-			_llLogger()->WriteNextLine(-LOG_INFO, "Unable to open LODSettings file \"%s\"", filename);
-			return 0;
+
+	if (format) {
+		if (filename) {
+			if (fopen_s(&fptr, filename, "rb")) {
+				_llLogger()->WriteNextLine(-LOG_INFO, "Unable to open .lod file \"%s\"", filename);
+				return 0;
+			}
+			ReadShort(fptr, &x1, 0);
+			ReadShort(fptr, &y1, 0);
+			ReadShort(fptr, &x2, 0);
+			ReadShort(fptr, &y2, 0);
+			ReadInt(fptr, &unknown1, 0);
+			ReadInt(fptr, &unknown2, 0);
+			ReadInt(fptr, &unknown3, 0);
+		} else {
+			if (_llUtils()->size < 16) {
+				_llLogger()->WriteNextLine(-LOG_ERROR, "%s: data size (%i) too small", command_name, _llUtils()->size);
+				return 0;
+			}
+			x1 = *(signed short int*)(_llUtils()->data);
+			y1 = *(signed short int*)(_llUtils()->data + 2);
 		}
 
-		ReadInt(fptr, &unknown1, 0);
-		ReadInt(fptr, &unknown2, 0);
-		ReadInt(fptr, &unknown3, 0);
-		ReadShort(fptr, &x1, 0);
-		ReadShort(fptr, &y1, 0);
-		ReadShort(fptr, &x2, 0);
-		ReadShort(fptr, &y2, 0);
-		ReadInt(fptr, &unknown4, 0);
+		_llUtils()->SetValue("_lod_x1", x1);
+		_llUtils()->SetValue("_lod_y1", y1);
+
+		if (filename) 
+			_llLogger()->WriteNextLine(-LOG_INFO, "%s: read dimensions x1: %i, y1: %i: %i from file %s", command_name, x1, y1, filename);
+		else           
+			_llLogger()->WriteNextLine(-LOG_INFO, "%s: read dimensions x1: %i, y1: %i: %i from memory", command_name, x1, y1);
 
 	} else {
-
-		if (_llUtils()->size < 24) {
-			_llLogger()->WriteNextLine(-LOG_ERROR, "%s: data size (%i) too small", command_name, _llUtils()->size);
-			return 0;
+		if (filename) {
+			if (fopen_s(&fptr, filename, "rb")) {
+				_llLogger()->WriteNextLine(-LOG_INFO, "Unable to open LODSettings file \"%s\"", filename);
+				return 0;
+			}
+			ReadInt(fptr, &unknown1, 0);
+			ReadInt(fptr, &unknown2, 0);
+			ReadInt(fptr, &unknown3, 0);
+			ReadShort(fptr, &x1, 0);
+			ReadShort(fptr, &y1, 0);
+			ReadShort(fptr, &x2, 0);
+			ReadShort(fptr, &y2, 0);
+			ReadInt(fptr, &unknown4, 0);
+		} else {
+			if (_llUtils()->size < 24) {
+				_llLogger()->WriteNextLine(-LOG_ERROR, "%s: data size (%i) too small", command_name, _llUtils()->size);
+				return 0;
+			}
+			x1 = *(signed short int*)(_llUtils()->data + 12);
+			y1 = *(signed short int*)(_llUtils()->data + 14);
+			x2 = *(signed short int*)(_llUtils()->data + 16);
+			y2 = *(signed short int*)(_llUtils()->data + 18);
 		}
 
-		x1 = *(signed short int*)(_llUtils()->data + 12);
-		y1 = *(signed short int*)(_llUtils()->data + 14);
-		x2 = *(signed short int*)(_llUtils()->data + 16);
-		y2 = *(signed short int*)(_llUtils()->data + 18);
+		_llUtils()->SetValue("_lod_x1", x1);
+		_llUtils()->SetValue("_lod_y1", y1);
+		_llUtils()->SetValue("_lod_x2", x2);
+		_llUtils()->SetValue("_lod_y2", y2);
 
-
+		if (filename) 
+			_llLogger()->WriteNextLine(-LOG_INFO, "%s: read dimensions x1: %i, y1: %i, x2: %i, y2: %i from file %s", command_name, x1, y1, x2, y2, filename);
+		else           
+			_llLogger()->WriteNextLine(-LOG_INFO, "%s: read dimensions x1: %i, y1: %i, x2: %i, y2: %i from memory", command_name, x1, y1, x2, y2);
 	}
-
-	_llUtils()->SetValue("_lod_x1", x1);
-	_llUtils()->SetValue("_lod_y1", y1);
-	_llUtils()->SetValue("_lod_x2", x2);
-	_llUtils()->SetValue("_lod_y2", y2);
-
-	if (filename) 
-		_llLogger()->WriteNextLine(-LOG_INFO, "%s: read dimensions x1: %i, y1: %i, x2: %i, y2: %i from file %s", command_name, x1, y1, x2, y2, filename);
-	else           
-		_llLogger()->WriteNextLine(-LOG_INFO, "%s: read dimensions x1: %i, y1: %i, x2: %i, y2: %i from memory", command_name, x1, y1, x2, y2);
 
 	return 1;
 }
