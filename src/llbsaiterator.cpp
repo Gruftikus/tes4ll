@@ -1,6 +1,6 @@
 #include "../include/llbsaiterator.h"
-#include "./../lltool/include/llutils.h"
-#include "./../lltool/include/lllogger.h"
+#include "../../lltool/include/llutils.h"
+#include "../../lltool/include/lllogger.h"
 
 #include <./../boost/boost/filesystem.hpp>
 
