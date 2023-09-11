@@ -119,6 +119,7 @@ int main(int argc, char **argv) {
 		} else if (strcmp(argv[i],"-w")==0) {
 			utils->SetValue("_worldspace", argv[i+1]);
 			mesg->WriteNextLine(-LOG_INFO, "Worldspace: %s", utils->GetValue("_worldspace"));
+			i++; // JdG: bump past flag value
 		} else if (argv[i][0] != '[') {
 			char *my_flag_list = new char[strlen(argv[i])+2];
 			strcpy_s(my_flag_list, strlen(argv[i])+1, argv[i]);
